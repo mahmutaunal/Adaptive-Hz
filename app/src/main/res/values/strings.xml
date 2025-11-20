@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">Adaptive Hz</string>
+    <string name="description">
+        This app enables adaptive refresh on unsupported Samsung Galaxy devices.
+        You must grant WRITE_SECURE_SETTINGS permission using ADB to use it.
+    </string>
+    <string name="apply_adaptive">Apply Adaptive Hz</string>
+    <string name="force_60hz">Apply Minimum Hz</string>
+    <string name="restore_defaults">Restore defaults</string>
+    <string name="toast_adaptive_applied">Adaptive mode applied</string>
+    <string name="toast_permission_missing">WRITE_SECURE_SETTINGS permission is not granted</string>
+    <string name="toast_60hz_forced">60 Hz fixed refresh applied</string>
+    <string name="toast_restored_defaults">Restored to defaults</string>
+    <string name="force_90hz">Apply Maximum Hz</string>
+    <string name="toast_90hz_forced">90 Hz fixed refresh applied</string>
+    <string name="accessibility_service_description">Automatically switches Galaxy device based on interaction.</string>
+    <string name="dialog_accessibility_title">Permission Required for Automatic Hz</string>
+    <string name="dialog_accessibility_message">
+        Adaptive Hz automatically switches your display refresh rate between based on your touch and usage.
+        To enable this feature, you need to activate the accessibility service.
+        After enabling the “Adaptive Hz” service, you can return to the app.
+    </string>
+    <string name="dialog_accessibility_confirm">Open Settings</string>
+    <string name="dialog_accessibility_cancel">Later</string>
+    <string name="toast_open_accessibility_failed">
+        Could not open accessibility settings. Please enable it manually from Settings &gt; Accessibility.
+    </string>
+</resources>

@@ -1,0 +1,107 @@
+# ==========================
+# Android / Kotlin / Jetpack Compose
+# Full Professional .gitignore
+# ==========================
+
+# --------- Gradle ---------
+.gradle/
+build/
+*/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Local Gradle properties (keeps signing keys, local paths)
+gradle.properties
+
+# --------- Android Studio & IntelliJ IDEA ----------
+.idea/
+.idea/caches/
+.idea/libraries/
+.idea/modules.xml
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/tasks.xml
+.idea/assetWizardSettings.xml
+.idea/misc.xml
+.idea/vcs.xml
+.idea/compiler.xml
+
+# Do NOT ignore Run Configurations:
+!*.run.xml
+
+# --------- Jetpack Compose Previews ---------
+# Compose preview intermediate build artifacts
+.preview/
+
+# --------- Keystore / Signing / Credentials ---------
+*.jks
+*.keystore
+*.pem
+*.der
+*.key
+*.p12
+*.pfx
+*.keystore.properties
+signing.properties
+secure.keystore
+
+# --------- Local Config Files ---------
+local.properties
+*.gradle.local
+*.properties.local
+
+# --------- Logs & Reports ---------
+*.log
+*.stacktrace
+*.hprof
+hs_err_pid*
+
+# --------- System / OS Files ---------
+.DS_Store
+Thumbs.db
+ehthumbs.db
+$RECYCLE.BIN/
+
+# --------- APK / AAB Artifacts (never push built releases) ---------
+*.apk
+*.aab
+*.ap_
+*.dex
+*.aar
+*.so
+
+# --------- Crashlytics / Firebase ---------
+# Automatically generated build IDs and configs
+fabric.properties
+crashlytics-build.properties
+
+# --------- NDK / CMake Build Artifacts ---------
+obj/
+*.o
+*.lo
+*.la
+*.al
+*.ko
+*.mod
+*.cmd
+
+# --------- Kotlin Specific ---------
+# Kotlin build cache
+.kotlintest/
+.kotlin/
+kotlin-js-store/
+
+# --------- Misc ---------
+captures/           # Android Studio screenshots & bug captures
+benchmark/          # Performance benchmark artifacts
+release/            # Local release outputs
+.idea/deploymentTargetDropDown.xml
+*.class
+*.iml
+
+# --------- ADB Related ---------
+*.adb
+adb.log
+
+# ==========================
+# END OF FILE
+# ==========================
