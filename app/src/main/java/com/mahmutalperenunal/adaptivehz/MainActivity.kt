@@ -131,7 +131,7 @@ fun MainScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
-            painter = painterResource(id = R.mipmap.ic_launcher),
+            painter = painterResource(id = R.drawable.ic_launcher),
             contentDescription = null,
             modifier = Modifier
                 .padding(bottom = 8.dp)
