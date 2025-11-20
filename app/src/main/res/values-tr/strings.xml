@@ -5,14 +5,14 @@
         Kullanmak için ADB ile WRITE_SECURE_SETTINGS izni vermen gerekir.
     </string>
     <string name="apply_adaptive">Adaptif Hz Uygula</string>
-    <string name="force_60hz">60 Hz Uygula</string>
+    <string name="force_60hz">Minimum Uygula</string>
     <string name="restore_defaults">Varsayılana Döndür</string>
     <string name="toast_adaptive_applied">Adaptif mod uygulandı</string>
     <string name="toast_permission_missing">WRITE_SECURE_SETTINGS izni verilmemiş</string>
-    <string name="toast_60hz_forced">60 Hz sabit uygulandı</string>
+    <string name="toast_60hz_forced">Minimum Hz sabit uygulandı</string>
     <string name="toast_restored_defaults">Varsayılana döndürüldü</string>
-    <string name="force_90hz">90 Hz Uygula</string>
-    <string name="toast_90hz_forced">90 Hz sabit uygulandı</string>
+    <string name="force_90hz">Maksimum Uygula</string>
+    <string name="toast_90hz_forced">Maksimum Hz sabit uygulandı</string>
     <string name="accessibility_service_description">Galaxy cihazını etkileşime göre otomatik olarak değiştirir.</string>
     <string name="dialog_accessibility_title">Otomatik Hz için izin gerekli</string>
     <string name="dialog_accessibility_message">

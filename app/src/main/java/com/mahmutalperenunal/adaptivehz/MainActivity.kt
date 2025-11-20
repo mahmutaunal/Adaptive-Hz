@@ -10,7 +10,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -35,7 +34,13 @@ import androidx.compose.ui.unit.dp
 import com.mahmutalperenunal.adaptivehz.ui.theme.AdaptiveHzTheme
 import androidx.core.content.edit
 import android.accessibilityservice.AccessibilityServiceInfo
+import android.app.Activity
 import android.view.accessibility.AccessibilityManager
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalView
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.core.view.WindowInsetsControllerCompat
 
 class MainActivity : ComponentActivity() {
 
@@ -60,9 +65,24 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        installSplashScreen()
         val shouldShowAccessibilityDialog = !isAdaptiveServiceEnabled()
         setContent {
             AdaptiveHzTheme {
+                val view = LocalView.current
+                val window = (view.context as Activity).window
+                val color = MaterialTheme.colorScheme.background
+
+                SideEffect {
+                    window.statusBarColor = color.toArgb()
+                    window.navigationBarColor = color.toArgb()
+
+                    WindowInsetsControllerCompat(window, window.decorView).apply {
+                        isAppearanceLightStatusBars = false
+                        isAppearanceLightNavigationBars = false
+                    }
+                }
+
                 Surface(
                     modifier = Modifier.fillMaxSize()
                 ) {
@@ -127,30 +147,36 @@ fun MainScreen(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 24.dp, vertical = 32.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp, Alignment.Top),
+        verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.ic_launcher),
-            contentDescription = null,
+        Column(
             modifier = Modifier
-                .padding(bottom = 8.dp)
-        )
+                .fillMaxWidth()
+                .weight(1f),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.ic_launcher),
+                contentDescription = null,
+                modifier = Modifier
+                    .padding(bottom = 8.dp)
+            )
 
-        Text(
-            text = stringResource(id = R.string.app_name),
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onBackground
-        )
+            Text(
+                text = stringResource(id = R.string.app_name),
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onBackground
+            )
 
-        Text(
-            text = stringResource(id = R.string.description),
-            style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
-        )
-
-        Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = stringResource(id = R.string.description),
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
+            )
+        }
 
         Column(
             modifier = Modifier.fillMaxWidth(),

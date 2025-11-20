@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.AdaptiveHz" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.AdaptiveHz" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowSplashScreenBackground">?android:colorBackground</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="android:statusBarColor">?android:colorBackground</item>
+    </style>
 </resources>

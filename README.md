@@ -122,15 +122,6 @@ Adaptive Hz App
 
 ---
 
-## 🗺️ Roadmap
-
-- Quick Settings Tile (toggle)
-- App-based refresh profiles
-- Stats overlay (current refresh indicator)
-- Icon redesign + Material You themes
-
----
-
 ## 📜 License
 
 This project is open-source. Suggested license: **MIT**.  
