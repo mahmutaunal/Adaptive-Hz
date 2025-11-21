@@ -34,13 +34,12 @@ import androidx.compose.ui.unit.dp
 import com.mahmutalperenunal.adaptivehz.ui.theme.AdaptiveHzTheme
 import androidx.core.content.edit
 import android.accessibilityservice.AccessibilityServiceInfo
-import android.app.Activity
 import android.view.accessibility.AccessibilityManager
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.SideEffect
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.graphics.Color
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.core.view.WindowInsetsControllerCompat
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 class MainActivity : ComponentActivity() {
 
@@ -69,20 +68,7 @@ class MainActivity : ComponentActivity() {
         val shouldShowAccessibilityDialog = !isAdaptiveServiceEnabled()
         setContent {
             AdaptiveHzTheme {
-                val view = LocalView.current
-                val window = (view.context as Activity).window
-                val color = MaterialTheme.colorScheme.background
-
-                SideEffect {
-                    window.statusBarColor = color.toArgb()
-                    window.navigationBarColor = color.toArgb()
-
-                    WindowInsetsControllerCompat(window, window.decorView).apply {
-                        isAppearanceLightStatusBars = false
-                        isAppearanceLightNavigationBars = false
-                    }
-                }
-
+                SetupSystemBars()
                 Surface(
                     modifier = Modifier.fillMaxSize()
                 ) {
@@ -130,6 +116,23 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun SetupSystemBars() {
+    val systemUiController = rememberSystemUiController()
+    val useDarkIcons = !isSystemInDarkTheme()
+
+    SideEffect {
+        systemUiController.setStatusBarColor(
+            color = Color.Transparent,
+            darkIcons = useDarkIcons
+        )
+        systemUiController.setNavigationBarColor(
+            color = Color.Transparent,
+            darkIcons = useDarkIcons
+        )
     }
 }
 
