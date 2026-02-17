@@ -1,4 +1,4 @@
-package com.mahmutalperenunal.adaptivehz
+package com.mahmutalperenunal.adaptivehz.core
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -16,8 +16,13 @@ class BootReceiver : BroadcastReceiver() {
             val dynamicEnabled = prefs.getBoolean("dynamic_enabled", false)
 
             if (dynamicEnabled) {
-                // If the user has left adaptive mode ON: start at 60 Hz
-                RefreshRateController.applyForce60(context)
+                // If the user has left adaptive mode ON: start at minimum Hz
+                RefreshRateController.applyForceMinimum(context)
+            }
+
+            val keepAlive = prefs.getBoolean("keep_alive_enabled", false)
+            if (keepAlive) {
+                StabilityForegroundService.start(context)
             }
         }
     }

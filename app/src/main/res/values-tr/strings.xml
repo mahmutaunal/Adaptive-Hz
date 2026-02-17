@@ -1,28 +1,87 @@
 <resources>
     <string name="app_name">Adaptive Hz</string>
-    <string name="description">
-        Bu uygulama desteklenmeyen Samsung Galaxy cihazlarda yenileme hızını adaptif çalışacak şekilde ayarlar.
-        Kullanmak için ADB ile WRITE_SECURE_SETTINGS izni vermen gerekir.
-    </string>
-    <string name="apply_adaptive">Adaptif Hz Uygula</string>
-    <string name="force_60hz">Minimum Uygula</string>
-    <string name="restore_defaults">Varsayılana Döndür</string>
-    <string name="toast_adaptive_applied">Adaptif mod uygulandı</string>
-    <string name="toast_permission_missing">WRITE_SECURE_SETTINGS izni verilmemiş</string>
-    <string name="toast_60hz_forced">Minimum Hz sabit uygulandı</string>
-    <string name="toast_restored_defaults">Varsayılana döndürüldü</string>
-    <string name="force_90hz">Maksimum Uygula</string>
-    <string name="toast_90hz_forced">Maksimum Hz sabit uygulandı</string>
+
+    <string name="home_title">Adaptive Hz</string>
+    <string name="home_description">Accessibility olayları ve güvenli sistem ayarları (ADB) kullanarak adaptif yenileme hızı geçişi sağlar.</string>
+
+    <string name="setup_title">Kurulum</string>
+
+    <string name="setup_accessibility_title">Erişilebilirlik Servisi</string>
+    <string name="setup_accessibility_desc">Zorunlu. Sistem genelinde dokunma/kaydırma olaylarını algılar.</string>
+    <string name="setup_accessibility_button">Erişilebilirliği Aç</string>
+
+    <string name="setup_adb_title">ADB İzni (WRITE_SECURE_SETTINGS)</string>
+    <string name="setup_adb_desc">Zorunlu. ADB ile izin verin ve burada doğrulayın.</string>
+    <string name="setup_adb_verify">İzni Doğrula</string>
+    <string name="setup_adb_instruction">Bilgisayarınızda şu komutu çalıştırın:</string>
+
+    <string name="setup_battery_title">Pil Optimizasyonlarını Kapat</string>
+    <string name="setup_battery_desc">Önerilir. İşletim sisteminin uygulamayı arka planda sonlandırmasını engeller.</string>
+    <string name="open_battery_settings">Pil Ayarlarını Aç</string>
+
+    <string name="setup_stability_title">Stability Mode (Foreground Service)</string>
+    <string name="setup_stability_desc">Kalıcı bildirim ile sürecin aktif kalmasını sağlar.</string>
+    <string name="setup_notifications_button">Bildirimler</string>
+
+    <string name="enable">Etkinleştir</string>
+    <string name="disable">Devre Dışı</string>
+
+    <string name="dashboard_title">Panel</string>
+    <string name="dashboard_status_title">Durum</string>
+
+    <string name="status_current_display">Anlık ekran</string>
+    <string name="status_vendor">Üretici</string>
+    <string name="status_setting">Sistem Ayarı</string>
+    <string name="status_accessibility">Erişilebilirlik</string>
+    <string name="status_mode">Mod</string>
+
+    <string name="mode_adaptive">Adaptif (Otomatik)</string>
+    <string name="mode_manual">Manuel</string>
+
+    <string name="minimum">Minimum</string>
+    <string name="maximum">Maksimum</string>
+
+    <string name="per_app_title">Uygulama Bazlı Yenileme Hızı</string>
+    <string name="per_app_desc">Yakında: Her uygulama için Adaptif / Minimum / Maksimum seçimi.</string>
+    <string name="per_app_desc2">Bu özellik yüklü uygulamaların listelenmesini ve uygulama bazlı ayar saklanmasını gerektirir.</string>
+
+    <string name="footer_title">AlpWare Studio tarafından geliştirildi</string>
+    <string name="footer_desc">Bu açık kaynaklı bir projedir. Geri bildirim ve cihaz test raporlarınız memnuniyetle karşılanır.</string>
+    <string name="footer_github">GitHub</string>
+    <string name="footer_play">Google Play</string>
+
+    <string name="toast_adb_verified">ADB izni doğrulandı ✅</string>
+    <string name="toast_adb_permission_missing">İzin eksik. Önce ADB ile izin verin.</string>
+    <string name="toast_adb_verify_unavailable">Bu ROM üzerinde doğrulama yapılamadı.</string>
+
+    <string name="label_ok">OK</string>
+    <string name="label_recommended">ÖNERİLİR</string>
+
+    <string name="toast_stability_enabled">Stability Mode etkinleştirildi</string>
+    <string name="toast_stability_disabled">Stability Mode devre dışı bırakıldı</string>
+    <string name="toast_open_notification_settings_failed">Bildirim ayarları açılamadı.</string>
+
+    <string name="toast_adaptive_applied">Adaptif uygulandı ✅</string>
+    <string name="toast_minimum_applied">Minimum uygulandı</string>
+    <string name="toast_maximum_applied">Maksimum uygulandı</string>
+    <string name="toast_secure_settings_missing">WRITE_SECURE_SETTINGS izni eksik.</string>
+
+    <string name="label_missing">EKSİK</string>
+    <string name="label_on">AÇIK</string>
+    <string name="label_off">KAPALI</string>
+    <string name="label_granted">VERİLDİ</string>
+    <string name="label_required">GEREKLİ</string>
+
+    <string name="label_notifications_status">Bildirimler: %1$s</string>
+
+    <string name="stability_notification_channel_name">Adaptive Hz</string>
+    <string name="stability_notification_title">Adaptive-Hz</string>
+    <string name="stability_notification_text">Çalışıyor (Stability Mode)</string>
+
+    <string name="toast_open_accessibility_failed">Erişilebilirlik ayarları açılamadı. Lütfen Ayarlar &gt; Erişilebilirlik menüsünden manuel olarak aç.</string>
+
     <string name="accessibility_service_description">Galaxy cihazını etkileşime göre otomatik olarak değiştirir.</string>
-    <string name="dialog_accessibility_title">Otomatik Hz için izin gerekli</string>
-    <string name="dialog_accessibility_message">
-    Adaptive Hz, ekran yenileme hızını dokunuşlarına göre otomatik olarak değiştirir.
-    Bunun çalışabilmesi için erişilebilirlik hizmetini açman gerekiyor.
-    &quot;Adaptive Hz&quot; hizmetini etkinleştirdikten sonra uygulamaya geri dönebilirsin.
-    </string>
-    <string name="dialog_accessibility_confirm">Ayarlara git</string>
-    <string name="dialog_accessibility_cancel">Daha sonra</string>
-    <string name="toast_open_accessibility_failed">
-        Erişilebilirlik ayarları açılamadı. Lütfen Ayarlar &gt; Erişilebilirlik menüsünden manuel olarak aç.
-    </string>
+
+    <string name="toast_battery_already_ignored">Pil optimizasyonu zaten devre dışı.</string>
+    <string name="toast_battery_settings_failed">Pil optimizasyon ayarları açılamadı.</string>
 </resources>

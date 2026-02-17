@@ -1,28 +1,87 @@
 <resources>
     <string name="app_name">Adaptive Hz</string>
-    <string name="description">
-        This app enables adaptive refresh on unsupported Samsung Galaxy devices.
-        You must grant WRITE_SECURE_SETTINGS permission using ADB to use it.
-    </string>
-    <string name="apply_adaptive">Apply Adaptive</string>
-    <string name="force_60hz">Apply Minimum</string>
-    <string name="restore_defaults">Restore defaults</string>
-    <string name="toast_adaptive_applied">Adaptive mode applied</string>
-    <string name="toast_permission_missing">WRITE_SECURE_SETTINGS permission is not granted</string>
-    <string name="toast_60hz_forced">Minimum Hz fixed refresh applied</string>
-    <string name="toast_restored_defaults">Restored to defaults</string>
-    <string name="force_90hz">Apply Maximum</string>
-    <string name="toast_90hz_forced">Maximum Hz fixed refresh applied</string>
+
+    <string name="home_title">Adaptive Hz</string>
+    <string name="home_description">Adaptive refresh-rate switching using accessibility events + secure settings (ADB).</string>
+
+    <string name="setup_title">Setup</string>
+
+    <string name="setup_accessibility_title">Accessibility Service</string>
+    <string name="setup_accessibility_desc">Required. Enables detecting touch/scroll events system-wide.</string>
+    <string name="setup_accessibility_button">Open Accessibility</string>
+
+    <string name="setup_adb_title">ADB Permission (WRITE_SECURE_SETTINGS)</string>
+    <string name="setup_adb_desc">Required. Grant via ADB, then verify here.</string>
+    <string name="setup_adb_verify">Verify Permission</string>
+    <string name="setup_adb_instruction">Run this on your computer:</string>
+
+    <string name="setup_battery_title">Disable Battery Optimizations</string>
+    <string name="setup_battery_desc">Recommended. Prevents the OS from killing the app/service in the background.</string>
+    <string name="open_battery_settings">Open Battery Settings</string>
+
+    <string name="setup_stability_title">Stability Mode (Foreground Service)</string>
+    <string name="setup_stability_desc">Keeps the process alive using a persistent notification.</string>
+    <string name="setup_notifications_button">Notifications</string>
+
+    <string name="enable">Enable</string>
+    <string name="disable">Disable</string>
+
+    <string name="dashboard_title">Dashboard</string>
+    <string name="dashboard_status_title">Status</string>
+
+    <string name="status_current_display">Current display</string>
+    <string name="status_vendor">Vendor</string>
+    <string name="status_setting">Setting</string>
+    <string name="status_accessibility">Accessibility</string>
+    <string name="status_mode">Mode</string>
+
+    <string name="mode_adaptive">Adaptive (Auto)</string>
+    <string name="mode_manual">Manual</string>
+
+    <string name="minimum">Minimum</string>
+    <string name="maximum">Maximum</string>
+
+    <string name="per_app_title">Per-app refresh rate</string>
+    <string name="per_app_desc">Coming later: set Adaptive / Minimum / Maximum per app.</string>
+    <string name="per_app_desc2">This requires listing installed apps and storing per-app preferences.</string>
+
+    <string name="footer_title">Developed by AlpWare Studio</string>
+    <string name="footer_desc">This is an open-source project. Your feedback and device test reports are welcome.</string>
+    <string name="footer_github">GitHub</string>
+    <string name="footer_play">Google Play</string>
+
+    <string name="toast_adb_verified">ADB permission verified ✅</string>
+    <string name="toast_adb_permission_missing">Permission missing. Grant via ADB first.</string>
+    <string name="toast_adb_verify_unavailable">Unable to verify on this ROM.</string>
+
+    <string name="label_ok">OK</string>
+    <string name="label_recommended">RECOMMENDED</string>
+
+    <string name="toast_stability_enabled">Stability Mode enabled</string>
+    <string name="toast_stability_disabled">Stability Mode disabled</string>
+    <string name="toast_open_notification_settings_failed">Unable to open notification settings.</string>
+
+    <string name="toast_adaptive_applied">Adaptive applied ✅</string>
+    <string name="toast_minimum_applied">Minimum applied</string>
+    <string name="toast_maximum_applied">Maximum applied</string>
+    <string name="toast_secure_settings_missing">WRITE_SECURE_SETTINGS permission is missing.</string>
+
+    <string name="label_missing">MISSING</string>
+    <string name="label_on">ON</string>
+    <string name="label_off">OFF</string>
+    <string name="label_granted">GRANTED</string>
+    <string name="label_required">REQUIRED</string>
+
+    <string name="label_notifications_status">Notifications: %1$s</string>
+
+    <string name="stability_notification_channel_name">Adaptive Hz</string>
+    <string name="stability_notification_title">Adaptive-Hz</string>
+    <string name="stability_notification_text">Running (Stability Mode)</string>
+
+    <string name="toast_open_accessibility_failed">Could not open accessibility settings. Please enable it manually from Settings &gt; Accessibility.</string>
+
     <string name="accessibility_service_description">Automatically switches Galaxy device based on interaction.</string>
-    <string name="dialog_accessibility_title">Permission Required for Automatic Hz</string>
-    <string name="dialog_accessibility_message">
-        Adaptive Hz automatically switches your display refresh rate between based on your touch and usage.
-        To enable this feature, you need to activate the accessibility service.
-        After enabling the “Adaptive Hz” service, you can return to the app.
-    </string>
-    <string name="dialog_accessibility_confirm">Open Settings</string>
-    <string name="dialog_accessibility_cancel">Later</string>
-    <string name="toast_open_accessibility_failed">
-        Could not open accessibility settings. Please enable it manually from Settings &gt; Accessibility.
-    </string>
+
+    <string name="toast_battery_already_ignored">Battery optimizations are already disabled.</string>
+    <string name="toast_battery_settings_failed">Unable to open battery optimization settings.</string>
 </resources>

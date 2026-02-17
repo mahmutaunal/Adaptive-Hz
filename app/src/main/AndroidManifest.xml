@@ -6,6 +6,11 @@
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"
+        tools:ignore="ForegroundServicesPolicy" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <application
         android:allowBackup="true"
@@ -27,7 +32,7 @@
         </activity>
 
         <receiver
-            android:name=".BootReceiver"
+            android:name=".core.BootReceiver"
             android:enabled="true"
             android:exported="false">
             <intent-filter>
@@ -36,7 +41,7 @@
         </receiver>
 
         <service
-            android:name=".AdaptiveHzService"
+            android:name=".core.AdaptiveHzService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:exported="false"
             tools:ignore="AccessibilityPolicy">
@@ -48,6 +53,10 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/adaptive_hz_service" />
         </service>
-    </application>
 
+        <service
+            android:name=".core.StabilityForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+    </application>
 </manifest>
