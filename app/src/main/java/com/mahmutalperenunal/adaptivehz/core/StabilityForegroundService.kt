@@ -38,7 +38,7 @@ class StabilityForegroundService : Service() {
         ensureChannel()
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher)
+            .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle(getString(R.string.stability_notification_title))
             .setContentText(getString(R.string.stability_notification_text))
             .setOngoing(true)
