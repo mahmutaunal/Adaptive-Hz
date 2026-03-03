@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.mahmutalperenunal.adaptivehz.R
 
 /**
@@ -26,10 +27,6 @@ class StabilityForegroundService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // Keep running until user disables it.
         return START_STICKY
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -66,7 +63,7 @@ class StabilityForegroundService : Service() {
 
         fun start(context: Context) {
             val intent = Intent(context, StabilityForegroundService::class.java)
-            context.startForegroundService(intent)
+            ContextCompat.startForegroundService(context, intent)
         }
 
         fun stop(context: Context) {

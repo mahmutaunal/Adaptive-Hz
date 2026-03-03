@@ -3,6 +3,9 @@ package com.mahmutalperenunal.adaptivehz.core
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
+import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateController
 
 /**
  * When the device restarts, if the user has left adaptive mode enabled,
@@ -11,19 +14,25 @@ import android.content.Intent
  */
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
-        if (intent?.action == Intent.ACTION_BOOT_COMPLETED) {
-            val prefs = context.getSharedPreferences("adaptive_hz_prefs", Context.MODE_PRIVATE)
-            val dynamicEnabled = prefs.getBoolean("dynamic_enabled", false)
+        if (intent?.action != Intent.ACTION_BOOT_COMPLETED) return
 
-            if (dynamicEnabled) {
-                // If the user has left adaptive mode ON: start at minimum Hz
-                RefreshRateController.applyForceMinimum(context)
-            }
+        val prefs = context.getSharedPreferences("adaptive_hz_prefs", Context.MODE_PRIVATE)
+        val dynamicEnabled = prefs.getBoolean("dynamic_enabled", false)
 
-            val keepAlive = prefs.getBoolean("keep_alive_enabled", false)
-            if (keepAlive) {
-                StabilityForegroundService.start(context)
+        if (dynamicEnabled) {
+            try {
+                Handler(Looper.getMainLooper()).postDelayed({
+                    try { RefreshRateController.applyForceMinimum(context) } catch (_: Throwable) {}
+                }, 1500L)
+            } catch (_: Throwable) {
+                // Fallback: no delay
+                try { RefreshRateController.applyForceMinimum(context) } catch (_: Throwable) {}
             }
+        }
+
+        val keepAlive = prefs.getBoolean("keep_alive_enabled", false)
+        if (keepAlive) {
+            try { StabilityForegroundService.start(context) } catch (_: Throwable) {}
         }
     }
 }

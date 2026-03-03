@@ -30,10 +30,6 @@ class MainActivity : ComponentActivity() {
     private fun isAdaptiveServiceEnabled(): Boolean {
         val am = getSystemService(AccessibilityManager::class.java) ?: return false
 
-        // Android can represent the same component in different string forms.
-        // Examples:
-        // - com.pkg/.core.AdaptiveHzService
-        // - com.pkg/com.pkg.core.AdaptiveHzService
         val cn = ComponentName(this, AdaptiveHzService::class.java)
         val expectedShort = cn.flattenToShortString()
         val expectedFull = cn.flattenToString()

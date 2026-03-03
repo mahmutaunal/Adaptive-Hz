@@ -7,6 +7,8 @@ import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,7 +20,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -41,13 +42,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.border
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.ui.unit.Dp
+import androidx.compose.material3.HorizontalDivider
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
-import com.mahmutalperenunal.adaptivehz.core.RefreshRateController
+import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateController
 import com.mahmutalperenunal.adaptivehz.core.StabilityForegroundService
 import kotlinx.coroutines.delay
 import androidx.core.net.toUri
@@ -65,7 +65,6 @@ fun HomeScreen(
 
     val toastAdbVerified = stringResource(id = R.string.toast_adb_verified)
     val toastAdbPermissionMissing = stringResource(id = R.string.toast_adb_permission_missing)
-    val toastAdbVerifyUnavailable = stringResource(id = R.string.toast_adb_verify_unavailable)
     val toastStabilityEnabled = stringResource(id = R.string.toast_stability_enabled)
     val toastStabilityDisabled = stringResource(id = R.string.toast_stability_disabled)
     val toastOpenNotificationSettingsFailed = stringResource(id = R.string.toast_open_notification_settings_failed)
@@ -109,6 +108,21 @@ fun HomeScreen(
             ) == PackageManager.PERMISSION_GRANTED
         } else {
             true
+        }
+    }
+
+    // Android 13+ notification permission helper
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        notificationsGranted = granted
+        // If the user granted permission, and they already asked to enable stability,
+        // they can now enable it using the same button.
+    }
+
+    val requestNotificationPermission: () -> Unit = {
+        if (Build.VERSION.SDK_INT >= 33) {
+            notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
         }
     }
 
@@ -167,7 +181,7 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Divider()
+            HorizontalDivider()
         }
 
         // Main content (centered)
@@ -213,16 +227,39 @@ fun HomeScreen(
                 ok = adbGranted,
                 primaryButtonText = stringResource(id = R.string.setup_adb_verify),
                 onPrimaryClick = {
-                    // Best-effort verification by attempting a real write (min). If it throws, permission is missing.
-                    try {
-                        RefreshRateController.applyForceMinimum(context)
+                    // Verify WRITE_SECURE_SETTINGS by performing a no-op write to Settings.Global.
+                    // This avoids false positives from vendor paths that may work without the permission.
+                    val permission = "android.permission.WRITE_SECURE_SETTINGS"
+
+                    val verified = try {
+                        // 1) Fast path: ask PackageManager whether the permission is granted.
+                        val pmGranted = ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+
+                        // 2) Strong verification: attempt a no-op write (write back the same value).
+                        val cr = context.contentResolver
+                        val key = Settings.Global.ANIMATOR_DURATION_SCALE
+                        val current = Settings.Global.getFloat(cr, key, 1f)
+                        val wrote = Settings.Global.putFloat(cr, key, current)
+                        val after = Settings.Global.getFloat(cr, key, 1f)
+
+                        pmGranted || (wrote && after == current)
+                    } catch (_: SecurityException) {
+                        false
+                    } catch (_: Exception) {
+                        // Some devices may restrict access to this key even when the permission is granted.
+                        // In that case, fall back to the PackageManager result.
+                        ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+                    }
+
+                    if (verified) {
                         prefs.edit { putBoolean("adb_granted", true) }
                         adbGranted = true
                         Toast.makeText(context, toastAdbVerified, Toast.LENGTH_SHORT).show()
-                    } catch (_: SecurityException) {
+                    } else {
+                        // Keep the persistent flag false to avoid breaking setup logic.
+                        prefs.edit { putBoolean("adb_granted", false) }
+                        adbGranted = false
                         Toast.makeText(context, toastAdbPermissionMissing, Toast.LENGTH_LONG).show()
-                    } catch (_: Exception) {
-                        Toast.makeText(context, toastAdbVerifyUnavailable, Toast.LENGTH_LONG).show()
                     }
                 },
                 secondaryContent = {
@@ -299,6 +336,12 @@ fun HomeScreen(
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
                         OutlinedButton(
                             onClick = {
+                                // On Android 13+, enabling Stability Mode requires notification permission.
+                                if (Build.VERSION.SDK_INT >= 33 && !notificationsGranted && !keepAliveEnabled) {
+                                    requestNotificationPermission()
+                                    return@OutlinedButton
+                                }
+
                                 val next = !keepAliveEnabled
                                 prefs.edit { putBoolean("keep_alive_enabled", next) }
                                 keepAliveEnabled = next
@@ -313,13 +356,19 @@ fun HomeScreen(
                             },
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text(if (keepAliveEnabled) stringResource(id = R.string.disable) else stringResource(id = R.string.enable))
+                            val enableText = if (Build.VERSION.SDK_INT >= 33 && !notificationsGranted && !keepAliveEnabled) {
+                                // Make the dependency explicit so it doesn't look like "Enable" alone is enough.
+                                "${stringResource(id = R.string.enable)} (${stringResource(id = R.string.label_required)})"
+                            } else {
+                                if (keepAliveEnabled) stringResource(id = R.string.disable) else stringResource(id = R.string.enable)
+                            }
+                            Text(enableText)
                         }
 
-                        if (Build.VERSION.SDK_INT >= 33) {
+                        // Show the notification action only when it is actually needed (Android 13+ and missing permission).
+                        if (Build.VERSION.SDK_INT >= 33 && !notificationsGranted) {
                             OutlinedButton(
                                 onClick = {
-                                    // Notification permission screen (Android 13+)
                                     try {
                                         val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
                                             putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
@@ -399,10 +448,8 @@ fun HomeScreen(
                         try {
                             prefs.edit {
                                 putBoolean("dynamic_enabled", true)
-                                putBoolean("adb_granted", true) // if we got here, we likely have it
                             }
                             dynamicEnabled = true
-                            adbGranted = true
 
                             // Start at Minimum; service will boost to Maximum on interaction.
                             RefreshRateController.applyForceMinimum(context)
@@ -495,13 +542,15 @@ fun HomeScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
         }
 
         }
 
         if (setupComplete) {
             Spacer(modifier = Modifier.height(24.dp))
-            Divider()
+            HorizontalDivider()
             Spacer(modifier = Modifier.height(24.dp))
 
             // Footer
