@@ -1,5 +1,5 @@
 [versions]
-agp = "9.0.1"
+agp = "9.1.0"
 kotlin = "2.3.10"
 coreKtx = "1.17.0"
 junit = "4.13.2"
@@ -11,6 +11,7 @@ composeBom = "2026.02.01"
 material = "1.13.0"
 splashscreen = "1.2.0"
 accompanist = "0.36.0"
+navigationCompose = "2.9.7"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -31,6 +32,7 @@ androidx-compose-material-icons-extended = { group = "androidx.compose.material"
 material = { module = "com.google.android.material:material", version.ref = "material" }
 splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "splashscreen" }
 accompanist-systemuicontroller = { group = "com.google.accompanist", name = "accompanist-systemuicontroller", version.ref = "accompanist" }
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

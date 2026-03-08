@@ -5,6 +5,7 @@
     <string name="home_description">Accessibility olayları ve güvenli sistem ayarları (ADB) kullanarak adaptif yenileme hızı geçişi sağlar.</string>
 
     <string name="setup_title">Kurulum</string>
+    <string name="setup_description">Adaptive Hz\'in doğru çalışabilmesi için bazı sistem izinleri gereklidir. Tüm özellikleri etkinleştirmek için aşağıdaki adımları tamamlayın.</string>
 
     <string name="setup_accessibility_title">Erişilebilirlik Servisi</string>
     <string name="setup_accessibility_desc">Zorunlu. Sistem genelinde dokunma/kaydırma olaylarını algılar.</string>
@@ -50,7 +51,7 @@
     <string name="footer_github">GitHub</string>
     <string name="footer_play">Google Play</string>
 
-    <string name="toast_adb_verified">ADB izni doğrulandı ✅</string>
+    <string name="toast_adb_verified">ADB izni doğrulandı</string>
     <string name="toast_adb_permission_missing">İzin eksik. Önce ADB ile izin verin.</string>
     <string name="toast_adb_verify_unavailable">Bu ROM üzerinde doğrulama yapılamadı.</string>
 
@@ -61,7 +62,7 @@
     <string name="toast_stability_disabled">Stability Mode devre dışı bırakıldı</string>
     <string name="toast_open_notification_settings_failed">Bildirim ayarları açılamadı.</string>
 
-    <string name="toast_adaptive_applied">Adaptif uygulandı ✅</string>
+    <string name="toast_adaptive_applied">Adaptif uygulandı</string>
     <string name="toast_minimum_applied">Minimum uygulandı</string>
     <string name="toast_maximum_applied">Maksimum uygulandı</string>
     <string name="toast_secure_settings_missing">WRITE_SECURE_SETTINGS izni eksik.</string>
@@ -76,7 +77,7 @@
 
     <string name="stability_notification_channel_name">Adaptive Hz</string>
     <string name="stability_notification_title">Adaptive-Hz</string>
-    <string name="stability_notification_text">Çalışıyor (Stability Mode)</string>
+    <string name="stability_notification_text">Çalışıyor</string>
 
     <string name="toast_open_accessibility_failed">Erişilebilirlik ayarları açılamadı. Lütfen Ayarlar &gt; Erişilebilirlik menüsünden manuel olarak aç.</string>
 
@@ -84,4 +85,103 @@
 
     <string name="toast_battery_already_ignored">Pil optimizasyonu zaten devre dışı.</string>
     <string name="toast_battery_settings_failed">Pil optimizasyon ayarları açılamadı.</string>
+
+    <string name="developer_signature">AlpWare Studio tarafından geliştirilmiştir</string>
+
+    <string name="label_idle">Boşta</string>
+    <string name="label_active">Aktif</string>
+    <string name="label_target_max_on_touch">Dokunmada maksimum</string>
+    <string name="label_target_minimum">Minimum</string>
+    <string name="label_target_maximum">Maksimum</string>
+    <string name="label_target_system_default">Sistem varsayılanı</string>
+    <string name="status_target">Hedef</string>
+    <string name="status_interaction">Etkileşim</string>
+
+    <string name="settings_enable_adaptive_hz">Adaptive Hz\'i Etkinleştir</string>
+    <string name="settings_enable_adaptive_hz_desc">Adaptive Hz motorunu açıp kapatır. Devre dışı bırakıldığında uygulama yenileme hızını kontrol etmeyi durdurur ve sistem varsayılan davranışına geri dönülür.</string>
+
+    <!-- Common -->
+    <string name="cd_back">Geri</string>
+    <string name="action_close">Kapat</string>
+    <string name="cd_expand">Genişlet</string>
+    <string name="cd_collapse">Daralt</string>
+    <string name="error">Hata</string>
+
+    <!-- Settings - header -->
+    <string name="settings_title">Ayarlar</string>
+    <string name="settings_app_name">KeymapKit</string>
+    <string name="settings_app_tagline">Adaptif Hz, kullanıcı etkileşimine göre ekran yenileme hızını 60 Hz ile 120 Hz arasında otomatik olarak değiştirir.</string>
+
+    <!-- Settings - defaults (developer) -->
+    <string name="settings_developer_name">AlpWare Studio</string>
+    <string name="settings_developer_email">contact@alpwarestudio.com</string>
+    <string name="settings_website_url">https://alpwarestudio.com</string>
+
+    <!-- Settings - sections -->
+    <string name="settings_section_about">Hakkında</string>
+    <string name="settings_section_developer">Geliştirici</string>
+    <string name="settings_section_support">Destek</string>
+    <string name="settings_section_legal">Yasal</string>
+
+    <!-- Settings - items -->
+    <string name="settings_item_version">Sürüm</string>
+    <string name="settings_item_repository">Depo (GitHub)</string>
+    <string name="settings_item_email">E-posta</string>
+    <string name="settings_item_website">Web Sitesi</string>
+
+    <string name="settings_item_report_issue">Hata Bildir</string>
+    <string name="settings_item_share_app">Uygulamayı Paylaş</string>
+
+    <string name="settings_item_privacy_policy">Gizlilik Politikası</string>
+    <string name="settings_item_open_source_notices">Açık Kaynak Bildirimleri</string>
+
+    <!-- Settings - values -->
+    <string name="settings_value_version">%1$s (%2$d)</string>
+    <string name="settings_value_other_apps">Diğer uygulamalar ve yayıncı sayfası</string>
+    <string name="settings_value_github_issues">GitHub Issues</string>
+    <string name="settings_value_send_github_link">GitHub bağlantısını gönder</string>
+    <string name="settings_value_privacy_short">Çevrimdışı. Veri toplanmaz.</string>
+    <string name="settings_value_third_party_licenses">Üçüncü taraf lisansları</string>
+
+    <!-- Settings - share -->
+    <string name="settings_share_title">%1$s paylaş</string>
+    <string name="settings_share_text">%1$s\n%2$s</string>
+
+    <!-- Settings - email -->
+    <string name="settings_email_subject">%1$s geri bildirim</string>
+
+    <!-- Settings - footer -->
+    <string name="settings_footer_tip">İpucu: Uygulamayı çevrimdışı dostu tut—bağlantıları yalnızca gerektiğinde aç.</string>
+
+    <!-- Settings - dialog actions -->
+    <string name="settings_action_view_on_github">GitHub’da görüntüle</string>
+
+    <!-- Settings - dialog: Privacy -->
+    <string name="settings_dialog_privacy_title">Gizlilik Politikası</string>
+    <string name="settings_dialog_privacy_body">
+        Öne çıkanlar
+        • Bu uygulama çevrimdışı çalışır.
+        • Kişisel veri toplanmaz.
+        • Analitik, reklam veya takipçi kullanılmaz.
+        • Veri toplamak için izin istenmez.
+
+        Detaylar
+        Bu uygulama kişisel bilgilerinizi toplamaz, saklamaz veya paylaşmaz. Tüm işlevler cihazınızda yerel olarak çalışır.
+
+        Sorularınız için Ayarlar bölümündeki e-posta üzerinden geliştiriciye ulaşabilirsiniz.
+    </string>
+
+    <!-- Settings - dialog: Notices -->
+    <string name="settings_dialog_notices_title">Açık kaynak bildirimleri</string>
+    <string name="settings_dialog_notices_body">
+        Bu uygulama açık kaynaklıdır ve üçüncü taraf kütüphaneler içerebilir.
+
+        Şunları eklemeniz gerekebilir:
+        • Depoya bağlantı (Ayarlar → Depo)
+        • Proje lisansı (örn. MIT/Apache-2.0)
+        • Bağımlılıklar için gerekli NOTICE dosyaları
+
+        İpucu
+        Tüm lisans metinlerini uygulama içinde göstermek isterseniz res/raw veya assets altına koyup burada görüntüleyebilirsiniz.
+    </string>
 </resources>

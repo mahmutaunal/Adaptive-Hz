@@ -48,8 +48,7 @@ class AdaptiveHzService : AccessibilityService() {
                 pkg == null || pkg == packageName || pkg == "com.android.systemui"
             },
             tag = "AdaptiveHzEngine",
-            idleTimeoutMs = 3500L,   // <-- IMPORTANT
-            settleDelayMs = 140L,
+            idleTimeoutMs = 3500L,
             maxHighHoldMs = 8000L
         )
 

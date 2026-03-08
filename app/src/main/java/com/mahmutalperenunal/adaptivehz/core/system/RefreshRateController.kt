@@ -9,11 +9,6 @@ import kotlin.math.roundToInt
 /**
  * Centralized helper responsible for reading and writing refresh-rate related
  * system settings in a vendor-aware manner.
- *
- * Design goals:
- * - Keep vendor differences isolated here.
- * - Avoid unsafe guesses on unsupported devices.
- * - Prefer stability over aggressive behavior.
  */
 object RefreshRateController {
 
@@ -48,6 +43,27 @@ object RefreshRateController {
             }
             DeviceVendor.OTHER -> {
                 // do nothing
+            }
+        }
+    }
+
+    /**
+     * Restores the device to the vendor's default / adaptive refresh rate mode.
+     * Used when the user globally disables the app.
+     */
+    fun resetToSystemDefault(context: Context) {
+        when (DeviceVendorDetector.detect()) {
+            DeviceVendor.XIAOMI -> {
+                // Xiaomi/HyperOS typically treats the highest available rate as the default adaptive state
+                val (_, maxHz) = resolveDisplayMinMax(context)
+                writeAny(context, KEY_XIAOMI_REFRESH_RATE, maxHz)
+            }
+            DeviceVendor.SAMSUNG -> {
+                // Samsung adaptive mode
+                writeSecure(context, KEY_REFRESH_MODE, 1)
+            }
+            DeviceVendor.OTHER -> {
+                // Unsupported vendors: do nothing for safety
             }
         }
     }

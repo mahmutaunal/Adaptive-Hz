@@ -14,8 +14,8 @@ android {
         applicationId = "com.mahmutalperenunal.adaptivehz"
         minSdk = 31
         targetSdk = 36
-        versionCode = 10
-        versionName = "1.1.0"
+        versionCode = 11
+        versionName = "1.1.0 - Beta"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -41,6 +41,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -57,6 +58,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.splashscreen)
     implementation(libs.accompanist.systemuicontroller)
+    implementation(libs.androidx.navigation.compose)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

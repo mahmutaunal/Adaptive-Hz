@@ -12,11 +12,6 @@ import com.mahmutalperenunal.adaptivehz.core.engine.strategy.VendorStrategy
 /**
  * Engine that toggles the device between LOW (min Hz) and HIGH (max Hz)
  * based on user interaction signals coming from Accessibility events.
- *
- * Goals:
- * - Boost to HIGH as fast as possible on interaction.
- * - Drop back to LOW after a stable idle window (idleTimeoutMs).
- * - Avoid self/noise triggers and avoid getting stuck on HIGH.
  */
 class AdaptiveHzEngine(
     private val context: Context,
@@ -132,15 +127,13 @@ class AdaptiveHzEngine(
         val toIndex = runCatching { e.toIndex }.getOrDefault(-1)
 
         val hasIndexInfo = itemCount > 0 && fromIndex >= 0 && toIndex >= 0 && fromIndex != toIndex
-        if (hasIndexInfo) return true
-
-        return false
+        return hasIndexInfo
     }
 
     /** Rate-limit boosts to avoid spamming secure settings writes. */
     private fun boostNowDebounced(now: Long) {
         if ((now - lastBoostUptimeMs) < minBoostIntervalMs) {
-            // Even if we skip the write, extend the idle window to feel responsive.
+            // Even if we skip to write, extend the idle window to feel responsive.
             scheduleDrop()
             return
         }
