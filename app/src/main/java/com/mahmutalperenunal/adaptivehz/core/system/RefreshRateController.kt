@@ -182,4 +182,14 @@ object RefreshRateController {
         val hz = try { context.display.refreshRate } catch (_: Throwable) { 0f }
         return Status(vendor, key, valueStr, hz)
     }
+
+    fun isBatterySaverOn(context: Context): Boolean {
+        return try {
+            val powerManager =
+                context.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+            powerManager.isPowerSaveMode
+        } catch (_: Throwable) {
+            false
+        }
+    }
 }

@@ -48,8 +48,9 @@ class AdaptiveHzService : AccessibilityService() {
                 pkg == null || pkg == packageName || pkg == "com.android.systemui"
             },
             tag = "AdaptiveHzEngine",
-            idleTimeoutMs = 3500L,
-            maxHighHoldMs = 8000L
+            interactionIdleTimeoutMs = 3500L,
+            contentIdleTimeoutMs = 3500L,
+            maxHighHoldMs = 4000L
         )
 
         if (!started) {
@@ -85,7 +86,8 @@ class AdaptiveHzService : AccessibilityService() {
             AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
             AccessibilityEvent.TYPE_TOUCH_INTERACTION_END,
             AccessibilityEvent.TYPE_VIEW_SCROLLED,
-            AccessibilityEvent.TYPE_VIEW_CLICKED -> true
+            AccessibilityEvent.TYPE_VIEW_CLICKED,
+            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> true
             else -> false
         }
     }
