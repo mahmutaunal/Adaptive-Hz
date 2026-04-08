@@ -28,6 +28,10 @@
 
 ---
 
+If you'd like to support my work, you can sponsor me on GitHub ❤️
+
+---
+
 ## 🚀 What is Adaptive Hz?
 
 > ⚡ Automatically switches between minimum and maximum refresh rates based on real user interaction  
