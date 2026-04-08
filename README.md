@@ -3,23 +3,54 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.1.0-blue" />
+  <img src="https://img.shields.io/github/v/release/mahmutaunal/Adaptive-Hz?label=latest%20release" />
+  <img src="https://img.shields.io/github/stars/mahmutaunal/Adaptive-Hz?style=social" />
   <img src="https://img.shields.io/badge/platform-Android-green" />
   <img src="https://img.shields.io/badge/license-MIT-lightgrey" />
-  <img src="https://img.shields.io/badge/status-Active-success" />
 </p>
 
 # Adaptive Hz
 
-Automatic, interaction-based refresh rate switching for Android devices.
+> Bring true adaptive refresh rate to devices that don’t support it — intelligently, automatically, and without root.
+
+<p align="center">
+  <a href="https://github.com/mahmutaunal/Adaptive-Hz/releases">
+    <img src="https://img.shields.io/badge/Download-APK-blue?style=for-the-badge" />
+  </a>
+  <a href="#installation">
+    <img src="https://img.shields.io/badge/How%20to%20Install-Guide-green?style=for-the-badge" />
+  </a>
+</p>
+
+---
+
+⭐ If this project helps you, consider giving it a star!
+
+---
+
+## 🚀 What is Adaptive Hz?
+
+> ⚡ Automatically switches between minimum and maximum refresh rates based on real user interaction  
+> 🔋 Saves battery without sacrificing smoothness  
+> 🔒 100% offline, no tracking, no ads  
 
 Adaptive Hz dynamically switches your device between its supported minimum and maximum refresh rates based on real user interaction.
 
-Originally created for Samsung mid-range devices lacking true adaptive mode, the project now supports Xiaomi / HyperOS devices as well.
+Unlike OEM implementations, it works globally across apps and focuses on real touch behavior.
 
 ---
 
 ## Overview
+
+### Why this exists
+
+Many mid-range Android devices (especially Samsung & Xiaomi) either:
+- Do not provide true adaptive refresh rate
+- Or limit it to specific apps
+
+This results in unnecessary battery drain or poor responsiveness.
+
+Adaptive Hz was built to fix this gap with a simple, system-wide solution.
 
 ---
 
@@ -29,10 +60,12 @@ Originally created for Samsung mid-range devices lacking true adaptive mode, the
   <img src="assets/1.png" width="250" />
   <img src="assets/2.png" width="250" />
   <img src="assets/3.png" width="250" />
+  <img src="assets/4.png" width="250" />
 </p>
 
-- Setup & Permissions screen
+- Setup & Permissions
 - Dashboard (Light mode)
+- Settings
 - Dashboard (Dark mode)
 
 Many Android devices offer multiple refresh rates (60Hz / 90Hz / 120Hz) but:
@@ -148,12 +181,32 @@ The system is event-driven and does not run continuous background loops.
 
 ```
 Adaptive Hz
+├── core
+│   ├── engine
+│   │   ├── strategy
+│   │   │   ├── VendorStrategy
+│   │   │   ├── SamsungStrategy
+│   │   │   ├── XiaomiStrategy
+│   │   │   └── OtherStrategy
+│   │   ├── AdaptiveHzEngine
+│   │   └── EngineModels.kt
+│   └── system
+│       ├── DeviceVendor.kt
+│       └── RefreshRateController
+    ├── BootReceiver
+    ├── AdaptiveHzService
+    ├── StabilityForegroundService
+├── ui
+│   ├── home
+│   │   ├── components
+│   │   │   ├── DashboardContent.kt
+│   │   │   └── SetupContent.kt
+│   │   └── HomeScreen.kt
+│   ├── settings
+│   │   └── SettingsScreen.kt
+│   └── theme
 │
-├── MainActivity
-├── AdaptiveHzService
-├── RefreshRateController
-├── StabilityForegroundService
-└── BootReceiver
+└── MainActivity.kt
 ```
 
 ---
@@ -163,6 +216,29 @@ Adaptive Hz
 - Very low CPU usage
 - No polling loops
 - Battery savings typically 5–15% per day (usage dependent)
+
+---
+
+## 🔬 Technical Highlights
+
+- Event-driven architecture (no polling)
+- Minimal CPU overhead
+- OEM-aware system setting control
+- Accessibility-based interaction detection
+
+---
+
+## 📊 Benchmark & Testing
+
+Typical battery savings: **~5–15% per day** (usage dependent)
+
+Test methodology:
+- Device: Samsung Galaxy A52 (120Hz)
+- Scenario: Mixed usage (scrolling + idle periods)
+- Comparison: Fixed 120Hz vs Adaptive Hz enabled
+- Measurement: Battery usage over a full day
+
+Note: Results may vary depending on usage patterns and device behavior.
 
 ---
 
@@ -184,15 +260,62 @@ More devices welcome.
 
 ---
 
-## Contributing
+## 📱 Compatibility
 
-Feedback, device reports, and improvements are welcome.
+| Brand   | Device                  | Android | ROM        | Status |
+|---------|------------------------|--------|-----------|--------|
+| Samsung | Galaxy A52             | 14     | OneUI 6    | ✅ Stable |
+| Xiaomi  | Redmi Note 14 Pro 5G   | -      | HyperOS 3.x| ⚠️ Community tested |
 
-Please include:
+More devices are welcome via issues or PRs.
+
+---
+
+## ❓ FAQ
+
+### Is this safe for my device?
+Yes. Adaptive Hz only changes system refresh rate settings. It does not modify hardware behavior.
+
+### Does it require root?
+No. It works using standard Android permissions.
+
+### Does it collect any data?
+No. The app is completely offline and does not track users.
+
+### Will it drain battery?
+No — it is designed to reduce battery usage by lowering refresh rate when idle.
+
+---
+
+## 💬 Community
+
+Join the discussion and connect with other users:
+
+- Ask questions in Q&A
+- Share device compatibility results
+- Suggest new features and improvements
+- Discuss ROM-specific behavior
+
+👉 Visit Discussions: https://github.com/mahmutaunal/Adaptive-Hz/discussions
+
+---
+
+## 🤝 Contributing
+
+Contributions, feedback, and device reports are welcome.
+
+You can help by:
+
+- Reporting bugs via Issues
+- Sharing device compatibility results in Discussions
+- Suggesting features in Ideas
+- Improving code via Pull Requests
+
+Please include when relevant:
 
 - Device model
 - Android version
-- ROM
+- ROM / UI
 - Supported refresh rates
 
 ---
@@ -203,6 +326,23 @@ MIT License
 
 ---
 
+## 🗺️ Roadmap
+
+- [ ] More vendor support (Pixel, OnePlus)
+- [ ] Per-app refresh rate profiles
+- [ ] Advanced tuning settings
+- [ ] UI/UX improvements
+- [ ] Public device compatibility dashboard
+- [ ] Advanced logging / debug mode
+
+---
+
 Made with care by AlpWare Studio
+
+---
+
+## 🤝 Acknowledgements
+
+Inspired by limitations in OEM adaptive refresh rate implementations.
 
 ---
