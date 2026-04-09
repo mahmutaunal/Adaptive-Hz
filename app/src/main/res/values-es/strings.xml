@@ -2,115 +2,115 @@
     <string name="app_name">Adaptive Hz</string>
 
     <string name="home_title">Adaptive Hz</string>
-    <string name="home_description">Adaptive refresh-rate switching using accessibility events + secure settings (ADB).</string>
+    <string name="home_description">Cambio adaptativo de tasa de refresco usando eventos de accesibilidad + configuración segura (ADB).</string>
 
-    <string name="setup_title">Setup</string>
-    <string name="setup_description">To work properly, Adaptive Hz needs several system permissions. Please complete the steps below to enable all features.</string>
+    <string name="setup_title">Configuración</string>
+    <string name="setup_description">Para funcionar correctamente, Adaptive Hz necesita varios permisos del sistema. Por favor, completa los siguientes pasos para habilitar todas las funciones.</string>
 
-    <string name="setup_accessibility_title">Accessibility Service</string>
-    <string name="setup_accessibility_desc">Required. Enables detecting touch/scroll events system-wide.</string>
-    <string name="setup_accessibility_button">Open Accessibility</string>
+    <string name="setup_accessibility_title">Servicio de accesibilidad</string>
+    <string name="setup_accessibility_desc">Obligatorio. Permite detectar eventos de toque/desplazamiento en todo el sistema.</string>
+    <string name="setup_accessibility_button">Abrir accesibilidad</string>
 
-    <string name="setup_adb_title">ADB Permission (WRITE_SECURE_SETTINGS)</string>
-    <string name="setup_adb_desc">Required. Grant via ADB, then verify here.</string>
-    <string name="setup_adb_verify">Verify Permission</string>
-    <string name="setup_adb_instruction">Run this on your computer:</string>
+    <string name="setup_adb_title">Permiso ADB (WRITE_SECURE_SETTINGS)</string>
+    <string name="setup_adb_desc">Obligatorio. Otórgalo mediante ADB, luego verifícalo aquí.</string>
+    <string name="setup_adb_verify">Verificar permiso</string>
+    <string name="setup_adb_instruction">Ejecuta esto en tu computadora:</string>
 
-    <string name="setup_battery_title">Disable Battery Optimizations</string>
-    <string name="setup_battery_desc">Recommended. Prevents the OS from killing the app/service in the background.</string>
-    <string name="open_battery_settings">Open Battery Settings</string>
+    <string name="setup_battery_title">Desactivar optimización de batería</string>
+    <string name="setup_battery_desc">Recomendado. Evita que el sistema cierre la aplicación/servicio en segundo plano.</string>
+    <string name="open_battery_settings">Abrir ajustes de batería</string>
 
-    <string name="setup_stability_title">Stability Mode (Foreground Service)</string>
-    <string name="setup_stability_desc">Keeps the process alive using a persistent notification.</string>
-    <string name="setup_notifications_button">Notifications</string>
+    <string name="setup_stability_title">Modo de estabilidad (servicio en primer plano)</string>
+    <string name="setup_stability_desc">Mantiene el proceso activo mediante una notificación persistente.</string>
+    <string name="setup_notifications_button">Notificaciones</string>
 
-    <string name="enable">Enable</string>
-    <string name="disable">Disable</string>
+    <string name="enable">Activar</string>
+    <string name="disable">Desactivar</string>
 
-    <string name="dashboard_title">Dashboard</string>
-    <string name="dashboard_status_title">Status</string>
+    <string name="dashboard_title">Panel</string>
+    <string name="dashboard_status_title">Estado</string>
 
-    <string name="status_current_display">Current display</string>
-    <string name="status_vendor">Vendor</string>
-    <string name="status_setting">Setting</string>
-    <string name="status_accessibility">Accessibility</string>
-    <string name="status_mode">Mode</string>
+    <string name="status_current_display">Pantalla actual</string>
+    <string name="status_vendor">Fabricante</string>
+    <string name="status_setting">Ajuste</string>
+    <string name="status_accessibility">Accesibilidad</string>
+    <string name="status_mode">Modo</string>
 
-    <string name="mode_adaptive">Adaptive (Auto)</string>
+    <string name="mode_adaptive">Adaptativo (Auto)</string>
     <string name="mode_manual">Manual</string>
 
-    <string name="minimum">Minimum</string>
-    <string name="maximum">Maximum</string>
+    <string name="minimum">Mínimo</string>
+    <string name="maximum">Máximo</string>
 
-    <string name="per_app_title">Per-app refresh rate</string>
-    <string name="per_app_desc">Coming later: set Adaptive / Minimum / Maximum per app.</string>
-    <string name="per_app_desc2">This requires listing installed apps and storing per-app preferences.</string>
+    <string name="per_app_title">Tasa de refresco por aplicación</string>
+    <string name="per_app_desc">Próximamente: establecer Adaptativo / Mínimo / Máximo por aplicación.</string>
+    <string name="per_app_desc2">Esto requiere listar las aplicaciones instaladas y guardar preferencias por aplicación.</string>
 
-    <string name="footer_title">Developed by AlpWare Studio</string>
-    <string name="footer_desc">This is an open-source project. Your feedback and device test reports are welcome.</string>
+    <string name="footer_title">Desarrollado por AlpWare Studio</string>
+    <string name="footer_desc">Este es un proyecto de código abierto. Tus comentarios e informes de prueba de dispositivos son bienvenidos.</string>
     <string name="footer_github">GitHub</string>
     <string name="footer_play">Google Play</string>
 
-    <string name="toast_adb_verified">ADB permission verified</string>
-    <string name="toast_adb_permission_missing">Permission missing. Grant via ADB first.</string>
-    <string name="toast_adb_verify_unavailable">Unable to verify on this ROM.</string>
+    <string name="toast_adb_verified">Permiso ADB verificado</string>
+    <string name="toast_adb_permission_missing">Falta el permiso. Otórgalo vía ADB primero.</string>
+    <string name="toast_adb_verify_unavailable">No se puede verificar en esta ROM.</string>
 
     <string name="label_ok">OK</string>
-    <string name="label_recommended">RECOMMENDED</string>
+    <string name="label_recommended">RECOMENDADO</string>
 
-    <string name="toast_stability_enabled">Stability Mode enabled</string>
-    <string name="toast_stability_disabled">Stability Mode disabled</string>
-    <string name="toast_open_notification_settings_failed">Unable to open notification settings.</string>
+    <string name="toast_stability_enabled">Modo de estabilidad activado</string>
+    <string name="toast_stability_disabled">Modo de estabilidad desactivado</string>
+    <string name="toast_open_notification_settings_failed">No se pudieron abrir los ajustes de notificaciones.</string>
 
-    <string name="toast_adaptive_applied">Adaptive applied</string>
-    <string name="toast_minimum_applied">Minimum applied</string>
-    <string name="toast_maximum_applied">Maximum applied</string>
-    <string name="toast_secure_settings_missing">WRITE_SECURE_SETTINGS permission is missing.</string>
+    <string name="toast_adaptive_applied">Adaptativo aplicado</string>
+    <string name="toast_minimum_applied">Mínimo aplicado</string>
+    <string name="toast_maximum_applied">Máximo aplicado</string>
+    <string name="toast_secure_settings_missing">Falta el permiso WRITE_SECURE_SETTINGS.</string>
 
-    <string name="label_missing">MISSING</string>
-    <string name="label_on">ON</string>
-    <string name="label_off">OFF</string>
-    <string name="label_granted">GRANTED</string>
-    <string name="label_required">REQUIRED</string>
+    <string name="label_missing">FALTA</string>
+    <string name="label_on">ACTIVADO</string>
+    <string name="label_off">DESACTIVADO</string>
+    <string name="label_granted">PERMITIDO</string>
+    <string name="label_required">REQUERIDO</string>
 
-    <string name="label_notifications_status">Notifications: %1$s</string>
+    <string name="label_notifications_status">Notificaciones: %1$s</string>
 
     <string name="stability_notification_channel_name">Adaptive Hz</string>
     <string name="stability_notification_title">Adaptive-Hz</string>
-    <string name="stability_notification_text">Running</string>
+    <string name="stability_notification_text">Ejecutándose</string>
 
-    <string name="toast_open_accessibility_failed">Could not open accessibility settings. Please enable it manually from Settings &gt; Accessibility.</string>
+    <string name="toast_open_accessibility_failed">No se pudieron abrir los ajustes de accesibilidad. Por favor, actívalo manualmente en Ajustes &gt; Accesibilidad.</string>
 
-    <string name="accessibility_service_description">Automatically switches Galaxy device based on interaction.</string>
+    <string name="accessibility_service_description">Cambia automáticamente la tasa de refresco del dispositivo según la interacción del usuario.</string>
 
-    <string name="toast_battery_already_ignored">Battery optimizations are already disabled.</string>
-    <string name="toast_battery_settings_failed">Unable to open battery optimization settings.</string>
+    <string name="toast_battery_already_ignored">Las optimizaciones de batería ya están desactivadas.</string>
+    <string name="toast_battery_settings_failed">No se pueden abrir los ajustes de optimización de batería.</string>
 
-    <string name="developer_signature">Developed by AlpWare Studio</string>
+    <string name="developer_signature">Desarrollado por AlpWare Studio</string>
 
-    <string name="label_idle">Idle</string>
-    <string name="label_active">Active</string>
-    <string name="label_target_max_on_touch">Max on touch</string>
-    <string name="label_target_minimum">Minimum</string>
-    <string name="label_target_maximum">Maximum</string>
-    <string name="label_target_system_default">System default</string>
-    <string name="status_target">Target</string>
-    <string name="status_interaction">Interaction</string>
+    <string name="label_idle">Inactivo</string>
+    <string name="label_active">Activo</string>
+    <string name="label_target_max_on_touch">Máximo al tocar</string>
+    <string name="label_target_minimum">Mínimo</string>
+    <string name="label_target_maximum">Máximo</string>
+    <string name="label_target_system_default">Predeterminado del sistema</string>
+    <string name="status_target">Objetivo</string>
+    <string name="status_interaction">Interacción</string>
 
-    <string name="settings_enable_adaptive_hz">Enable Adaptive Hz</string>
-    <string name="settings_enable_adaptive_hz_desc">Turns the Adaptive Hz engine on or off. When disabled, the app stops controlling the refresh rate and the system default behavior is restored.</string>
+    <string name="settings_enable_adaptive_hz">Activar Adaptive Hz</string>
+    <string name="settings_enable_adaptive_hz_desc">Activa o desactiva el motor Adaptive Hz. Cuando está desactivado, la aplicación deja de controlar la tasa de refresco y se restaura el comportamiento predeterminado del sistema.</string>
 
     <!-- Common -->
-    <string name="cd_back">Back</string>
-    <string name="action_close">Close</string>
-    <string name="cd_expand">Expand</string>
-    <string name="cd_collapse">Collapse</string>
+    <string name="cd_back">Atrás</string>
+    <string name="action_close">Cerrar</string>
+    <string name="cd_expand">Expandir</string>
+    <string name="cd_collapse">Contraer</string>
     <string name="error">Error</string>
 
     <!-- Settings - header -->
-    <string name="settings_title">Settings</string>
+    <string name="settings_title">Ajustes</string>
     <string name="settings_app_name">Adaptive Hz</string>
-    <string name="settings_app_tagline">Adaptive Hz automatically switches the display refresh rate between 60 Hz and 120 Hz based on user interaction.</string>
+    <string name="settings_app_tagline">Adaptive Hz cambia automáticamente la tasa de refresco de la pantalla entre 60 Hz y 120 Hz según la interacción del usuario.</string>
 
     <!-- Settings - defaults (developer) -->
     <string name="settings_developer_name">AlpWare Studio</string>
@@ -118,70 +118,70 @@
     <string name="settings_website_url">https://alpwarestudio.com</string>
 
     <!-- Settings - sections -->
-    <string name="settings_section_about">About</string>
-    <string name="settings_section_developer">Developer</string>
-    <string name="settings_section_support">Support</string>
+    <string name="settings_section_about">Acerca de</string>
+    <string name="settings_section_developer">Desarrollador</string>
+    <string name="settings_section_support">Soporte</string>
     <string name="settings_section_legal">Legal</string>
 
     <!-- Settings - items -->
-    <string name="settings_item_version">Version</string>
-    <string name="settings_item_repository">Repository</string>
-    <string name="settings_item_email">Email</string>
-    <string name="settings_item_website">Website</string>
+    <string name="settings_item_version">Versión</string>
+    <string name="settings_item_repository">Repositorio</string>
+    <string name="settings_item_email">Correo electrónico</string>
+    <string name="settings_item_website">Sitio web</string>
 
-    <string name="settings_item_report_issue">Report an Issue</string>
-    <string name="settings_item_share_app">Share App</string>
+    <string name="settings_item_report_issue">Reportar un problema</string>
+    <string name="settings_item_share_app">Compartir aplicación</string>
 
-    <string name="settings_item_privacy_policy">Privacy Policy</string>
-    <string name="settings_item_open_source_notices">Open source notices</string>
+    <string name="settings_item_privacy_policy">Política de privacidad</string>
+    <string name="settings_item_open_source_notices">Licencias de código abierto</string>
 
     <!-- Settings - values -->
     <string name="settings_value_version">%1$s (%2$d)</string>
-    <string name="settings_value_other_apps">Other apps &amp; publisher page</string>
+    <string name="settings_value_other_apps">Otras aplicaciones y página del desarrollador</string>
     <string name="settings_value_github_issues">GitHub Issues</string>
-    <string name="settings_value_send_github_link">Send GitHub link</string>
-    <string name="settings_value_privacy_short">Offline. No data collection.</string>
-    <string name="settings_value_third_party_licenses">Third-party licenses</string>
+    <string name="settings_value_send_github_link">Enviar enlace de GitHub</string>
+    <string name="settings_value_privacy_short">Sin conexión. No se recopilan datos.</string>
+    <string name="settings_value_third_party_licenses">Licencias de terceros</string>
 
     <!-- Settings - share -->
-    <string name="settings_share_title">Share %1$s</string>
+    <string name="settings_share_title">Compartir %1$s</string>
     <string name="settings_share_text">%1$s\n%2$s</string>
 
     <!-- Settings - email -->
     <string name="settings_email_subject">%1$s feedback</string>
 
     <!-- Settings - footer -->
-    <string name="settings_footer_tip">Tip: Keep this app offline-friendly—open links only when needed.</string>
+    <string name="settings_footer_tip">Consejo: Mantén esta aplicación sin conexión, abre los enlaces solo cuando sea necesario.</string>
 
     <!-- Settings - dialog actions -->
-    <string name="settings_action_view_on_github">View on GitHub</string>
+    <string name="settings_action_view_on_github">Ver en GitHub</string>
 
     <!-- Settings - dialog: Privacy -->
-    <string name="settings_dialog_privacy_title">Privacy Policy</string>
+    <string name="settings_dialog_privacy_title">Política de privacidad</string>
     <string name="settings_dialog_privacy_body">
-        Key points
-        • This app works offline.
-        • No personal data is collected.
-        • No analytics, ads, or trackers are used.
-        • No permissions are requested for data collection.
+        Puntos clave
+        • Esta aplicación funciona sin conexión.
+        • No se recopilan datos personales.
+        • No se utilizan analíticas, anuncios ni rastreadores.
+        • No se solicitan permisos para recopilar datos.
 
-        Details
-        This application does not collect, store, or share any personal information. All functionality runs locally on your device.
+        Detalles
+        Esta aplicación no recopila, almacena ni comparte información personal. Toda la funcionalidad se ejecuta localmente en tu dispositivo.
 
-        If you have questions, contact the developer via the email in Settings.
+        Si tienes preguntas, contacta al desarrollador mediante el correo disponible en Ajustes.
     </string>
 
     <!-- Settings - dialog: Notices -->
-    <string name="settings_dialog_notices_title">Open source notices</string>
+    <string name="settings_dialog_notices_title">Licencias de código abierto</string>
     <string name="settings_dialog_notices_body">
-        This app is open source and may include third-party libraries.
+        Esta aplicación es de código abierto y puede incluir bibliotecas de terceros.
 
-        You may need to include:
-        • A link to the repository (Settings → Repository)
-        • The project LICENSE (e.g., MIT/Apache-2.0)
-        • Any required NOTICE files for dependencies
+        Puede que necesites incluir:
+        • Un enlace al repositorio (Ajustes → Repositorio)
+        • La licencia del proyecto (ej., MIT/Apache-2.0)
+        • Cualquier archivo NOTICE requerido por las dependencias
 
-        Tip
-        If you want to show full license texts in-app, place them under res/raw or assets and render them here.
+        Consejo
+        Si deseas mostrar los textos completos de las licencias dentro de la aplicación, colócalos en res/raw o assets y muéstralos aquí.
     </string>
 </resources>
