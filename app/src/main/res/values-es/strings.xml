@@ -68,8 +68,8 @@
     <string name="toast_secure_settings_missing">Falta el permiso WRITE_SECURE_SETTINGS.</string>
 
     <string name="label_missing">FALTA</string>
-    <string name="label_on">ACTIVADO</string>
-    <string name="label_off">DESACTIVADO</string>
+    <string name="label_on">ON</string>
+    <string name="label_off">OFF</string>
     <string name="label_granted">PERMITIDO</string>
     <string name="label_required">REQUERIDO</string>
 
