@@ -14,8 +14,8 @@ android {
         applicationId = "com.mahmutalperenunal.adaptivehz"
         minSdk = 31
         targetSdk = 36
-        versionCode = 12
-        versionName = "1.1.0 - Beta"
+        versionCode = 13
+        versionName = "1.1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
