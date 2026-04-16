@@ -100,6 +100,26 @@ Adaptive Hz solves this by:
 
 ---
 
+## ⚙️ Stability Mode (Optional)
+
+Adaptive Hz includes an optional **Stability Mode** that runs a foreground service with a persistent notification.
+
+### Why it exists
+Some Android devices (especially aggressive OEM ROMs) may kill background processes, which can interrupt adaptive refresh behavior.
+
+### What it does
+- Keeps the app alive in the background
+- Improves reliability of refresh rate switching
+- Prevents the system from killing the service
+
+### Trade-offs
+- Shows a persistent notification while active
+- Can be disabled anytime from Settings
+
+> 💡 If you prefer a clean status bar, you can safely disable it — the app will still work, but background stability may be reduced on some devices.
+
+---
+
 ## Supported Vendors
 
 ### Samsung

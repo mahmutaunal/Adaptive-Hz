@@ -45,8 +45,6 @@ fun DashboardComponent(
     val labelTarget = stringResource(id = R.string.status_target)
     val labelInteraction = stringResource(id = R.string.status_interaction)
 
-    Spacer(modifier = Modifier.height(16.dp))
-
     // Status summary card with the app toggle and current refresh-rate information
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),

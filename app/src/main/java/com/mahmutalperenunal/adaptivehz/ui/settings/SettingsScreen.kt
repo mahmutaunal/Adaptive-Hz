@@ -10,11 +10,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -25,6 +28,7 @@ import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.Storefront
@@ -40,6 +44,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.mutableStateOf
@@ -51,6 +57,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.Alignment
 import com.mahmutalperenunal.adaptivehz.BuildConfig
 import com.mahmutalperenunal.adaptivehz.R
 import androidx.core.net.toUri
@@ -62,6 +69,8 @@ Settings screen for the app. Displays app info, developer links, support options
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
+    keepAliveEnabled: Boolean,
+    onKeepAliveChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     appName: String? = null,
     appTagline: String? = null,
@@ -116,10 +125,20 @@ fun SettingsScreen(
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // App tagline / short description shown at the top
             AppHeader(appTagline = appTaglineText)
 
             Spacer(modifier = Modifier.height(4.dp))
+
+            SectionTitle(stringResource(R.string.settings_section_behavior))
+            SettingsSwitchRow(
+                leading = Icons.Outlined.Notifications,
+                title = stringResource(R.string.settings_item_stability_mode),
+                subtitle = stringResource(R.string.settings_value_stability_mode_summary),
+                checked = keepAliveEnabled,
+                onCheckedChange = onKeepAliveChanged
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp))
 
             SectionTitle(stringResource(R.string.settings_section_about))
             SettingsRow(
@@ -326,6 +345,61 @@ private fun SettingsRow(
             if (clickable) Modifier.clickable(onClick = onClick) else Modifier
         )
     )
+}
+
+@Composable
+private fun SettingsSwitchRow(
+    leading: ImageVector,
+    title: String,
+    subtitle: String? = null,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) }
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = leading,
+            contentDescription = null,
+            modifier = Modifier.size(22.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Text(
+                text = title,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            subtitle?.let {
+                Text(
+                    text = it,
+                    maxLines = 10,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors()
+        )
+    }
 }
 
 // Small informational note shown at the bottom of the settings screen

@@ -7,15 +7,15 @@ plugins {
 android {
     namespace = "com.mahmutalperenunal.adaptivehz"
     compileSdk {
-        version = release(36)
+        version = release(37)
     }
 
     defaultConfig {
         applicationId = "com.mahmutalperenunal.adaptivehz"
         minSdk = 31
-        targetSdk = 36
-        versionCode = 13
-        versionName = "1.1.1"
+        targetSdk = 37
+        versionCode = 14
+        versionName = "1.1.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

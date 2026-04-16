@@ -58,7 +58,9 @@ fun HomeScreen(
     isAdaptiveServiceEnabled: () -> Boolean,
     openAccessibilitySettings: () -> Unit,
     requestIgnoreBatteryOptimizations: () -> Unit,
-    openSettingsScreen: () -> Unit
+    openSettingsScreen: () -> Unit,
+    keepAliveEnabled: Boolean,
+    onKeepAliveEnabledChange: (Boolean) -> Unit
 ) {
     val context = LocalContext.current
     // Shared preferences used to persist lightweight app state
@@ -90,14 +92,6 @@ fun HomeScreen(
 
     // Restored state backed by SharedPreferences
     var adbGranted by remember { mutableStateOf(prefs.getBoolean("adb_granted", false)) }
-    var keepAliveEnabled by remember {
-        mutableStateOf(
-            prefs.getBoolean(
-                "keep_alive_enabled",
-                false
-            )
-        )
-    }
     val dynamicEnabled = remember { mutableStateOf(prefs.getBoolean("dynamic_enabled", false)) }
     val appEnabled = remember { mutableStateOf(prefs.getBoolean("app_enabled", true)) }
     val manualTarget = remember { mutableStateOf(prefs.getString("manual_target", "minimum") ?: "minimum") }
@@ -153,7 +147,6 @@ fun HomeScreen(
             dynamicEnabled.value = prefs.getBoolean("dynamic_enabled", false)
             appEnabled.value = prefs.getBoolean("app_enabled", true)
             manualTarget.value = prefs.getString("manual_target", "minimum") ?: "minimum"
-            keepAliveEnabled = prefs.getBoolean("keep_alive_enabled", false)
             refreshBatteryState()
             refreshNotificationState()
             status = RefreshRateController.readStatus(context)
@@ -167,7 +160,7 @@ fun HomeScreen(
     }
 
     // Home switches from setup to dashboard only after all required steps are completed
-    val setupComplete = accessibilityEnabled && adbGranted && batteryOptimizationsIgnored && keepAliveEnabled
+    val setupComplete = accessibilityEnabled && adbGranted && batteryOptimizationsIgnored
 
     // Centralized enable/disable handler for the app's refresh-rate behavior
     val setAppEnabled: (Boolean) -> Unit = { enabled ->
@@ -312,7 +305,7 @@ fun HomeScreen(
                     },
                     onSetKeepAliveEnabled = { next ->
                         prefs.edit { putBoolean("keep_alive_enabled", next) }
-                        keepAliveEnabled = next
+                        onKeepAliveEnabledChange(next)
 
                         if (next) {
                             StabilityForegroundService.start(context)

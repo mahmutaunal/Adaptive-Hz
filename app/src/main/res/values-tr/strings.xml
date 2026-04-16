@@ -118,12 +118,14 @@
     <string name="settings_website_url">https://alpwarestudio.com</string>
 
     <!-- Settings - sections -->
+    <string name="settings_section_behavior">Davranış</string>
     <string name="settings_section_about">Hakkında</string>
     <string name="settings_section_developer">Geliştirici</string>
     <string name="settings_section_support">Destek</string>
     <string name="settings_section_legal">Yasal</string>
 
     <!-- Settings - items -->
+    <string name="settings_item_stability_mode">Kararlılık Modu</string>
     <string name="settings_item_version">Sürüm</string>
     <string name="settings_item_repository">Depo (GitHub)</string>
     <string name="settings_item_email">E-posta</string>
@@ -136,6 +138,7 @@
     <string name="settings_item_open_source_notices">Açık Kaynak Bildirimleri</string>
 
     <!-- Settings - values -->
+    <string name="settings_value_stability_mode_summary">Adaptive Hz\'in arka planda daha kararlı çalışmasını sağlar ve kalıcı bir bildirim kullanır. Devre dışı bırakıldığında bildirim kaldırılır ancak bazı cihazlarda kararlılık azalabilir.</string>
     <string name="settings_value_version">%1$s (%2$d)</string>
     <string name="settings_value_other_apps">Diğer uygulamalar ve yayıncı sayfası</string>
     <string name="settings_value_github_issues">GitHub Issues</string>

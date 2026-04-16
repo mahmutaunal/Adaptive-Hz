@@ -118,12 +118,14 @@
     <string name="settings_website_url">https://alpwarestudio.com</string>
 
     <!-- Settings - sections -->
+    <string name="settings_section_behavior">Comportamiento</string>
     <string name="settings_section_about">Acerca de</string>
     <string name="settings_section_developer">Desarrollador</string>
     <string name="settings_section_support">Soporte</string>
     <string name="settings_section_legal">Legal</string>
 
     <!-- Settings - items -->
+    <string name="settings_item_stability_mode">Modo de estabilidad</string>
     <string name="settings_item_version">Versión</string>
     <string name="settings_item_repository">Repositorio</string>
     <string name="settings_item_email">Correo electrónico</string>
@@ -136,6 +138,7 @@
     <string name="settings_item_open_source_notices">Licencias de código abierto</string>
 
     <!-- Settings - values -->
+    <string name="settings_value_stability_mode_summary">Mantiene Adaptive Hz funcionando de forma más estable en segundo plano mediante una notificación persistente. Al desactivarlo, la notificación desaparece, pero la estabilidad puede reducirse en algunos dispositivos.</string>
     <string name="settings_value_version">%1$s (%2$d)</string>
     <string name="settings_value_other_apps">Otras aplicaciones y página del desarrollador</string>
     <string name="settings_value_github_issues">GitHub Issues</string>

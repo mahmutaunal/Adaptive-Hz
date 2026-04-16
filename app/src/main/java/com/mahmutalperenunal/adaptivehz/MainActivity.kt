@@ -9,6 +9,10 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.mahmutalperenunal.adaptivehz.ui.theme.AdaptiveHzTheme
 import android.accessibilityservice.AccessibilityServiceInfo
@@ -28,6 +32,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.mahmutalperenunal.adaptivehz.ui.home.HomeScreen
 import com.mahmutalperenunal.adaptivehz.ui.settings.SettingsScreen
+import androidx.core.content.edit
+import com.mahmutalperenunal.adaptivehz.core.StabilityForegroundService
 
 
 // Main entry point of the app. Sets up navigation and provides system-level helpers used by the UI.
@@ -95,6 +101,13 @@ class MainActivity : ComponentActivity() {
                 // Navigation controller managing the app's two main screens
                 val navController = rememberNavController()
 
+                val prefs = remember {
+                    getSharedPreferences("adaptive_hz_prefs", MODE_PRIVATE)
+                }
+                var keepAliveEnabled by remember {
+                    mutableStateOf(prefs.getBoolean("keep_alive_enabled", false))
+                }
+
                 SetupSystemBars()
                 Surface(
                     modifier = Modifier.fillMaxSize()
@@ -108,13 +121,35 @@ class MainActivity : ComponentActivity() {
                                 isAdaptiveServiceEnabled = { isAdaptiveServiceEnabled() },
                                 openAccessibilitySettings = { openAccessibilitySettings() },
                                 requestIgnoreBatteryOptimizations = { requestIgnoreBatteryOptimizations() },
-                                openSettingsScreen = { navController.navigate("settings") }
+                                openSettingsScreen = { navController.navigate("settings") },
+                                keepAliveEnabled = keepAliveEnabled,
+                                onKeepAliveEnabledChange = { next ->
+                                    prefs.edit { putBoolean("keep_alive_enabled", next) }
+                                    keepAliveEnabled = next
+
+                                    if (next) {
+                                        StabilityForegroundService.start(this@MainActivity)
+                                    } else {
+                                        StabilityForegroundService.stop(this@MainActivity)
+                                    }
+                                }
                             )
                         }
 
                         composable("settings") {
                             SettingsScreen(
-                                onBack = { navController.popBackStack() }
+                                onBack = { navController.popBackStack() },
+                                keepAliveEnabled = keepAliveEnabled,
+                                onKeepAliveChanged = { next ->
+                                    prefs.edit { putBoolean("keep_alive_enabled", next) }
+                                    keepAliveEnabled = next
+
+                                    if (next) {
+                                        StabilityForegroundService.start(this@MainActivity)
+                                    } else {
+                                        StabilityForegroundService.stop(this@MainActivity)
+                                    }
+                                }
                             )
                         }
                     }
