@@ -158,4 +158,12 @@ object AdaptiveHzActionHandler {
             AdaptiveHzMode.FORCE_MAX -> setMaximum(context)
         }
     }
+
+    fun toggle(context: Context) {
+        if (isAppEnabled(context)) {
+            turnOff(context)
+        } else {
+            turnOn(context)
+        }
+    }
 }

@@ -216,6 +216,30 @@ The system remains fully event-driven and does not run continuous background loo
 
 ---
 
+## ⚡ Quick Settings Tile
+
+Adaptive Hz includes a **Quick Settings Tile** for fast access directly from the system panel.
+
+### What it does
+- Toggle Adaptive Hz **On / Off** with a single tap
+- Mirrors the app’s default behavior:
+  - **On → Adaptive mode**
+  - **Off → System default**
+
+### Behavior
+- Tile shows current state (**On / Off**) with dynamic subtitle
+- Fully synced with in-app state and notification controls
+- Long press opens the app for detailed settings
+
+### Design
+- Uses a **monochrome icon** optimized for Quick Settings
+- Automatically adapts to system light/dark theme
+- Built following Android system UI guidelines
+
+> 💡 This provides the fastest way to control Adaptive Hz without opening the app or using notifications.
+
+---
+
 ## Architecture
 
 ```
