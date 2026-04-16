@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import com.mahmutalperenunal.adaptivehz.core.engine.AdaptiveHzEngine
+import com.mahmutalperenunal.adaptivehz.core.engine.AdaptiveHzMode
 import com.mahmutalperenunal.adaptivehz.core.engine.strategy.OtherStrategy
 import com.mahmutalperenunal.adaptivehz.core.engine.strategy.SamsungStrategy
 import com.mahmutalperenunal.adaptivehz.core.engine.strategy.XiaomiStrategy
@@ -18,7 +19,7 @@ import com.mahmutalperenunal.adaptivehz.core.system.DeviceVendorDetector
  * Responsibilities:
  * - Select the correct VendorStrategy at runtime.
  * - Forward only relevant interaction events to the engine.
- * - Respect the user’s dynamic_enabled preference.
+ * - Forward events only while the app is in ADAPTIVE mode.
  */
 @SuppressLint("AccessibilityPolicy")
 class AdaptiveHzService : AccessibilityService() {
@@ -43,7 +44,7 @@ class AdaptiveHzService : AccessibilityService() {
         engine = AdaptiveHzEngine(
             context = this,
             strategy = strategy,
-            isEnabled = { isDynamicEnabled() },
+            isEnabled = { isAdaptiveModeEnabled() },
             shouldIgnorePackage = { pkg ->
                 pkg == null || pkg == packageName || pkg == "com.android.systemui"
             },
@@ -65,7 +66,7 @@ class AdaptiveHzService : AccessibilityService() {
      */
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
-        if (!isDynamicEnabled()) return
+        if (!isAdaptiveModeEnabled()) return
         if (!shouldForward(event.eventType)) return
         engine.onEvent(event)
     }
@@ -92,9 +93,8 @@ class AdaptiveHzService : AccessibilityService() {
         }
     }
 
-    /** Returns whether adaptive mode is currently enabled by the user. */
-    private fun isDynamicEnabled(): Boolean {
-        val prefs = getSharedPreferences("adaptive_hz_prefs", MODE_PRIVATE)
-        return prefs.getBoolean("dynamic_enabled", false)
+    /** Returns whether the app is currently in adaptive mode. */
+    private fun isAdaptiveModeEnabled(): Boolean {
+        return AdaptiveHzPrefs.getCurrentMode(this) == AdaptiveHzMode.ADAPTIVE
     }
 }

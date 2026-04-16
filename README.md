@@ -190,14 +190,29 @@ Settings → Accessibility → Installed Services → Adaptive Hz → Enable
 
 ## How It Works
 
-| State | Refresh Rate |
-|-------|---------------|
-| Active touch | Maximum |
-| Idle | Minimum |
-| Locked / AOD | Minimum |
-| Manual mode | Forced selection |
+| Mode | Behavior |
+|------|----------|
+| Adaptive | Automatically switches between minimum and maximum based on interaction |
+| Minimum | Locks refresh rate to minimum |
+| Maximum | Locks refresh rate to maximum |
+| Off | Restores system default behavior |
 
-The system is event-driven and does not run continuous background loops.
+### Notification Controls
+
+When **Stability Mode** is enabled, Adaptive Hz provides quick controls directly from the notification:
+
+- **Off state:**
+  - Shows a single **On** button
+
+- **Active state:**
+  - Shows **Off + 2 dynamic mode buttons** (Adaptive / Min / Max depending on current state)
+
+- **Smart behavior:**
+  - Turning off from notification keeps the service alive briefly (grace period)
+  - Allows quick re-enable without reopening the app
+  - Automatically stops itself after a short time if not used
+
+The system remains fully event-driven and does not run continuous background loops.
 
 ---
 

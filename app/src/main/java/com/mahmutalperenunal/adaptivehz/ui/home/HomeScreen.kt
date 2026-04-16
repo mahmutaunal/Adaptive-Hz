@@ -1,7 +1,6 @@
 package com.mahmutalperenunal.adaptivehz.ui.home
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.PowerManager
@@ -43,9 +42,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.TopAppBar
 import androidx.core.content.ContextCompat
-import androidx.core.content.edit
-import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateController
+import com.mahmutalperenunal.adaptivehz.core.AdaptiveHzActionHandler
+import com.mahmutalperenunal.adaptivehz.core.AdaptiveHzPrefs
 import com.mahmutalperenunal.adaptivehz.core.StabilityForegroundService
+import com.mahmutalperenunal.adaptivehz.core.engine.AdaptiveHzMode
+import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateController
 import kotlinx.coroutines.delay
 import androidx.compose.ui.res.stringResource
 import com.mahmutalperenunal.adaptivehz.R
@@ -64,7 +65,7 @@ fun HomeScreen(
 ) {
     val context = LocalContext.current
     // Shared preferences used to persist lightweight app state
-    val prefs = remember { context.getSharedPreferences("adaptive_hz_prefs", Context.MODE_PRIVATE) }
+    val prefs = remember { AdaptiveHzPrefs }
 
     val toastAdbVerified = stringResource(id = R.string.toast_adb_verified)
     val toastAdbPermissionMissing = stringResource(id = R.string.toast_adb_permission_missing)
@@ -91,10 +92,8 @@ fun HomeScreen(
     val scrollState = rememberScrollState()
 
     // Restored state backed by SharedPreferences
-    var adbGranted by remember { mutableStateOf(prefs.getBoolean("adb_granted", false)) }
-    val dynamicEnabled = remember { mutableStateOf(prefs.getBoolean("dynamic_enabled", false)) }
-    val appEnabled = remember { mutableStateOf(prefs.getBoolean("app_enabled", true)) }
-    val manualTarget = remember { mutableStateOf(prefs.getString("manual_target", "minimum") ?: "minimum") }
+    var adbGranted by remember { mutableStateOf(prefs.isAdbGranted(context)) }
+    val currentMode = remember { mutableStateOf(prefs.getCurrentMode(context)) }
 
     // Frequently refreshed runtime checks
     var accessibilityEnabled by remember { mutableStateOf(isAdaptiveServiceEnabled()) }
@@ -144,9 +143,7 @@ fun HomeScreen(
     LaunchedEffect(Unit) {
         while (true) {
             accessibilityEnabled = isAdaptiveServiceEnabled()
-            dynamicEnabled.value = prefs.getBoolean("dynamic_enabled", false)
-            appEnabled.value = prefs.getBoolean("app_enabled", true)
-            manualTarget.value = prefs.getString("manual_target", "minimum") ?: "minimum"
+            currentMode.value = prefs.getCurrentMode(context)
             refreshBatteryState()
             refreshNotificationState()
             status = RefreshRateController.readStatus(context)
@@ -162,44 +159,24 @@ fun HomeScreen(
     // Home switches from setup to dashboard only after all required steps are completed
     val setupComplete = accessibilityEnabled && adbGranted && batteryOptimizationsIgnored
 
-    // Centralized enable/disable handler for the app's refresh-rate behavior
-    val setAppEnabled: (Boolean) -> Unit = { enabled ->
-        prefs.edit { putBoolean("app_enabled", enabled) }
-        appEnabled.value = enabled
-
-        if (enabled) {
-            if (keepAliveEnabled) {
-                StabilityForegroundService.start(context)
-            }
-        } else {
-            prefs.edit {
-                putBoolean("dynamic_enabled", false)
-                putString("manual_target", "system_default")
-            }
-            dynamicEnabled.value = false
-            manualTarget.value = "system_default"
-            RefreshRateController.resetToSystemDefault(context)
-            StabilityForegroundService.stop(context)
-        }
-    }
+    val appEnabled = currentMode.value != AdaptiveHzMode.OFF
 
     // Derived labels shown in the dashboard summary
-    val currentModeLabel = if (!appEnabled.value) {
-        stringResource(id = R.string.label_off)
-    } else if (dynamicEnabled.value) {
-        stringResource(id = R.string.mode_adaptive)
-    } else {
-        stringResource(id = R.string.mode_manual)
+    val currentModeLabel = when (currentMode.value) {
+        AdaptiveHzMode.OFF -> stringResource(id = R.string.label_off)
+        AdaptiveHzMode.ADAPTIVE -> stringResource(id = R.string.mode_adaptive)
+        AdaptiveHzMode.FORCE_MIN,
+        AdaptiveHzMode.FORCE_MAX -> stringResource(id = R.string.mode_manual)
     }
 
-    val targetLabel = when {
-        !appEnabled.value -> labelSystemDefault
-        dynamicEnabled.value -> labelAdaptiveTarget
-        manualTarget.value == "maximum" -> labelManualTargetMax
-        else -> labelManualTargetMin
+    val targetLabel = when (currentMode.value) {
+        AdaptiveHzMode.OFF -> labelSystemDefault
+        AdaptiveHzMode.ADAPTIVE -> labelAdaptiveTarget
+        AdaptiveHzMode.FORCE_MIN -> labelManualTargetMin
+        AdaptiveHzMode.FORCE_MAX -> labelManualTargetMax
     }
 
-    val interactionLabel = if (appEnabled.value && dynamicEnabled.value) {
+    val interactionLabel = if (currentMode.value == AdaptiveHzMode.ADAPTIVE) {
         labelActive
     } else {
         labelIdle
@@ -288,11 +265,11 @@ fun HomeScreen(
                         }
 
                         if (verified) {
-                            prefs.edit { putBoolean("adb_granted", true) }
+                            prefs.setAdbGranted(context, true)
                             adbGranted = true
                             Toast.makeText(context, toastAdbVerified, Toast.LENGTH_SHORT).show()
                         } else {
-                            prefs.edit { putBoolean("adb_granted", false) }
+                            prefs.setAdbGranted(context, false)
                             adbGranted = false
                             Toast.makeText(context, toastAdbPermissionMissing, Toast.LENGTH_LONG).show()
                         }
@@ -304,7 +281,7 @@ fun HomeScreen(
                         requestNotificationPermission()
                     },
                     onSetKeepAliveEnabled = { next ->
-                        prefs.edit { putBoolean("keep_alive_enabled", next) }
+                        prefs.setKeepAliveEnabled(context, next)
                         onKeepAliveEnabledChange(next)
 
                         if (next) {
@@ -329,26 +306,32 @@ fun HomeScreen(
             } else {
                 // Main dashboard shown after setup is fully completed
                 DashboardComponent(
-                    appEnabled = appEnabled.value,
+                    appEnabled = appEnabled,
                     currentDisplayHz = status.displayHz.toInt(),
                     vendorLabel = status.vendor.toString(),
                     currentModeLabel = currentModeLabel,
                     targetLabel = targetLabel,
                     interactionLabel = interactionLabel,
                     onAppEnabledChange = { enabled ->
-                        setAppEnabled(enabled)
+                        try {
+                            if (enabled) {
+                                AdaptiveHzActionHandler.turnOn(context)
+                            } else {
+                                AdaptiveHzActionHandler.turnOff(context)
+                            }
+                            currentMode.value = AdaptiveHzActionHandler.getCurrentMode(context)
+                        } catch (_: SecurityException) {
+                            Toast.makeText(
+                                context,
+                                toastSecureSettingsMissing,
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
                     },
                     onAdaptiveClick = {
                         try {
-                            prefs.edit {
-                                putBoolean("dynamic_enabled", true)
-                                putString("manual_target", "minimum")
-                            }
-                            dynamicEnabled.value = true
-                            manualTarget.value = "minimum"
-
-                            RefreshRateController.applyForceMinimum(context)
-
+                            AdaptiveHzActionHandler.setAdaptive(context)
+                            currentMode.value = AdaptiveHzActionHandler.getCurrentMode(context)
                             Toast.makeText(context, toastAdaptiveApplied, Toast.LENGTH_SHORT).show()
                         } catch (_: SecurityException) {
                             Toast.makeText(
@@ -360,15 +343,8 @@ fun HomeScreen(
                     },
                     onMinimumClick = {
                         try {
-                            prefs.edit {
-                                putBoolean("dynamic_enabled", false)
-                                putString("manual_target", "minimum")
-                            }
-                            dynamicEnabled.value = false
-                            manualTarget.value = "minimum"
-
-                            RefreshRateController.applyForceMinimum(context)
-
+                            AdaptiveHzActionHandler.setMinimum(context)
+                            currentMode.value = AdaptiveHzActionHandler.getCurrentMode(context)
                             Toast.makeText(context, toastMinimumApplied, Toast.LENGTH_SHORT).show()
                         } catch (_: SecurityException) {
                             Toast.makeText(
@@ -380,15 +356,8 @@ fun HomeScreen(
                     },
                     onMaximumClick = {
                         try {
-                            prefs.edit {
-                                putBoolean("dynamic_enabled", false)
-                                putString("manual_target", "maximum")
-                            }
-                            dynamicEnabled.value = false
-                            manualTarget.value = "maximum"
-
-                            RefreshRateController.applyForceMaximum(context)
-
+                            AdaptiveHzActionHandler.setMaximum(context)
+                            currentMode.value = AdaptiveHzActionHandler.getCurrentMode(context)
                             Toast.makeText(context, toastMaximumApplied, Toast.LENGTH_SHORT).show()
                         } catch (_: SecurityException) {
                             Toast.makeText(
