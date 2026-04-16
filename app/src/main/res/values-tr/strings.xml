@@ -100,6 +100,14 @@
     <string name="settings_enable_adaptive_hz">Adaptive Hz\'i Etkinleştir</string>
     <string name="settings_enable_adaptive_hz_desc">Adaptive Hz motorunu açıp kapatır. Devre dışı bırakıldığında uygulama yenileme hızını kontrol etmeyi durdurur ve sistem varsayılan davranışına geri dönülür.</string>
 
+    <string name="setup_adb_desc_with_root">Gerekli ayrıcalıklı izni ADB ile verebilir veya cihazınız root erişimini destekliyorsa tek dokunuşla root kurulumu kullanabilirsiniz.</string>
+    <string name="setup_root_detected_desc">Bu cihazda root erişimi tespit edildi. ADB kullanmak yerine gerekli izni otomatik olarak vermeyi deneyebilirsiniz.</string>
+    <string name="setup_root_grant_button">Otomatik Ver</string>
+    <string name="root_grant_success">Gerekli izin başarıyla verildi.</string>
+    <string name="root_grant_denied">Root isteği reddedildi.</string>
+    <string name="root_not_available">Bu cihazda root erişimi bulunmuyor.</string>
+    <string name="root_grant_failed">Otomatik root kurulumu başarısız oldu.</string>
+
     <!-- Common -->
     <string name="cd_back">Geri</string>
     <string name="action_close">Kapat</string>

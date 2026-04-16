@@ -40,8 +40,10 @@ fun SetupComponent(
     toastStabilityEnabled: String,
     toastStabilityDisabled: String,
     toastOpenNotificationSettingsFailed: String,
+    rootAvailable: Boolean,
     onOpenAccessibilitySettings: () -> Unit,
     onVerifyAdb: () -> Unit,
+    onGrantWithRoot: () -> Unit,
     onRequestIgnoreBatteryOptimizations: () -> Unit,
     onRequestNotificationPermission: () -> Unit,
     onSetKeepAliveEnabled: (Boolean) -> Unit,
@@ -74,11 +76,36 @@ fun SetupComponent(
     // One-time ADB step required to grant privileged behavior
     SetupCard(
         title = stringResource(id = R.string.setup_adb_title),
-        description = stringResource(id = R.string.setup_adb_desc),
+        description = if (rootAvailable) {
+            stringResource(id = R.string.setup_adb_desc_with_root)
+        } else {
+            stringResource(id = R.string.setup_adb_desc)
+        },
         ok = adbGranted,
         primaryButtonText = stringResource(id = R.string.setup_adb_verify),
         onPrimaryClick = onVerifyAdb,
-        secondaryContent = secondaryAdbContent
+        secondaryContent = {
+            secondaryAdbContent()
+
+            if (!adbGranted && rootAvailable) {
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text(
+                    text = stringResource(id = R.string.setup_root_detected_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.9f)
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                OutlinedButton(
+                    onClick = onGrantWithRoot,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(id = R.string.setup_root_grant_button))
+                }
+            }
+        }
     )
 
     Spacer(modifier = Modifier.height(16.dp))

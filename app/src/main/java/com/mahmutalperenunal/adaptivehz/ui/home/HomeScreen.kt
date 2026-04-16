@@ -50,6 +50,7 @@ import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateController
 import kotlinx.coroutines.delay
 import androidx.compose.ui.res.stringResource
 import com.mahmutalperenunal.adaptivehz.R
+import com.mahmutalperenunal.adaptivehz.core.system.RootManager
 import com.mahmutalperenunal.adaptivehz.ui.home.components.DashboardComponent
 import com.mahmutalperenunal.adaptivehz.ui.home.components.SetupComponent
 
@@ -76,6 +77,10 @@ fun HomeScreen(
     val toastMinimumApplied = stringResource(id = R.string.toast_minimum_applied)
     val toastMaximumApplied = stringResource(id = R.string.toast_maximum_applied)
     val toastSecureSettingsMissing = stringResource(id = R.string.toast_secure_settings_missing)
+    val toastRootGrantSuccess = stringResource(id = R.string.root_grant_success)
+    val toastRootGrantDenied = stringResource(id = R.string.root_grant_denied)
+    val toastRootNotAvailable = stringResource(id = R.string.root_not_available)
+    val toastRootGrantFailed = stringResource(id = R.string.root_grant_failed)
     val labelOn = stringResource(id = R.string.label_on)
     val labelOff = stringResource(id = R.string.label_off)
     val labelGranted = stringResource(id = R.string.label_granted)
@@ -101,6 +106,7 @@ fun HomeScreen(
 
     var batteryOptimizationsIgnored by remember { mutableStateOf(false) }
     var notificationsGranted by remember { mutableStateOf(true) }
+    var rootAvailable by remember { mutableStateOf(false) }
 
     // Checks whether battery optimizations are disabled for the app
     val refreshBatteryState: () -> Unit = {
@@ -154,6 +160,11 @@ fun HomeScreen(
     LaunchedEffect(Unit) {
         refreshBatteryState()
         refreshNotificationState()
+
+        rootAvailable = when (RootManager.getRootState()) {
+            is RootManager.RootState.Available -> true
+            else -> false
+        }
     }
 
     // Home switches from setup to dashboard only after all required steps are completed
@@ -238,6 +249,7 @@ fun HomeScreen(
                     toastStabilityEnabled = toastStabilityEnabled,
                     toastStabilityDisabled = toastStabilityDisabled,
                     toastOpenNotificationSettingsFailed = toastOpenNotificationSettingsFailed,
+                    rootAvailable = rootAvailable,
                     onOpenAccessibilitySettings = openAccessibilitySettings,
                     onVerifyAdb = {
                         val permission = "android.permission.WRITE_SECURE_SETTINGS"
@@ -272,6 +284,43 @@ fun HomeScreen(
                             prefs.setAdbGranted(context, false)
                             adbGranted = false
                             Toast.makeText(context, toastAdbPermissionMissing, Toast.LENGTH_LONG).show()
+                        }
+                    },
+                    onGrantWithRoot = {
+                        when (val result = RootManager.grantWriteSecureSettings(context)) {
+                            is RootManager.RootState.Available -> {
+                                prefs.setAdbGranted(context, true)
+                                adbGranted = true
+                                Toast.makeText(
+                                    context,
+                                    toastRootGrantSuccess,
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+
+                            is RootManager.RootState.Denied -> {
+                                Toast.makeText(
+                                    context,
+                                    toastRootGrantDenied,
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+
+                            is RootManager.RootState.Unavailable -> {
+                                Toast.makeText(
+                                    context,
+                                    toastRootNotAvailable,
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+
+                            is RootManager.RootState.Failed -> {
+                                Toast.makeText(
+                                    context,
+                                    result.reason ?: toastRootGrantFailed,
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
                         }
                     },
                     onRequestIgnoreBatteryOptimizations = {

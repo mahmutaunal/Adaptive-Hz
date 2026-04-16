@@ -170,6 +170,26 @@ adb shell pm grant com.mahmutalperenunal.adaptivehz android.permission.WRITE_SEC
 
 ---
 
+### 🔓 Optional Root-Assisted Setup
+
+Adaptive Hz does **not require root** and works fully using standard Android permissions.
+
+However, if your device is rooted, you can optionally grant the required permission directly inside the app without using ADB.
+
+#### What it does
+- Detects if root access is available on the device
+- Attempts to grant `WRITE_SECURE_SETTINGS` automatically
+- Falls back to manual ADB setup if the operation fails
+
+#### Notes
+- Root support is completely optional
+- Behavior may vary depending on ROM and root implementation (Magisk, etc.)
+- No background or persistent root access is used — only a one-time permission grant attempt
+
+> 💡 If automatic setup fails, you can always use the manual ADB command above.
+
+---
+
 ## Installation
 
 1. Install APK

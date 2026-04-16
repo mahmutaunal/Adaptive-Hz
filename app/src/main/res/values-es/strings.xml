@@ -100,6 +100,14 @@
     <string name="settings_enable_adaptive_hz">Activar Adaptive Hz</string>
     <string name="settings_enable_adaptive_hz_desc">Activa o desactiva el motor Adaptive Hz. Cuando está desactivado, la aplicación deja de controlar la tasa de refresco y se restaura el comportamiento predeterminado del sistema.</string>
 
+    <string name="setup_adb_desc_with_root">Otorga el permiso privilegiado requerido mediante ADB o usa la configuración automática con root si tu dispositivo lo permite.</string>
+    <string name="setup_root_detected_desc">Se detectó acceso root en este dispositivo. Puedes intentar otorgar el permiso requerido automáticamente en lugar de usar ADB.</string>
+    <string name="setup_root_grant_button">Conceder automáticamente</string>
+    <string name="root_grant_success">El permiso requerido se otorgó correctamente.</string>
+    <string name="root_grant_denied">La solicitud de root fue rechazada.</string>
+    <string name="root_not_available">El acceso root no está disponible en este dispositivo.</string>
+    <string name="root_grant_failed">La configuración automática con root falló.</string>
+
     <!-- Common -->
     <string name="cd_back">Atrás</string>
     <string name="action_close">Cerrar</string>

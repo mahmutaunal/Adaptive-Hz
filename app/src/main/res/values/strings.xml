@@ -100,6 +100,14 @@
     <string name="settings_enable_adaptive_hz">Enable Adaptive Hz</string>
     <string name="settings_enable_adaptive_hz_desc">Turns the Adaptive Hz engine on or off. When disabled, the app stops controlling the refresh rate and the system default behavior is restored.</string>
 
+    <string name="setup_adb_desc_with_root">Grant the required privileged permission with ADB, or use one-tap root setup if your device supports root access.</string>
+    <string name="setup_root_detected_desc">Root access was detected on this device. You can try granting the required permission automatically instead of using ADB.</string>
+    <string name="setup_root_grant_button">Grant Automatically</string>
+    <string name="root_grant_success">Required permission granted successfully.</string>
+    <string name="root_grant_denied">Root request was denied.</string>
+    <string name="root_not_available">Root is not available on this device.</string>
+    <string name="root_grant_failed">Automatic root setup failed.</string>
+
     <!-- Common -->
     <string name="cd_back">Back</string>
     <string name="action_close">Close</string>
