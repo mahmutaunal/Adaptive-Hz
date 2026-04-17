@@ -195,4 +195,18 @@
         Tip
         If you want to show full license texts in-app, place them under res/raw or assets and render them here.
     </string>
+
+    <!-- Widgets -->
+    <string name="widget_title">Adaptive Hz</string>
+    <string name="widget_description">Control refresh rate modes from the home screen widget.</string>
+    <string name="widget_badge_setup">SETUP</string>
+    <string name="widget_off">OFF</string>
+    <string name="widget_min">MIN</string>
+    <string name="widget_adaptive">AUTO</string>
+    <string name="widget_max">MAX</string>
+    <string name="widget_status_off">Refresh rate control is off</string>
+    <string name="widget_status_minimum">Minimum refresh rate is active</string>
+    <string name="widget_status_adaptive">Adaptive mode is active</string>
+    <string name="widget_status_maximum">Maximum refresh rate is active</string>
+    <string name="widget_status_setup_required">Setup required — tap to open app</string>
 </resources>

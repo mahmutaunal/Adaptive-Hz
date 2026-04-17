@@ -191,6 +191,9 @@ class StabilityForegroundService : Service() {
         private const val ACTION_SET_ADAPTIVE = "action_set_adaptive"
         private const val ACTION_SET_MIN = "action_set_min"
         private const val ACTION_SET_MAX = "action_set_max"
+        private const val ACTION_STOP = "com.mahmutalperenunal.adaptivehz.action.STOP_FOREGROUND"
+
+        private const val ACTION_REFRESH_NOTIFICATION = "com.mahmutalperenunal.adaptivehz.action.REFRESH_NOTIFICATION"
 
         private const val OFF_GRACE_PERIOD_MS = 60_000L
 
@@ -200,8 +203,23 @@ class StabilityForegroundService : Service() {
         }
 
         fun stop(context: Context) {
-            val intent = Intent(context, StabilityForegroundService::class.java)
-            context.stopService(intent)
+            val intent = Intent(context, StabilityForegroundService::class.java).apply {
+                action = ACTION_STOP
+            }
+            context.startService(intent)
+        }
+
+        fun refreshNotification(context: Context) {
+            if (!AdaptiveHzPrefs.isKeepAliveEnabled(context)) return
+            if (!AdaptiveHzPrefs.isAppEnabled(context)) return
+
+            val intent = Intent(context, StabilityForegroundService::class.java).apply {
+                action = ACTION_REFRESH_NOTIFICATION
+            }
+
+            try {
+                ContextCompat.startForegroundService(context, intent)
+            } catch (_: Throwable) { }
         }
     }
 }

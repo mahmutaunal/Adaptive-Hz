@@ -3,6 +3,7 @@ package com.mahmutalperenunal.adaptivehz.core
 import android.content.Context
 import com.mahmutalperenunal.adaptivehz.core.engine.AdaptiveHzMode
 import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateController
+import com.mahmutalperenunal.adaptivehz.widget.AdaptiveHzWidgetUpdater
 
 /**
  * Shared action layer used by both UI and notification actions.
@@ -11,6 +12,16 @@ import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateController
  * StabilityForegroundService.
  */
 object AdaptiveHzActionHandler {
+
+    private fun refreshSurfaces(context: Context) {
+        try {
+            AdaptiveHzWidgetUpdater.refreshAll(context)
+        } catch (_: Throwable) { }
+
+        try {
+            StabilityForegroundService.refreshNotification(context)
+        } catch (_: Throwable) { }
+    }
 
     fun getCurrentMode(context: Context): AdaptiveHzMode {
         return AdaptiveHzPrefs.getCurrentMode(context)
@@ -39,6 +50,8 @@ object AdaptiveHzActionHandler {
                 StabilityForegroundService.start(context)
             } catch (_: Throwable) { }
         }
+
+        refreshSurfaces(context)
     }
 
     /**
@@ -57,6 +70,8 @@ object AdaptiveHzActionHandler {
         try {
             StabilityForegroundService.stop(context)
         } catch (_: Throwable) { }
+
+        refreshSurfaces(context)
     }
 
     /**
@@ -71,6 +86,8 @@ object AdaptiveHzActionHandler {
         try {
             RefreshRateController.resetToSystemDefault(context)
         } catch (_: Throwable) { }
+
+        refreshSurfaces(context)
     }
 
     /**
@@ -81,14 +98,15 @@ object AdaptiveHzActionHandler {
 
         try {
             RefreshRateController.applyForceMinimum(context)
-        } catch (_: Throwable) {
-        }
+        } catch (_: Throwable) { }
 
         if (AdaptiveHzPrefs.isKeepAliveEnabled(context)) {
             try {
                 StabilityForegroundService.start(context)
             } catch (_: Throwable) { }
         }
+
+        refreshSurfaces(context)
     }
 
     /**
@@ -106,6 +124,8 @@ object AdaptiveHzActionHandler {
                 StabilityForegroundService.start(context)
             } catch (_: Throwable) { }
         }
+
+        refreshSurfaces(context)
     }
 
     /**
@@ -123,6 +143,8 @@ object AdaptiveHzActionHandler {
                 StabilityForegroundService.start(context)
             } catch (_: Throwable) { }
         }
+
+        refreshSurfaces(context)
     }
 
     /**

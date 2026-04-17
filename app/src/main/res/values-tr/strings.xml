@@ -195,4 +195,18 @@
         İpucu
         Tüm lisans metinlerini uygulama içinde göstermek isterseniz res/raw veya assets altına koyup burada görüntüleyebilirsiniz.
     </string>
+
+    <!-- Widgets -->
+    <string name="widget_title">Adaptive Hz</string>
+    <string name="widget_description">Ana ekran widget’ından yenileme hızı modlarını kontrol edin.</string>
+    <string name="widget_badge_setup">KURULUM</string>
+    <string name="widget_off">KAPALI</string>
+    <string name="widget_min">MIN</string>
+    <string name="widget_adaptive">OTOMATİK</string>
+    <string name="widget_max">MAKS</string>
+    <string name="widget_status_off">Yenileme hızı kontrolü kapalı</string>
+    <string name="widget_status_minimum">Minimum yenileme hızı aktif</string>
+    <string name="widget_status_adaptive">Adaptif mod aktif</string>
+    <string name="widget_status_maximum">Maksimum yenileme hızı aktif</string>
+    <string name="widget_status_setup_required">Kurulum gerekli — uygulamayı açmak için dokunun</string>
 </resources>

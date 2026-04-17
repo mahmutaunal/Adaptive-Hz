@@ -168,7 +168,7 @@ fun HomeScreen(
     }
 
     // Home switches from setup to dashboard only after all required steps are completed
-    val setupComplete = accessibilityEnabled && adbGranted && batteryOptimizationsIgnored
+    val setupComplete = accessibilityEnabled && adbGranted && batteryOptimizationsIgnored && keepAliveEnabled
 
     val appEnabled = currentMode.value != AdaptiveHzMode.OFF
 

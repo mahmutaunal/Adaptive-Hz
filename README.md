@@ -260,6 +260,47 @@ Adaptive Hz includes a **Quick Settings Tile** for fast access directly from the
 
 ---
 
+## 🧩 Home Screen Widget
+
+Adaptive Hz includes a **resizable home screen widget** for quick access to refresh rate modes.
+
+### What it does
+- Instantly switch between:
+  - **Off**
+  - **Minimum**
+  - **Adaptive**
+  - **Maximum**
+- Shows the current active mode with a highlighted state and badge
+- Provides one-tap control without opening the app
+
+### Behavior
+- Fully synced with:
+  - In-app state
+  - Notification controls
+  - Quick Settings tile
+- Automatically updates after every action
+- Detects setup state:
+  - If required permissions are missing, widget enters a **passive state**
+  - Tapping the widget opens the app to complete setup
+
+### Layout & Resizing
+- Default layout is optimized for **wide (4x1) usage**
+- Supports resizing:
+  - Expands horizontally for better spacing
+  - Switches to a compact layout when space is limited
+- Designed to match system widget behavior on **OneUI and HyperOS**
+
+### Design
+- Minimal, clean card-style layout
+- Supports light/dark system themes
+- Uses subtle visual states:
+  - Active mode highlight
+  - Disabled state when setup is incomplete
+
+> 💡 The widget is the fastest way to control Adaptive Hz modes directly from your home screen.
+
+---
+
 ## Architecture
 
 ```

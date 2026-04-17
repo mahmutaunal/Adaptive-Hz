@@ -195,4 +195,18 @@
         Consejo
         Si deseas mostrar los textos completos de las licencias dentro de la aplicación, colócalos en res/raw o assets y muéstralos aquí.
     </string>
+
+    <!-- Widgets -->
+    <string name="widget_title">Adaptive Hz</string>
+    <string name="widget_description">Controla los modos de frecuencia de actualización desde el widget de inicio.</string>
+    <string name="widget_badge_setup">CONFIG</string>
+    <string name="widget_off">OFF</string>
+    <string name="widget_min">MIN</string>
+    <string name="widget_adaptive">AUTO</string>
+    <string name="widget_max">MAX</string>
+    <string name="widget_status_off">El control de frecuencia de actualización está desactivado</string>
+    <string name="widget_status_minimum">Frecuencia mínima activa</string>
+    <string name="widget_status_adaptive">Modo adaptativo activo</string>
+    <string name="widget_status_maximum">Frecuencia máxima activa</string>
+    <string name="widget_status_setup_required">Configuración necesaria — toca para abrir la app</string>
 </resources>
