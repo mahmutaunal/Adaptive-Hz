@@ -5,6 +5,12 @@ import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import com.mahmutalperenunal.adaptivehz.R
 
+/**
+ * Quick Settings Tile service for toggling Adaptive Hz.
+ *
+ * Keeps the tile UI (icon, label, subtitle, state) in sync with the app state
+ * and delegates the toggle action to [AdaptiveHzActionHandler].
+ */
 class AdaptiveHzTileService : TileService() {
 
     override fun onTileAdded() {
@@ -28,6 +34,7 @@ class AdaptiveHzTileService : TileService() {
         updateTile()
     }
 
+    // Syncs the tile UI with current app state (enabled/disabled)
     private fun updateTile() {
         val tile = qsTile ?: return
         val enabled = AdaptiveHzActionHandler.isAppEnabled(this)

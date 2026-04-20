@@ -48,10 +48,7 @@ class AdaptiveHzService : AccessibilityService() {
             shouldIgnorePackage = { pkg ->
                 pkg == null || pkg == packageName || pkg == "com.android.systemui"
             },
-            tag = "AdaptiveHzEngine",
-            interactionIdleTimeoutMs = 3500L,
-            contentIdleTimeoutMs = 3500L,
-            maxHighHoldMs = 4000L
+            tag = "AdaptiveHzEngine"
         )
 
         if (!started) {
@@ -67,7 +64,7 @@ class AdaptiveHzService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
         if (!isAdaptiveModeEnabled()) return
-        if (!shouldForward(event.eventType)) return
+        Log.d("AdaptiveHzRaw", "rawEvent=${event.eventType}")
         engine.onEvent(event)
     }
 
@@ -77,20 +74,6 @@ class AdaptiveHzService : AccessibilityService() {
         try { if (::engine.isInitialized) engine.stop() } catch (_: Throwable) {}
         started = false
         super.onDestroy()
-    }
-
-    /**
-     * Filters event types to reduce noise and prevent false boosts.
-     */
-    private fun shouldForward(t: Int): Boolean {
-        return when (t) {
-            AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
-            AccessibilityEvent.TYPE_TOUCH_INTERACTION_END,
-            AccessibilityEvent.TYPE_VIEW_SCROLLED,
-            AccessibilityEvent.TYPE_VIEW_CLICKED,
-            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> true
-            else -> false
-        }
     }
 
     /** Returns whether the app is currently in adaptive mode. */

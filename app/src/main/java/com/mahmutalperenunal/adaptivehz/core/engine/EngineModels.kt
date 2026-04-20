@@ -1,5 +1,10 @@
 package com.mahmutalperenunal.adaptivehz.core.engine
 
+/**
+ * Represents a single system setting write operation.
+ *
+ * Used by the engine to apply refresh rate related values via ADB/root.
+ */
 data class SettingWrite(
     val key: String,
     val intValue: Int,

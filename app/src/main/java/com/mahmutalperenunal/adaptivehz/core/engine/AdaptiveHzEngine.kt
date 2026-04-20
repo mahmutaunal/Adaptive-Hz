@@ -23,20 +23,18 @@ class AdaptiveHzEngine(
     private val tag: String = "AdaptiveHzEngine",
 
     // Core UX timing (keep these stable across devices)
-    private val interactionIdleTimeoutMs: Long = 3500L,
-    private val contentIdleTimeoutMs: Long = 3500L,
-    private val maxHighHoldMs: Long = 4000L,
-
-    // Spam/noise protection (tune carefully)
-    private val minBoostIntervalMs: Long = 90L
+    private val interactionIdleTimeoutMs: Long = 2000L
 ) {
     private val handler = Handler(Looper.getMainLooper())
 
+    // Engine lifecycle flag to prevent processing events before start() is called
     private var started = false
     private var isHigh = false
 
     private var lastHighUptimeMs: Long = 0L
     private var lastBoostUptimeMs: Long = 0L
+
+    private var isTouchInteracting: Boolean = false
 
     // Single idle timer: every boost resets it; when it fires we drop to LOW.
     private val dropRunnable = Runnable {
@@ -51,7 +49,7 @@ class AdaptiveHzEngine(
         if (!isEnabled()) return@Runnable
 
         val now = SystemClock.uptimeMillis()
-        val heldTooLong = isHigh && (now - lastHighUptimeMs) >= maxHighHoldMs
+        val heldTooLong = isHigh && (now - lastHighUptimeMs) >= interactionIdleTimeoutMs
         if (heldTooLong) {
             Log.w(tag, "Safety drop -> LOW")
             applyLow(force = true)
@@ -65,6 +63,7 @@ class AdaptiveHzEngine(
         isHigh = false
         lastHighUptimeMs = 0L
         lastBoostUptimeMs = 0L
+        isTouchInteracting = false
 
         // Start safe at LOW
         applyLow(force = true)
@@ -74,7 +73,9 @@ class AdaptiveHzEngine(
 
     /** Stops the engine and cancels all scheduled work. */
     fun stop() {
+        if (isHigh) applyLow(force = true)
         started = false
+        isTouchInteracting = false
         handler.removeCallbacksAndMessages(null)
         Log.d(tag, "Stopped")
     }
@@ -84,6 +85,8 @@ class AdaptiveHzEngine(
      * The service should pre-filter noisy event types and packages.
      */
     fun onEvent(event: AccessibilityEvent) {
+        logEventDetails(event)
+
         if (!started) return
         if (!isEnabled()) return
 
@@ -91,43 +94,73 @@ class AdaptiveHzEngine(
         if (shouldIgnorePackage(pkg)) return
         if (!canProcessForegroundInteraction(pkg)) return
 
-        val now = SystemClock.uptimeMillis()
-
         Log.d(tag, "EVENT ${eventTypeName(event.eventType)} pkg=$pkg isHigh=$isHigh")
 
         when (event.eventType) {
             AccessibilityEvent.TYPE_TOUCH_INTERACTION_START -> {
-                boostNowDebounced(now)
+                isTouchInteracting = true
+                requestHigh()
             }
 
             AccessibilityEvent.TYPE_TOUCH_INTERACTION_END -> {
-                // Touch ended: schedule the standard idle drop window (3.5s by default).
-                handler.removeCallbacks(dropRunnable)
-                handler.postDelayed(dropRunnable, interactionIdleTimeoutMs)
+                isTouchInteracting = false
+                scheduleDrop(interactionIdleTimeoutMs)
             }
 
-            AccessibilityEvent.TYPE_VIEW_CLICKED -> {
-                boostNowDebounced(now)
-            }
-
+            AccessibilityEvent.TYPE_VIEW_CLICKED,
+            AccessibilityEvent.TYPE_VIEW_SELECTED,
             AccessibilityEvent.TYPE_VIEW_SCROLLED -> {
-                // Scroll can be noisy on some ROMs; only treat it as interaction if it looks real.
-                if (isRealScroll(event)) boostNowDebounced(now)
+                isTouchInteracting = true
+                requestHigh()
             }
 
             AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
-                if (shouldBoostFromContentChange(event, pkg)) {
+                if (shouldBoostFromContentChange(event)) {
                     if (isHigh) {
-                        Log.d(tag, "Content change accepted -> extending HIGH hold")
-                        scheduleDrop(contentIdleTimeoutMs)
+                        scheduleDrop(interactionIdleTimeoutMs)
                     } else {
-                        boostNowDebounced(now)
-                        scheduleDrop(contentIdleTimeoutMs)
+                        requestHigh()
                     }
                 }
             }
 
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
+                onWindowStateChanged(event)
+            }
+
+            AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED,
+            AccessibilityEvent.TYPE_ANNOUNCEMENT,
+            AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED -> {
+                // Explicitly ignore known noisy events.
+            }
+
             else -> Unit
+        }
+    }
+
+    private fun shouldBoostFromContentChange(e: AccessibilityEvent): Boolean {
+        // Main interaction signal on many OneUI / HyperOS devices.
+        // Keep this permissive so real touches are not missed.
+        if (isRealScroll(e)) return true
+
+        val changeTypes = e.contentChangeTypes
+        if (changeTypes == 0) return true
+        if ((changeTypes and AccessibilityEvent.CONTENT_CHANGE_TYPE_SUBTREE) != 0) return true
+        if ((changeTypes and AccessibilityEvent.CONTENT_CHANGE_TYPE_TEXT) != 0) return true
+        if ((changeTypes and AccessibilityEvent.CONTENT_CHANGE_TYPE_CONTENT_DESCRIPTION) != 0) return true
+        if ((changeTypes and AccessibilityEvent.CONTENT_CHANGE_TYPE_STATE_DESCRIPTION) != 0) return true
+
+        return false
+    }
+
+    private fun onWindowStateChanged(event: AccessibilityEvent) {
+        val pkg = event.packageName?.toString()
+        if (shouldIgnorePackage(pkg)) return
+
+        // Do not force a fresh boost if we are already LOW and idle.
+        // But if the UI is already active, keep the HIGH window alive across screen/dialog transitions.
+        if (isHigh) {
+            scheduleDrop(interactionIdleTimeoutMs)
         }
     }
 
@@ -136,16 +169,19 @@ class AdaptiveHzEngine(
      * Some apps emit TYPE_VIEW_SCROLLED during content updates without user touch.
      */
     private fun isRealScroll(e: AccessibilityEvent): Boolean {
-        val scrollDeltaDetected = runCatching { e.scrollDeltaY != 0 || e.scrollDeltaX != 0 }.getOrDefault(false)
-        if (scrollDeltaDetected) return true
-
-        val scrollX = runCatching { e.scrollX }.getOrDefault(0)
-        val scrollY = runCatching { e.scrollY }.getOrDefault(0)
-        if (scrollX != 0 || scrollY != 0) return true
+        val deltaX = runCatching { e.scrollDeltaX }.getOrDefault(0)
+        val deltaY = runCatching { e.scrollDeltaY }.getOrDefault(0)
+        if (deltaX != 0 || deltaY != 0) return true
 
         val fromIndex = runCatching { e.fromIndex }.getOrDefault(-1)
         val toIndex = runCatching { e.toIndex }.getOrDefault(-1)
-        return fromIndex >= 0 && toIndex >= 0 && fromIndex != toIndex
+        if (fromIndex != -1 && toIndex != -1 && fromIndex != toIndex) return true
+
+        val scrollX = runCatching { e.scrollX }.getOrDefault(-1)
+        val scrollY = runCatching { e.scrollY }.getOrDefault(-1)
+        val maxScrollX = runCatching { e.maxScrollX }.getOrDefault(-1)
+        val maxScrollY = runCatching { e.maxScrollY }.getOrDefault(-1)
+        return (scrollX > 0 || scrollY > 0) || (maxScrollX > 0 || maxScrollY > 0)
     }
 
     /**
@@ -168,42 +204,14 @@ class AdaptiveHzEngine(
         return true
     }
 
-    /**
-     * WINDOW_CONTENT_CHANGED is treated as a secondary fallback signal.
-     * Keep it stricter than scroll/click so passive UI updates do not hold HIGH unnecessarily.
-     */
-    private fun shouldBoostFromContentChange(e: AccessibilityEvent, pkg: String?): Boolean {
-        val hasMotionLikeSignal = isRealScroll(e)
-        if (hasMotionLikeSignal) return true
-
-        val changeTypes = e.contentChangeTypes
-        val isMeaningfulChange =
-            changeTypes == 0 ||
-                (changeTypes and AccessibilityEvent.CONTENT_CHANGE_TYPE_SUBTREE) != 0 ||
-                (changeTypes and AccessibilityEvent.CONTENT_CHANGE_TYPE_TEXT) != 0 ||
-                (changeTypes and AccessibilityEvent.CONTENT_CHANGE_TYPE_CONTENT_DESCRIPTION) != 0
-
-        if (!isMeaningfulChange) return false
-
-        val className = e.className?.toString().orEmpty()
-        val sourceText = e.text.joinToString(" ")
-
-        val looksLikePassiveClockUpdate =
-            pkg == "com.android.systemui" &&
-                    className.contains("TextView", ignoreCase = true) &&
-                    sourceText.length in 1..8
-
-        return !looksLikePassiveClockUpdate
-    }
-
-    /** Rate-limit boosts to avoid spamming secure settings writes. */
-    private fun boostNowDebounced(now: Long) {
-        if ((now - lastBoostUptimeMs) < minBoostIntervalMs) {
-            // Even if we skip to write, extend the idle window to feel responsive.
+    private fun requestHigh() {
+        if (isHigh) {
+            lastHighUptimeMs = SystemClock.uptimeMillis()
             scheduleDrop(interactionIdleTimeoutMs)
+            scheduleSafety()
             return
         }
-        lastBoostUptimeMs = now
+
         boostNow()
     }
 
@@ -250,17 +258,61 @@ class AdaptiveHzEngine(
     /** Schedules the safety check that prevents staying on HIGH indefinitely. */
     private fun scheduleSafety() {
         handler.removeCallbacks(safetyRunnable)
-        handler.postDelayed(safetyRunnable, maxHighHoldMs + 250L)
+        handler.postDelayed(safetyRunnable, interactionIdleTimeoutMs)
     }
 
     private fun eventTypeName(type: Int): String {
         return when (type) {
             AccessibilityEvent.TYPE_TOUCH_INTERACTION_START -> "TOUCH_START"
             AccessibilityEvent.TYPE_TOUCH_INTERACTION_END -> "TOUCH_END"
-            AccessibilityEvent.TYPE_VIEW_SCROLLED -> "VIEW_SCROLLED"
             AccessibilityEvent.TYPE_VIEW_CLICKED -> "VIEW_CLICKED"
+            AccessibilityEvent.TYPE_VIEW_SELECTED -> "VIEW_SELECTED"
+            AccessibilityEvent.TYPE_VIEW_SCROLLED -> "VIEW_SCROLLED"
             AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> "WINDOW_CONTENT_CHANGED"
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> "WINDOW_STATE_CHANGED"
+            AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED -> "NOTIFICATION_STATE_CHANGED"
+            AccessibilityEvent.TYPE_ANNOUNCEMENT -> "ANNOUNCEMENT"
+            AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED -> "VIEW_ACCESSIBILITY_FOCUS_CLEARED"
             else -> type.toString()
         }
+    }
+
+    private fun logEventDetails(event: AccessibilityEvent) {
+        val source = event.source
+
+        val actions = try {
+            source?.actionList
+                ?.joinToString(prefix = "[", postfix = "]") { it.id.toString() }
+                .orEmpty()
+        } catch (_: Throwable) {
+            "[]"
+        }
+
+        val msg = buildString {
+            append("type=").append(eventTypeName(event.eventType))
+            append(" pkg=").append(event.packageName)
+            append(" cls=").append(event.className)
+            append(" changeTypes=").append(event.contentChangeTypes)
+
+            append(" from=").append(runCatching { event.fromIndex }.getOrDefault(-1))
+            append(" to=").append(runCatching { event.toIndex }.getOrDefault(-1))
+
+            append(" scrollX=").append(runCatching { event.scrollX }.getOrDefault(-1))
+            append(" scrollY=").append(runCatching { event.scrollY }.getOrDefault(-1))
+            append(" maxScrollX=").append(runCatching { event.maxScrollX }.getOrDefault(-1))
+            append(" maxScrollY=").append(runCatching { event.maxScrollY }.getOrDefault(-1))
+
+            append(" deltaX=").append(runCatching { event.scrollDeltaX }.getOrDefault(0))
+            append(" deltaY=").append(runCatching { event.scrollDeltaY }.getOrDefault(0))
+
+            append(" scrollable=").append(
+                runCatching { source?.isScrollable ?: false }.getOrDefault(false)
+            )
+
+            append(" actions=").append(actions)
+            append(" touchActive=").append(isTouchInteracting)
+        }
+
+        Log.d(tag, msg)
     }
 }

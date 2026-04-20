@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Build
 import android.provider.Settings
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -100,7 +101,11 @@ fun SetupComponent(
 
                 OutlinedButton(
                     onClick = onGrantWithRoot,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outline
+                    )
                 ) {
                     Text(stringResource(id = R.string.setup_root_grant_button))
                 }
@@ -200,7 +205,11 @@ fun SetupComponent(
                             ).show()
                         }
                     },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outline
+                    )
                 ) {
                     val buttonText =
                         if (Build.VERSION.SDK_INT >= 33 && !notificationsGranted && !keepAliveEnabled) {
@@ -233,7 +242,11 @@ fun SetupComponent(
                                 ).show()
                             }
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        border = BorderStroke(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.outline
+                        )
                     ) {
                         Text(stringResource(id = R.string.setup_notifications_button))
                     }
@@ -298,7 +311,11 @@ private fun SetupCard(
             ) {
                 OutlinedButton(
                     onClick = onPrimaryClick,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outline
+                    )
                 ) {
                     Text(primaryButtonText)
                 }
