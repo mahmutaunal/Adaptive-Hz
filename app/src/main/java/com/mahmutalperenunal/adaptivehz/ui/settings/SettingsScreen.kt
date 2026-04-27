@@ -5,6 +5,7 @@ package com.mahmutalperenunal.adaptivehz.ui.settings
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -23,6 +24,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.OpenInNew
+import androidx.compose.material.icons.outlined.BatterySaver
 import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Email
@@ -71,6 +73,10 @@ fun SettingsScreen(
     onBack: () -> Unit,
     keepAliveEnabled: Boolean,
     onKeepAliveChanged: (Boolean) -> Unit,
+    batteryOptimizationsIgnored: Boolean,
+    notificationsGranted: Boolean,
+    onRequestIgnoreBatteryOptimizations: () -> Unit,
+    onRequestNotificationPermission: () -> Unit,
     modifier: Modifier = Modifier,
     appName: String? = null,
     appTagline: String? = null,
@@ -130,12 +136,53 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(4.dp))
 
             SectionTitle(stringResource(R.string.settings_section_behavior))
+
+            SettingsRow(
+                leading = Icons.Outlined.BatterySaver,
+                title = stringResource(R.string.settings_item_battery_optimization),
+                subtitle = if (batteryOptimizationsIgnored) {
+                    stringResource(R.string.settings_value_battery_optimization_ok)
+                } else {
+                    stringResource(R.string.settings_value_battery_optimization_recommended)
+                },
+                onClick = onRequestIgnoreBatteryOptimizations
+            )
+
+            if (Build.VERSION.SDK_INT >= 33) {
+                SettingsRow(
+                    leading = Icons.Outlined.Notifications,
+                    title = stringResource(R.string.settings_item_notification_permission),
+                    subtitle = if (notificationsGranted) {
+                        stringResource(R.string.settings_value_notification_permission_ok)
+                    } else {
+                        stringResource(R.string.settings_value_notification_permission_required)
+                    },
+                    onClick = onRequestNotificationPermission
+                )
+            }
+
             SettingsSwitchRow(
                 leading = Icons.Outlined.Notifications,
                 title = stringResource(R.string.settings_item_stability_mode),
                 subtitle = stringResource(R.string.settings_value_stability_mode_summary),
                 checked = keepAliveEnabled,
-                onCheckedChange = onKeepAliveChanged
+                onCheckedChange = { next ->
+                    if (
+                        next &&
+                        Build.VERSION.SDK_INT >= 33 &&
+                        !notificationsGranted
+                    ) {
+                        Toast.makeText(
+                            context,
+                            R.string.settings_toast_notification_required_for_stability,
+                            Toast.LENGTH_LONG
+                        ).show()
+
+                        onRequestNotificationPermission()
+                    } else {
+                        onKeepAliveChanged(next)
+                    }
+                }
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp))

@@ -145,6 +145,14 @@
     <string name="settings_item_privacy_policy">Gizlilik Politikası</string>
     <string name="settings_item_open_source_notices">Açık Kaynak Bildirimleri</string>
 
+    <string name="settings_item_battery_optimization">Pil optimizasyonu</string>
+    <string name="settings_value_battery_optimization_ok">Daha iyi kararlılık için pil kısıtlamaları devre dışı.</string>
+    <string name="settings_value_battery_optimization_recommended">Agresif cihazlarda daha iyi arka plan kararlılığı için önerilir.</string>
+    <string name="settings_item_notification_permission">Bildirim izni</string>
+    <string name="settings_value_notification_permission_ok">Bildirim izni verilmiş.</string>
+    <string name="settings_value_notification_permission_required">Android 13 ve üzeri cihazlarda Stability Mode için gereklidir.</string>
+    <string name="settings_toast_notification_required_for_stability">Stability Mode’u etkinleştirmek için bildirim izni gereklidir.</string>
+
     <!-- Settings - values -->
     <string name="settings_value_stability_mode_summary">Adaptive Hz\'in arka planda daha kararlı çalışmasını sağlar ve kalıcı bir bildirim kullanır. Devre dışı bırakıldığında bildirim kaldırılır ancak bazı cihazlarda kararlılık azalabilir.</string>
     <string name="settings_value_version">%1$s (%2$d)</string>
@@ -209,4 +217,15 @@
     <string name="widget_status_adaptive">Adaptif mod aktif</string>
     <string name="widget_status_maximum">Maksimum yenileme hızı aktif</string>
     <string name="widget_status_setup_required">Kurulum gerekli — uygulamayı açmak için dokunun</string>
+
+    <string name="accessibility_broken_adaptive_disabled">Accessibility Service yanıt vermediği için Adaptive modu geçici olarak kullanılamıyor. Manuel modlar kullanılmaya devam edebilir.</string>
+    <string name="recovery_title">Servis yanıt vermiyor</string>
+    <string name="recovery_desc">
+        Accessibility Service açık görünüyor ancak yanıt vermiyor.
+        Bu durum sistem kısıtlamaları veya arka plan sınırlamaları nedeniyle oluşabilir.
+        Servisi yeniden başlatmayı veya pil ayarlarını değiştirmeyi deneyebilirsiniz.
+    </string>
+    <string name="retry">Tekrar dene</string>
+    <string name="setup_continue_button">Devam et</string>
+    <string name="setup_continue_required_hint">Devam etmek için yukarıdaki zorunlu adımları tamamlayın. Önerilen adımlar isteğe bağlıdır.</string>
 </resources>

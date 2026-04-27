@@ -145,6 +145,14 @@
     <string name="settings_item_privacy_policy">Privacy Policy</string>
     <string name="settings_item_open_source_notices">Open source notices</string>
 
+    <string name="settings_item_battery_optimization">Battery optimization</string>
+    <string name="settings_value_battery_optimization_ok">Battery restrictions are disabled for better stability.</string>
+    <string name="settings_value_battery_optimization_recommended">Recommended for better background stability on aggressive devices.</string>
+    <string name="settings_item_notification_permission">Notification permission</string>
+    <string name="settings_value_notification_permission_ok">Notification permission is granted.</string>
+    <string name="settings_value_notification_permission_required">Required to enable Stability Mode on Android 13 and above.</string>
+    <string name="settings_toast_notification_required_for_stability">Notification permission is required to enable Stability Mode.</string>
+
     <!-- Settings - values -->
     <string name="settings_value_stability_mode_summary">Keeps Adaptive Hz more reliable in the background using a persistent notification. Disabling this removes the notification but may reduce stability on some devices.</string>
     <string name="settings_value_version">%1$s (%2$d)</string>
@@ -209,4 +217,15 @@
     <string name="widget_status_adaptive">Adaptive mode is active</string>
     <string name="widget_status_maximum">Maximum refresh rate is active</string>
     <string name="widget_status_setup_required">Setup required — tap to open app</string>
+
+    <string name="accessibility_broken_adaptive_disabled">Adaptive mode is temporarily unavailable because the Accessibility Service is not responding. Manual modes can still be used.</string>
+    <string name="recovery_title">Service not responding</string>
+    <string name="recovery_desc">
+        The Accessibility Service appears to be enabled but is not responding.
+        This may happen due to system restrictions or background limits.
+        You can try restarting the service or adjusting battery settings.
+    </string>
+    <string name="retry">Retry</string>
+    <string name="setup_continue_button">Continue</string>
+    <string name="setup_continue_required_hint">Complete the required steps above to continue. Recommended steps are optional.</string>
 </resources>

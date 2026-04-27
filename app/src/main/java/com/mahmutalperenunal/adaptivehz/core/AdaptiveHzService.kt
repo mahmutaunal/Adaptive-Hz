@@ -2,6 +2,8 @@ package com.mahmutalperenunal.adaptivehz.core
 
 import android.accessibilityservice.AccessibilityService
 import android.annotation.SuppressLint
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import com.mahmutalperenunal.adaptivehz.core.engine.AdaptiveHzEngine
@@ -27,6 +29,15 @@ class AdaptiveHzService : AccessibilityService() {
     private lateinit var engine: AdaptiveHzEngine
     private var started = false
 
+    private val heartbeatHandler by lazy { Handler(Looper.getMainLooper()) }
+
+    private val heartbeatRunnable = object : Runnable {
+        override fun run() {
+            AdaptiveHzPrefs.markAccessibilityHeartbeat(this@AdaptiveHzService)
+            heartbeatHandler.postDelayed(this, HEARTBEAT_INTERVAL_MS)
+        }
+    }
+
     /**
      * Called when the accessibility service is fully connected.
      * Initializes the engine with the proper vendor strategy.
@@ -34,6 +45,9 @@ class AdaptiveHzService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         Log.d("AdaptiveHzService", "Service connected")
+
+        AdaptiveHzPrefs.markAccessibilityHeartbeat(this)
+        startHeartbeat()
 
         val strategy = when (DeviceVendorDetector.detect()) {
             DeviceVendor.SAMSUNG -> SamsungStrategy()
@@ -63,21 +77,47 @@ class AdaptiveHzService : AccessibilityService() {
      */
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
+
+        AdaptiveHzPrefs.markAccessibilityHeartbeat(this)
+
         if (!isAdaptiveModeEnabled()) return
+
         Log.d("AdaptiveHzRaw", "rawEvent=${event.eventType}")
         engine.onEvent(event)
     }
 
-    override fun onInterrupt() {}
+    override fun onInterrupt() {
+        AdaptiveHzPrefs.setAccessibilityConnected(this, false)
+    }
 
     override fun onDestroy() {
-        try { if (::engine.isInitialized) engine.stop() } catch (_: Throwable) {}
+        stopHeartbeat()
+
+        AdaptiveHzPrefs.markAccessibilityDisconnected(this)
+
+        try {
+            if (::engine.isInitialized) engine.stop()
+        } catch (_: Throwable) { }
+
         started = false
         super.onDestroy()
+    }
+
+    private fun startHeartbeat() {
+        heartbeatHandler.removeCallbacks(heartbeatRunnable)
+        heartbeatHandler.post(heartbeatRunnable)
+    }
+
+    private fun stopHeartbeat() {
+        heartbeatHandler.removeCallbacks(heartbeatRunnable)
     }
 
     /** Returns whether the app is currently in adaptive mode. */
     private fun isAdaptiveModeEnabled(): Boolean {
         return AdaptiveHzPrefs.getCurrentMode(this) == AdaptiveHzMode.ADAPTIVE
+    }
+
+    companion object {
+        private const val HEARTBEAT_INTERVAL_MS = 2_500L
     }
 }

@@ -31,6 +31,8 @@ import com.mahmutalperenunal.adaptivehz.R
 @Composable
 fun DashboardComponent(
     appEnabled: Boolean,
+    accessibilityWorking: Boolean,
+    accessibilityBroken: Boolean,
     currentDisplayHz: Int,
     vendorLabel: String,
     currentModeLabel: String,
@@ -124,10 +126,18 @@ fun DashboardComponent(
         // Default action to switch back to adaptive mode
         FilledTonalButton(
             onClick = onAdaptiveClick,
-            enabled = appEnabled,
+            enabled = appEnabled && accessibilityWorking,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(stringResource(id = R.string.mode_adaptive))
+        }
+
+        if (accessibilityBroken) {
+            Text(
+                text = stringResource(id = R.string.accessibility_broken_adaptive_disabled),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error
+            )
         }
 
         // Preset actions for locking the refresh rate to min or max

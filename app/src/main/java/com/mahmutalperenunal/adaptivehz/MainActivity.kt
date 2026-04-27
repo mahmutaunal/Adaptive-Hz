@@ -15,12 +15,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.mahmutalperenunal.adaptivehz.ui.theme.AdaptiveHzTheme
-import android.accessibilityservice.AccessibilityServiceInfo
 import android.annotation.SuppressLint
 import android.os.PowerManager
-import android.view.accessibility.AccessibilityManager
-import android.content.ComponentName
-import com.mahmutalperenunal.adaptivehz.core.AdaptiveHzService
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
@@ -33,23 +29,19 @@ import androidx.navigation.compose.rememberNavController
 import com.mahmutalperenunal.adaptivehz.ui.home.HomeScreen
 import com.mahmutalperenunal.adaptivehz.ui.settings.SettingsScreen
 import androidx.core.content.edit
+import com.mahmutalperenunal.adaptivehz.core.AdaptiveHzRuntimeState
 import com.mahmutalperenunal.adaptivehz.core.StabilityForegroundService
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.compose.runtime.LaunchedEffect
 
 
 // Main entry point of the app. Sets up navigation and provides system-level helpers used by the UI.
 class MainActivity : ComponentActivity() {
-
-    // Checks whether the AdaptiveHz accessibility service is currently enabled by the user
-    private fun isAdaptiveServiceEnabled(): Boolean {
-        val am = getSystemService(AccessibilityManager::class.java) ?: return false
-        // Component name used to match the service against the enabled accessibility services list
-        val cn = ComponentName(this, AdaptiveHzService::class.java)
-        val expectedShort = cn.flattenToShortString()
-        val expectedFull = cn.flattenToString()
-
-        val enabled = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
-        return enabled.any { it.id == expectedShort || it.id == expectedFull }
-    }
 
     // Opens the system Accessibility Settings screen so the user can enable the service
     private fun openAccessibilitySettings() {
@@ -108,6 +100,48 @@ class MainActivity : ComponentActivity() {
                     mutableStateOf(prefs.getBoolean("keep_alive_enabled", false))
                 }
 
+                var batteryOptimizationsIgnored by remember { mutableStateOf(false) }
+                var notificationsGranted by remember { mutableStateOf(true) }
+
+                val refreshBatteryState: () -> Unit = {
+                    batteryOptimizationsIgnored = try {
+                        val pm = getSystemService(PowerManager::class.java)
+                        pm?.isIgnoringBatteryOptimizations(packageName) == true
+                    } catch (_: Exception) {
+                        false
+                    }
+                }
+
+                val refreshNotificationState: () -> Unit = {
+                    notificationsGranted = if (Build.VERSION.SDK_INT >= 33) {
+                        ContextCompat.checkSelfPermission(
+                            this@MainActivity,
+                            Manifest.permission.POST_NOTIFICATIONS
+                        ) == PackageManager.PERMISSION_GRANTED
+                    } else {
+                        true
+                    }
+                }
+
+                val notificationPermissionLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.RequestPermission()
+                ) { granted ->
+                    notificationsGranted = granted
+                }
+
+                val requestNotificationPermission: () -> Unit = {
+                    if (Build.VERSION.SDK_INT >= 33) {
+                        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    } else {
+                        notificationsGranted = true
+                    }
+                }
+
+                LaunchedEffect(Unit) {
+                    refreshBatteryState()
+                    refreshNotificationState()
+                }
+
                 SetupSystemBars()
                 Surface(
                     modifier = Modifier.fillMaxSize()
@@ -118,9 +152,12 @@ class MainActivity : ComponentActivity() {
                     ) {
                         composable("home") {
                             HomeScreen(
-                                isAdaptiveServiceEnabled = { isAdaptiveServiceEnabled() },
+                                getAccessibilityState = { AdaptiveHzRuntimeState.getAccessibilityState(this@MainActivity) },
                                 openAccessibilitySettings = { openAccessibilitySettings() },
                                 requestIgnoreBatteryOptimizations = { requestIgnoreBatteryOptimizations() },
+                                batteryOptimizationsIgnored = batteryOptimizationsIgnored,
+                                notificationsGranted = notificationsGranted,
+                                onRequestNotificationPermission = requestNotificationPermission,
                                 openSettingsScreen = { navController.navigate("settings") },
                                 keepAliveEnabled = keepAliveEnabled,
                                 onKeepAliveEnabledChange = { next ->
@@ -140,6 +177,10 @@ class MainActivity : ComponentActivity() {
                             SettingsScreen(
                                 onBack = { navController.popBackStack() },
                                 keepAliveEnabled = keepAliveEnabled,
+                                batteryOptimizationsIgnored = batteryOptimizationsIgnored,
+                                notificationsGranted = notificationsGranted,
+                                onRequestIgnoreBatteryOptimizations = { requestIgnoreBatteryOptimizations() },
+                                onRequestNotificationPermission = requestNotificationPermission,
                                 onKeepAliveChanged = { next ->
                                     prefs.edit { putBoolean("keep_alive_enabled", next) }
                                     keepAliveEnabled = next

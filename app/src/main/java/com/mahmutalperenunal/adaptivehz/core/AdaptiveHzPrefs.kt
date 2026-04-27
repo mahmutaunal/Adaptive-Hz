@@ -20,6 +20,10 @@ object AdaptiveHzPrefs {
     const val KEY_MANUAL_TARGET = "manual_target"
     const val KEY_KEEP_ALIVE_ENABLED = "keep_alive_enabled"
     const val KEY_CURRENT_MODE = "current_mode"
+    const val KEY_ACCESSIBILITY_LAST_HEARTBEAT = "accessibility_last_heartbeat"
+    const val KEY_ACCESSIBILITY_LAST_CONNECTED_AT = "accessibility_last_connected_at"
+    const val KEY_ACCESSIBILITY_CONNECTED = "accessibility_connected"
+    const val KEY_INITIAL_SETUP_COMPLETED = "initial_setup_completed"
 
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -123,5 +127,34 @@ object AdaptiveHzPrefs {
         }
 
         setCurrentMode(context, mode)
+    }
+
+    fun getAccessibilityLastHeartbeat(context: Context): Long {
+        return prefs(context).getLong(KEY_ACCESSIBILITY_LAST_HEARTBEAT, 0L)
+    }
+
+    fun setAccessibilityConnected(context: Context, connected: Boolean) {
+        prefs(context).edit { putBoolean(KEY_ACCESSIBILITY_CONNECTED, connected) }
+    }
+
+    fun markAccessibilityHeartbeat(context: Context) {
+        val now = System.currentTimeMillis()
+        prefs(context).edit {
+            putBoolean(KEY_ACCESSIBILITY_CONNECTED, true)
+            putLong(KEY_ACCESSIBILITY_LAST_CONNECTED_AT, now)
+            putLong(KEY_ACCESSIBILITY_LAST_HEARTBEAT, now)
+        }
+    }
+
+    fun markAccessibilityDisconnected(context: Context) {
+        prefs(context).edit { putBoolean(KEY_ACCESSIBILITY_CONNECTED, false) }
+    }
+
+    fun isInitialSetupCompleted(context: Context): Boolean {
+        return prefs(context).getBoolean(KEY_INITIAL_SETUP_COMPLETED, false)
+    }
+
+    fun setInitialSetupCompleted(context: Context, completed: Boolean) {
+        prefs(context).edit { putBoolean(KEY_INITIAL_SETUP_COMPLETED, completed) }
     }
 }

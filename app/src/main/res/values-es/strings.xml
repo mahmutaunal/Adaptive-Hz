@@ -145,6 +145,14 @@
     <string name="settings_item_privacy_policy">Política de privacidad</string>
     <string name="settings_item_open_source_notices">Licencias de código abierto</string>
 
+    <string name="settings_item_battery_optimization">Optimización de batería</string>
+    <string name="settings_value_battery_optimization_ok">Las restricciones de batería están desactivadas para mejorar la estabilidad.</string>
+    <string name="settings_value_battery_optimization_recommended">Recomendado para mejorar la estabilidad en segundo plano en dispositivos agresivos.</string>
+    <string name="settings_item_notification_permission">Permiso de notificaciones</string>
+    <string name="settings_value_notification_permission_ok">El permiso de notificaciones está concedido.</string>
+    <string name="settings_value_notification_permission_required">Es necesario para activar Stability Mode en Android 13 o superior.</string>
+    <string name="settings_toast_notification_required_for_stability">Se requiere el permiso de notificaciones para activar Stability Mode.</string>
+
     <!-- Settings - values -->
     <string name="settings_value_stability_mode_summary">Mantiene Adaptive Hz funcionando de forma más estable en segundo plano mediante una notificación persistente. Al desactivarlo, la notificación desaparece, pero la estabilidad puede reducirse en algunos dispositivos.</string>
     <string name="settings_value_version">%1$s (%2$d)</string>
@@ -209,4 +217,15 @@
     <string name="widget_status_adaptive">Modo adaptativo activo</string>
     <string name="widget_status_maximum">Frecuencia máxima activa</string>
     <string name="widget_status_setup_required">Configuración necesaria — toca para abrir la app</string>
+
+    <string name="accessibility_broken_adaptive_disabled">El modo Adaptive no está disponible temporalmente porque el Servicio de Accesibilidad no responde. Los modos manuales aún se pueden usar.</string>
+    <string name="recovery_title">El servicio no responde</string>
+    <string name="recovery_desc">
+        El Servicio de Accesibilidad parece estar activado pero no responde.
+        Esto puede ocurrir debido a restricciones del sistema o limitaciones en segundo plano.
+        Puedes intentar reiniciar el servicio o ajustar la configuración de batería.
+    </string>
+    <string name="retry">Reintentar</string>
+    <string name="setup_continue_button">Continuar</string>
+    <string name="setup_continue_required_hint">Completa los pasos obligatorios anteriores para continuar. Los pasos recomendados son opcionales.</string>
 </resources>

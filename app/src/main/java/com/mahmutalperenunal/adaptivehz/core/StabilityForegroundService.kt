@@ -61,6 +61,21 @@ class StabilityForegroundService : Service() {
                 cancelPendingStop()
                 AdaptiveHzActionHandler.setMaximum(this)
             }
+
+            ACTION_STOP -> {
+                cancelPendingStop()
+                stopForeground(STOP_FOREGROUND_REMOVE)
+                stopSelf()
+                return START_NOT_STICKY
+            }
+
+            ACTION_REFRESH_NOTIFICATION -> {
+                cancelPendingStop()
+            }
+
+            null -> {
+                cancelPendingStop()
+            }
         }
 
         val nm = getSystemService(NotificationManager::class.java)

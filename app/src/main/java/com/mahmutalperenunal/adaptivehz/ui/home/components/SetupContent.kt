@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -34,6 +35,8 @@ fun SetupComponent(
     batteryOptimizationsIgnored: Boolean,
     notificationsGranted: Boolean,
     keepAliveEnabled: Boolean,
+    requiredSetupReady: Boolean,
+    onContinue: () -> Unit,
     labelOn: String,
     labelOff: String,
     labelGranted: String,
@@ -250,6 +253,28 @@ fun SetupComponent(
                     ) {
                         Text(stringResource(id = R.string.setup_notifications_button))
                     }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                FilledTonalButton(
+                    onClick = onContinue,
+                    enabled = requiredSetupReady,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(id = R.string.setup_continue_button))
+                }
+
+                if (!requiredSetupReady) {
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = stringResource(id = R.string.setup_continue_required_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
         }

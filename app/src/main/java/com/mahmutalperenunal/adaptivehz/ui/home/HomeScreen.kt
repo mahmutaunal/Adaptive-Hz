@@ -1,15 +1,11 @@
 package com.mahmutalperenunal.adaptivehz.ui.home
 
-import android.Manifest
 import android.content.pm.PackageManager
-import android.os.Build
-import android.os.PowerManager
 import android.provider.Settings
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,10 +17,13 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.ReportProblem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
@@ -40,6 +39,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.TopAppBar
 import androidx.core.content.ContextCompat
 import com.mahmutalperenunal.adaptivehz.core.AdaptiveHzActionHandler
@@ -50,6 +50,7 @@ import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateController
 import kotlinx.coroutines.delay
 import androidx.compose.ui.res.stringResource
 import com.mahmutalperenunal.adaptivehz.R
+import com.mahmutalperenunal.adaptivehz.core.AdaptiveHzRuntimeState
 import com.mahmutalperenunal.adaptivehz.core.system.RootManager
 import com.mahmutalperenunal.adaptivehz.ui.home.components.DashboardComponent
 import com.mahmutalperenunal.adaptivehz.ui.home.components.SetupComponent
@@ -57,7 +58,10 @@ import com.mahmutalperenunal.adaptivehz.ui.home.components.SetupComponent
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    isAdaptiveServiceEnabled: () -> Boolean,
+    getAccessibilityState: () -> AdaptiveHzRuntimeState.AccessibilityState,
+    batteryOptimizationsIgnored: Boolean,
+    notificationsGranted: Boolean,
+    onRequestNotificationPermission: () -> Unit,
     openAccessibilitySettings: () -> Unit,
     requestIgnoreBatteryOptimizations: () -> Unit,
     openSettingsScreen: () -> Unit,
@@ -101,74 +105,38 @@ fun HomeScreen(
     val currentMode = remember { mutableStateOf(prefs.getCurrentMode(context)) }
 
     // Frequently refreshed runtime checks
-    var accessibilityEnabled by remember { mutableStateOf(isAdaptiveServiceEnabled()) }
+    val accessibilityState = remember { mutableStateOf(getAccessibilityState()) }
     var status by remember { mutableStateOf(RefreshRateController.readStatus(context)) }
 
-    var batteryOptimizationsIgnored by remember { mutableStateOf(false) }
-    var notificationsGranted by remember { mutableStateOf(true) }
     var rootAvailable by remember { mutableStateOf(false) }
 
-    // Checks whether battery optimizations are disabled for the app
-    val refreshBatteryState: () -> Unit = {
-        batteryOptimizationsIgnored = try {
-            val pm = context.getSystemService(PowerManager::class.java)
-            pm?.isIgnoringBatteryOptimizations(context.packageName) == true
-        } catch (_: Exception) {
-            false
-        }
-    }
+    val initialSetupCompleted = remember { mutableStateOf(prefs.isInitialSetupCompleted(context)) }
 
-    // Checks notification permission status on Android 13+
-    val refreshNotificationState: () -> Unit = {
-        notificationsGranted = if (Build.VERSION.SDK_INT >= 33) {
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
-        } else {
-            true
-        }
-    }
-
-    // Android 13+ notification permission helper
-    val notificationPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        notificationsGranted = granted
-        // If the user granted permission, and they already asked to enable stability,
-        // they can now enable it using the same button.
-    }
-
-    val requestNotificationPermission: () -> Unit = {
-        if (Build.VERSION.SDK_INT >= 33) {
-            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
-    }
 
     // Periodically sync UI state with the latest system/app values
     LaunchedEffect(Unit) {
         while (true) {
-            accessibilityEnabled = isAdaptiveServiceEnabled()
+            accessibilityState.value = getAccessibilityState()
             currentMode.value = prefs.getCurrentMode(context)
-            refreshBatteryState()
-            refreshNotificationState()
             status = RefreshRateController.readStatus(context)
-            delay(500)
+            delay(1000)
         }
     }
 
     LaunchedEffect(Unit) {
-        refreshBatteryState()
-        refreshNotificationState()
-
         rootAvailable = when (RootManager.getRootState()) {
             is RootManager.RootState.Available -> true
             else -> false
         }
     }
 
+    val accessibilityConfigured = accessibilityState.value != AdaptiveHzRuntimeState.AccessibilityState.DISABLED
+    val accessibilityWorking = accessibilityState.value == AdaptiveHzRuntimeState.AccessibilityState.WORKING
+    val accessibilityBroken = accessibilityState.value == AdaptiveHzRuntimeState.AccessibilityState.BROKEN
+
     // Home switches from setup to dashboard only after all required steps are completed
-    val setupComplete = accessibilityEnabled && adbGranted && batteryOptimizationsIgnored && keepAliveEnabled
+    val requiredSetupReady = accessibilityConfigured && adbGranted
+    val setupComplete = requiredSetupReady && initialSetupCompleted.value
 
     val appEnabled = currentMode.value != AdaptiveHzMode.OFF
 
@@ -234,14 +202,31 @@ fun HomeScreen(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            if (accessibilityBroken) {
+                RecoveryCard(
+                    onRetry = {
+                        accessibilityState.value = getAccessibilityState()
+                    },
+                    onOpenAccessibilitySettings = openAccessibilitySettings,
+                    onOpenBatterySettings = requestIgnoreBatteryOptimizations
+                )
+            }
+
             if (!setupComplete) {
                 // Setup flow shown until all required permissions and services are ready
                 SetupComponent(
-                    accessibilityEnabled = accessibilityEnabled,
+                    accessibilityEnabled = accessibilityConfigured,
                     adbGranted = adbGranted,
                     batteryOptimizationsIgnored = batteryOptimizationsIgnored,
                     notificationsGranted = notificationsGranted,
                     keepAliveEnabled = keepAliveEnabled,
+                    requiredSetupReady = requiredSetupReady,
+                    onContinue = {
+                        if (requiredSetupReady) {
+                            prefs.setInitialSetupCompleted(context, true)
+                            initialSetupCompleted.value = true
+                        }
+                    },
                     labelOn = labelOn,
                     labelOff = labelOff,
                     labelGranted = labelGranted,
@@ -326,9 +311,7 @@ fun HomeScreen(
                     onRequestIgnoreBatteryOptimizations = {
                         requestIgnoreBatteryOptimizations()
                     },
-                    onRequestNotificationPermission = {
-                        requestNotificationPermission()
-                    },
+                    onRequestNotificationPermission = onRequestNotificationPermission,
                     onSetKeepAliveEnabled = { next ->
                         prefs.setKeepAliveEnabled(context, next)
                         onKeepAliveEnabledChange(next)
@@ -356,6 +339,8 @@ fun HomeScreen(
                 // Main dashboard shown after setup is fully completed
                 DashboardComponent(
                     appEnabled = appEnabled,
+                    accessibilityWorking = accessibilityWorking,
+                    accessibilityBroken = accessibilityBroken,
                     currentDisplayHz = status.displayHz.toInt(),
                     vendorLabel = status.vendor.toString(),
                     currentModeLabel = currentModeLabel,
@@ -434,5 +419,79 @@ private fun CodeLine(text: String) {
             modifier = Modifier.padding(10.dp),
             style = MaterialTheme.typography.bodySmall
         )
+    }
+}
+
+@Composable
+private fun RecoveryCard(
+    onRetry: () -> Unit,
+    onOpenAccessibilitySettings: () -> Unit,
+    onOpenBatterySettings: () -> Unit
+) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.ReportProblem,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
+
+                Text(
+                    text = stringResource(id = R.string.recovery_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(start = 10.dp)
+                )
+            }
+
+            Text(
+                text = stringResource(id = R.string.recovery_desc),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.9f)
+            )
+
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilledTonalButton(
+                    onClick = onRetry,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(id = R.string.retry))
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onOpenAccessibilitySettings,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(stringResource(id = R.string.setup_accessibility_button))
+                    }
+
+                    OutlinedButton(
+                        onClick = onOpenBatterySettings,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(stringResource(id = R.string.open_battery_settings))
+                    }
+                }
+            }
+        }
     }
 }
