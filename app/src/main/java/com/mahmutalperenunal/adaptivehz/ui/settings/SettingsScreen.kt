@@ -39,7 +39,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -341,7 +340,6 @@ private fun SectionTitle(text: String) {
     )
 }
 
-// Reusable row component for a single settings item
 @Composable
 private fun SettingsRow(
     leading: ImageVector,
@@ -351,47 +349,59 @@ private fun SettingsRow(
     trailing: ImageVector? = null,
     onClick: (() -> Unit)?,
 ) {
-    // Row becomes clickable only if an action is provided
     val clickable = onClick != null
-    ListItem(
-        headlineContent = {
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (clickable) Modifier.clickable(onClick = onClick) else Modifier
+            )
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = leading,
+            contentDescription = null,
+            modifier = Modifier.size(22.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
             Text(
                 text = title,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-        },
-        supportingContent = subtitle?.let {
-            {
+
+            subtitle?.let {
                 Text(
                     text = it,
                     maxLines = subtitleMaxLines,
                     overflow = TextOverflow.Ellipsis,
-                    softWrap = subtitleMaxLines != 1
+                    softWrap = subtitleMaxLines != 1,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-        },
-        leadingContent = {
+        }
+
+        trailing?.let {
+            Spacer(modifier = Modifier.width(16.dp))
+
             Icon(
-                imageVector = leading,
+                imageVector = it,
                 contentDescription = null,
-                modifier = Modifier.size(22.dp)
+                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
-        },
-        trailingContent = trailing?.let {
-            {
-                Icon(
-                    imageVector = it,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        },
-        modifier = Modifier.then(
-            if (clickable) Modifier.clickable(onClick = onClick) else Modifier
-        )
-    )
+        }
+    }
 }
 
 @Composable

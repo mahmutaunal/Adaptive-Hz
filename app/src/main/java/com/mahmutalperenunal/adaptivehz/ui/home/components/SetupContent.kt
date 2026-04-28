@@ -254,30 +254,30 @@ fun SetupComponent(
                         Text(stringResource(id = R.string.setup_notifications_button))
                     }
                 }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                FilledTonalButton(
-                    onClick = onContinue,
-                    enabled = requiredSetupReady,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(stringResource(id = R.string.setup_continue_button))
-                }
-
-                if (!requiredSetupReady) {
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = stringResource(id = R.string.setup_continue_required_hint),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
             }
         }
+    }
+
+    Spacer(modifier = Modifier.height(20.dp))
+
+    FilledTonalButton(
+        onClick = onContinue,
+        enabled = requiredSetupReady,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(stringResource(id = R.string.setup_continue_button))
+    }
+
+    if (!requiredSetupReady) {
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = stringResource(id = R.string.setup_continue_required_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.error,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
