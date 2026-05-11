@@ -1,4 +1,4 @@
-package com.mahmutalperenunal.adaptivehz.core
+package com.mahmutalperenunal.adaptivehz.core.service
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -12,8 +12,9 @@ import android.os.Looper
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.mahmutalperenunal.adaptivehz.R
-import com.mahmutalperenunal.adaptivehz.core.engine.AdaptiveHzMode
+import com.mahmutalperenunal.adaptivehz.core.engine.model.AdaptiveHzMode
 import android.os.Handler
+import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs
 
 /**
  * Keeps the app process alive more reliably on aggressive OEM ROMs (e.g. HyperOS)
@@ -25,6 +26,9 @@ class StabilityForegroundService : Service() {
 
     private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
 
+    /**
+     * Delays shutdown briefly to avoid notification flicker during quick toggles.
+     */
     private val delayedStopRunnable = Runnable {
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
@@ -35,6 +39,9 @@ class StabilityForegroundService : Service() {
         startForeground(NOTIF_ID, buildNotification())
     }
 
+    /**
+     * Handles notification actions and foreground lifecycle updates.
+     */
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_TOGGLE_ON -> {
@@ -86,6 +93,9 @@ class StabilityForegroundService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    /**
+     * Builds the persistent foreground notification with quick mode actions.
+     */
     private fun buildNotification(): Notification {
         ensureChannel()
 
@@ -157,6 +167,9 @@ class StabilityForegroundService : Service() {
         return builder.build()
     }
 
+    /**
+     * Creates immutable notification action intents.
+     */
     private fun createServiceIntent(action: String): PendingIntent {
         val intent = Intent(this, StabilityForegroundService::class.java).apply {
             this.action = action
@@ -169,6 +182,9 @@ class StabilityForegroundService : Service() {
         )
     }
 
+    /**
+     * Creates the notification channel on first launch.
+     */
     private fun ensureChannel() {
         val nm = getSystemService(NotificationManager::class.java)
         val existing = nm.getNotificationChannel(CHANNEL_ID)
@@ -183,6 +199,9 @@ class StabilityForegroundService : Service() {
         }
     }
 
+    /**
+     * Keeps the service alive briefly after switching OFF.
+     */
     private fun scheduleDelayedStop() {
         cancelPendingStop()
         mainHandler.postDelayed(delayedStopRunnable, OFF_GRACE_PERIOD_MS)
@@ -224,6 +243,9 @@ class StabilityForegroundService : Service() {
             context.startService(intent)
         }
 
+        /**
+         * Refreshes notification state without restarting engine logic.
+         */
         fun refreshNotification(context: Context) {
             if (!AdaptiveHzPrefs.isKeepAliveEnabled(context)) return
             if (!AdaptiveHzPrefs.isAppEnabled(context)) return

@@ -8,8 +8,14 @@ import android.os.PowerManager
 import android.os.SystemClock
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
+import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs
+import com.mahmutalperenunal.adaptivehz.core.debug.DebugAccessibilityEvent
+import com.mahmutalperenunal.adaptivehz.core.debug.DebugEventStore
+import com.mahmutalperenunal.adaptivehz.core.engine.model.AdaptiveHzMode
+import com.mahmutalperenunal.adaptivehz.core.engine.model.AppRefreshProfileMode
 import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateController
-import com.mahmutalperenunal.adaptivehz.core.engine.strategy.VendorStrategy
+import com.mahmutalperenunal.adaptivehz.core.engine.model.VendorStrategy
+import com.mahmutalperenunal.adaptivehz.core.engine.model.VendorTuning
 
 /**
  * Engine that toggles the device between LOW (min Hz) and HIGH (max Hz)
@@ -18,12 +24,11 @@ import com.mahmutalperenunal.adaptivehz.core.engine.strategy.VendorStrategy
 class AdaptiveHzEngine(
     private val context: Context,
     private val strategy: VendorStrategy,
-    private val isEnabled: () -> Boolean,
+    private val getGlobalMode: () -> AdaptiveHzMode,
     private val shouldIgnorePackage: (String?) -> Boolean,
+    private val getAppProfileMode: (String?) -> AppRefreshProfileMode = { AppRefreshProfileMode.DEFAULT },
     private val tag: String = "AdaptiveHzEngine",
-
-    // Core UX timing (keep these stable across devices)
-    private val interactionIdleTimeoutMs: Long = 2000L
+    private val tuning: VendorTuning = strategy.tuning()
 ) {
     private val handler = Handler(Looper.getMainLooper())
 
@@ -32,24 +37,24 @@ class AdaptiveHzEngine(
     private var isHigh = false
 
     private var lastHighUptimeMs: Long = 0L
-    private var lastBoostUptimeMs: Long = 0L
+    private var lastCoalescedEventUptimeMs: Long = 0L
 
     private var isTouchInteracting: Boolean = false
 
     // Single idle timer: every boost resets it; when it fires we drop to LOW.
     private val dropRunnable = Runnable {
         if (!started) return@Runnable
-        if (!isEnabled()) return@Runnable
+        if (getGlobalMode() == AdaptiveHzMode.OFF) return@Runnable
         applyLow(force = false)
     }
 
     // Safety net: if HIGH is held too long (missing END/noisy events), force LOW.
     private val safetyRunnable = Runnable {
         if (!started) return@Runnable
-        if (!isEnabled()) return@Runnable
+        if (getGlobalMode() == AdaptiveHzMode.OFF) return@Runnable
 
         val now = SystemClock.uptimeMillis()
-        val heldTooLong = isHigh && (now - lastHighUptimeMs) >= interactionIdleTimeoutMs
+        val heldTooLong = isHigh && (now - lastHighUptimeMs) >= tuning.interactionIdleTimeoutMs
         if (heldTooLong) {
             Log.w(tag, "Safety drop -> LOW")
             applyLow(force = true)
@@ -62,7 +67,6 @@ class AdaptiveHzEngine(
         started = true
         isHigh = false
         lastHighUptimeMs = 0L
-        lastBoostUptimeMs = 0L
         isTouchInteracting = false
 
         // Start safe at LOW
@@ -88,11 +92,31 @@ class AdaptiveHzEngine(
         logEventDetails(event)
 
         if (!started) return
-        if (!isEnabled()) return
+        if (getGlobalMode() == AdaptiveHzMode.OFF) return
 
         val pkg = event.packageName?.toString()
+
+        DebugEventStore.add(
+            DebugAccessibilityEvent(
+                timestamp = System.currentTimeMillis(),
+                packageName = pkg.orEmpty(),
+                eventType = eventTypeName(event.eventType),
+                contentChangeTypes = event.contentChangeTypes,
+                scrollDeltaX = runCatching { event.scrollDeltaX }.getOrDefault(0),
+                scrollDeltaY = runCatching { event.scrollDeltaY }.getOrDefault(0)
+            )
+        )
+
+        AdaptiveHzPrefs.updateDebugForegroundPackage(context, pkg)
+        AdaptiveHzPrefs.updateDebugLastEvent(
+            context = context,
+            eventName = eventTypeName(event.eventType),
+            packageName = pkg
+        )
+
         if (shouldIgnorePackage(pkg)) return
         if (!canProcessForegroundInteraction(pkg)) return
+        if (!handleModeDecisionBeforeEvent(pkg)) return
 
         Log.d(tag, "EVENT ${eventTypeName(event.eventType)} pkg=$pkg isHigh=$isHigh")
 
@@ -104,20 +128,22 @@ class AdaptiveHzEngine(
 
             AccessibilityEvent.TYPE_TOUCH_INTERACTION_END -> {
                 isTouchInteracting = false
-                scheduleDrop(interactionIdleTimeoutMs)
+                scheduleDrop(tuning.interactionIdleTimeoutMs)
             }
 
             AccessibilityEvent.TYPE_VIEW_CLICKED,
             AccessibilityEvent.TYPE_VIEW_SELECTED,
             AccessibilityEvent.TYPE_VIEW_SCROLLED -> {
-                isTouchInteracting = true
-                requestHigh()
+                if (tuning.allowScrollBoost) {
+                    isTouchInteracting = true
+                    requestHigh()
+                }
             }
 
             AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
-                if (shouldBoostFromContentChange(event)) {
+                if (tuning.allowContentChangeBoost && shouldBoostFromContentChange(event)) {
                     if (isHigh) {
-                        scheduleDrop(interactionIdleTimeoutMs)
+                        scheduleDrop(tuning.interactionIdleTimeoutMs)
                     } else {
                         requestHigh()
                     }
@@ -138,6 +164,93 @@ class AdaptiveHzEngine(
         }
     }
 
+    /**
+     * Resolves global mode and per-app overrides before processing an event.
+     */
+    private fun handleModeDecisionBeforeEvent(pkg: String?): Boolean {
+        val globalMode = getGlobalMode()
+        val appMode = getAppProfileMode(pkg)
+
+        if (globalMode == AdaptiveHzMode.OFF) {
+            applyLow(force = true)
+            return false
+        }
+
+        val finalMode = when (appMode) {
+
+            // Follow global behavior
+            AppRefreshProfileMode.DEFAULT -> {
+                when (globalMode) {
+                    AdaptiveHzMode.ADAPTIVE -> AppRefreshProfileMode.ADAPTIVE
+                    AdaptiveHzMode.FORCE_MIN -> AppRefreshProfileMode.FORCE_MIN
+                    AdaptiveHzMode.FORCE_MAX -> AppRefreshProfileMode.FORCE_MAX
+                }
+            }
+
+            // Per-app override modes
+            AppRefreshProfileMode.ADAPTIVE -> {
+                AppRefreshProfileMode.ADAPTIVE
+            }
+
+            AppRefreshProfileMode.FORCE_MIN -> {
+                AppRefreshProfileMode.FORCE_MIN
+            }
+
+            AppRefreshProfileMode.FORCE_MAX -> {
+                AppRefreshProfileMode.FORCE_MAX
+            }
+
+            AppRefreshProfileMode.RESPECT_APP -> {
+                AppRefreshProfileMode.RESPECT_APP
+            }
+
+            AppRefreshProfileMode.DISABLED -> {
+                AppRefreshProfileMode.DISABLED
+            }
+        }
+
+        Log.d(tag, "Mode decision pkg=$pkg global=$globalMode app=$appMode final=$finalMode")
+
+        return when (finalMode) {
+            AppRefreshProfileMode.DEFAULT -> {
+                true
+            }
+
+            AppRefreshProfileMode.ADAPTIVE -> {
+                if (globalMode == AdaptiveHzMode.FORCE_MIN || globalMode == AdaptiveHzMode.FORCE_MAX) isHigh = false
+                true
+            }
+
+            AppRefreshProfileMode.FORCE_MIN -> {
+                handler.removeCallbacks(dropRunnable)
+                handler.removeCallbacks(safetyRunnable)
+                applyLow(force = true)
+                false
+            }
+
+            AppRefreshProfileMode.FORCE_MAX -> {
+                handler.removeCallbacks(dropRunnable)
+                handler.removeCallbacks(safetyRunnable)
+                if (!isHigh) applyHigh(force = true)
+                false
+            }
+
+            AppRefreshProfileMode.RESPECT_APP -> {
+                handler.removeCallbacks(dropRunnable)
+                handler.removeCallbacks(safetyRunnable)
+                isHigh = false
+                false
+            }
+
+            AppRefreshProfileMode.DISABLED -> {
+                handler.removeCallbacks(dropRunnable)
+                handler.removeCallbacks(safetyRunnable)
+                applyLow(force = true)
+                false
+            }
+        }
+    }
+
     private fun shouldBoostFromContentChange(e: AccessibilityEvent): Boolean {
         // Main interaction signal on many OneUI / HyperOS devices.
         // Keep this permissive so real touches are not missed.
@@ -153,14 +266,17 @@ class AdaptiveHzEngine(
         return false
     }
 
+    /**
+     * Extends the current boost across window transitions when needed.
+     */
     private fun onWindowStateChanged(event: AccessibilityEvent) {
         val pkg = event.packageName?.toString()
         if (shouldIgnorePackage(pkg)) return
 
         // Do not force a fresh boost if we are already LOW and idle.
         // But if the UI is already active, keep the HIGH window alive across screen/dialog transitions.
-        if (isHigh) {
-            scheduleDrop(interactionIdleTimeoutMs)
+        if (tuning.extendBoostOnWindowChange && isHigh) {
+            scheduleDrop(tuning.interactionIdleTimeoutMs)
         }
     }
 
@@ -204,10 +320,22 @@ class AdaptiveHzEngine(
         return true
     }
 
+    /**
+     * Requests a HIGH state while coalescing rapid duplicate signals.
+     */
     private fun requestHigh() {
+        if (shouldCoalesceBoost()) {
+            if (isHigh) {
+                lastHighUptimeMs = SystemClock.uptimeMillis()
+                scheduleDrop(tuning.interactionIdleTimeoutMs)
+                scheduleSafety()
+            }
+            return
+        }
+
         if (isHigh) {
             lastHighUptimeMs = SystemClock.uptimeMillis()
-            scheduleDrop(interactionIdleTimeoutMs)
+            scheduleDrop(tuning.interactionIdleTimeoutMs)
             scheduleSafety()
             return
         }
@@ -215,6 +343,9 @@ class AdaptiveHzEngine(
         boostNow()
     }
 
+    /**
+     * Applies HIGH immediately for adaptive interaction boosts.
+     */
     private fun boostNow() {
         if (RefreshRateController.isBatterySaverOn(context)) {
             Log.d(tag, "Battery saver active, forcing LOW")
@@ -225,6 +356,12 @@ class AdaptiveHzEngine(
         val w = strategy.desiredHigh(context)
         val ok = RefreshRateController.writeSetting(context, w.key, w.intValue)
 
+        AdaptiveHzPrefs.updateDebugLastWrite(
+            context = context,
+            label = "HIGH ${w.label}",
+            success = ok
+        )
+
         if (ok) {
             isHigh = true
             lastHighUptimeMs = SystemClock.uptimeMillis()
@@ -234,19 +371,61 @@ class AdaptiveHzEngine(
             Log.w(tag, "HIGH (${w.label}) failed")
         }
 
-        scheduleDrop(interactionIdleTimeoutMs)
+        scheduleDrop(tuning.interactionIdleTimeoutMs)
+    }
+
+    /**
+     * Applies HIGH for explicit mode overrides.
+     */
+    private fun applyHigh(force: Boolean) {
+        if (isHigh && !force) return
+
+        if (RefreshRateController.isBatterySaverOn(context)) {
+            Log.d(tag, "Battery saver active, forcing LOW")
+            applyLow(force = true)
+            return
+        }
+
+        val w = strategy.desiredHigh(context)
+        val ok = RefreshRateController.writeSetting(context, w.key, w.intValue)
+
+        AdaptiveHzPrefs.updateDebugLastWrite(
+            context = context,
+            label = "HIGH ${w.label}",
+            success = ok
+        )
+
+        if (ok) {
+            isHigh = true
+            lastHighUptimeMs = SystemClock.uptimeMillis()
+            Log.d(tag, "HIGH (${w.label}) success")
+            scheduleSafety()
+        } else {
+            Log.w(tag, "HIGH (${w.label}) failed")
+        }
     }
 
     /** Resets the idle timer that drops the device back to LOW. */
-    private fun scheduleDrop(delayMs: Long = interactionIdleTimeoutMs) {
+    private fun scheduleDrop(delayMs: Long = tuning.interactionIdleTimeoutMs) {
         handler.removeCallbacks(dropRunnable)
         handler.postDelayed(dropRunnable, delayMs)
     }
 
+    /**
+     * Applies LOW and updates debug write state.
+     */
     private fun applyLow(force: Boolean) {
         if (!isHigh && !force) return
+
         val w = strategy.desiredLow(context)
         val ok = RefreshRateController.writeSetting(context, w.key, w.intValue)
+
+        AdaptiveHzPrefs.updateDebugLastWrite(
+            context = context,
+            label = "LOW ${w.label}",
+            success = ok
+        )
+
         if (ok) {
             isHigh = false
             Log.d(tag, "LOW (${w.label}) success")
@@ -258,9 +437,32 @@ class AdaptiveHzEngine(
     /** Schedules the safety check that prevents staying on HIGH indefinitely. */
     private fun scheduleSafety() {
         handler.removeCallbacks(safetyRunnable)
-        handler.postDelayed(safetyRunnable, interactionIdleTimeoutMs)
+        handler.postDelayed(safetyRunnable, tuning.interactionIdleTimeoutMs)
     }
 
+    /**
+     * Reduces redundant writes caused by bursty accessibility events.
+     */
+    private fun shouldCoalesceBoost(): Boolean {
+        val now = SystemClock.uptimeMillis()
+
+        val delta = now - lastCoalescedEventUptimeMs
+
+        if (delta < tuning.eventCoalescingWindowMs) {
+            Log.d(
+                tag,
+                "Coalesced boost request delta=${delta}ms"
+            )
+            return true
+        }
+
+        lastCoalescedEventUptimeMs = now
+        return false
+    }
+
+    /**
+     * Converts event constants into readable debug names.
+     */
     private fun eventTypeName(type: Int): String {
         return when (type) {
             AccessibilityEvent.TYPE_TOUCH_INTERACTION_START -> "TOUCH_START"
@@ -277,6 +479,9 @@ class AdaptiveHzEngine(
         }
     }
 
+    /**
+     * Logs raw event details for vendor-specific tuning and debugging.
+     */
     private fun logEventDetails(event: AccessibilityEvent) {
         val source = event.source
 

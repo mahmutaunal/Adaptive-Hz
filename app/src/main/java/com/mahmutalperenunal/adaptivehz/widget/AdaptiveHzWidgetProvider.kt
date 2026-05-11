@@ -7,8 +7,8 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import com.mahmutalperenunal.adaptivehz.core.AdaptiveHzActionHandler
-import com.mahmutalperenunal.adaptivehz.core.engine.AdaptiveHzMode
+import com.mahmutalperenunal.adaptivehz.core.service.AdaptiveHzActionHandler
+import com.mahmutalperenunal.adaptivehz.core.engine.model.AdaptiveHzMode
 
 // AppWidgetProvider that receives widget updates and mode change actions.
 class AdaptiveHzWidgetProvider : AppWidgetProvider() {

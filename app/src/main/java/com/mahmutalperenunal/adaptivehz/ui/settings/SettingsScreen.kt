@@ -20,27 +20,35 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.OpenInNew
+import androidx.compose.material.icons.outlined.Accessibility
+import androidx.compose.material.icons.outlined.AdminPanelSettings
 import androidx.compose.material.icons.outlined.BatterySaver
 import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.Storefront
+import androidx.compose.material.icons.outlined.Sync
+import androidx.compose.material.icons.outlined.Terminal
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -62,20 +70,31 @@ import androidx.compose.ui.Alignment
 import com.mahmutalperenunal.adaptivehz.BuildConfig
 import com.mahmutalperenunal.adaptivehz.R
 import androidx.core.net.toUri
+import com.mahmutalperenunal.adaptivehz.core.engine.AdaptiveHzRuntimeState
 
 /**
-Settings screen for the app. Displays app info, developer links, support options, and legal notices.
+ * Settings route for setup actions, diagnostics, support links and legal notices.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
+    accessibilityState: AdaptiveHzRuntimeState.AccessibilityState,
+    adbGranted: Boolean,
+    usageAccessGranted: Boolean,
+    rootAvailable: Boolean,
+    onOpenAccessibilitySettings: () -> Unit,
+    onVerifyAdb: () -> Unit,
+    onGrantWithRoot: () -> Unit,
+    onOpenUsageAccessSettings: () -> Unit,
     keepAliveEnabled: Boolean,
     onKeepAliveChanged: (Boolean) -> Unit,
     batteryOptimizationsIgnored: Boolean,
     notificationsGranted: Boolean,
     onRequestIgnoreBatteryOptimizations: () -> Unit,
     onRequestNotificationPermission: () -> Unit,
+    onOpenDiagnostics: () -> Unit,
+    onOpenEventInspector: () -> Unit,
     modifier: Modifier = Modifier,
     appName: String? = null,
     appTagline: String? = null,
@@ -98,14 +117,10 @@ fun SettingsScreen(
     val shareTitle = stringResource(R.string.settings_share_title, appNameText)
     val shareBody = stringResource(R.string.settings_share_text, appNameText, githubRepoUrl)
 
-    // Holds the currently visible legal dialog (Privacy Policy / Open Source Notices)
     val dialog = remember { mutableStateOf<LegalDialog?>(null) }
-
-    // Scroll state for the vertically scrollable settings content
     val scrollState = rememberScrollState()
     val topBarState = rememberTopAppBarState()
 
-    // Main layout structure with top app bar and scrollable content
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
@@ -128,21 +143,66 @@ fun SettingsScreen(
                 .padding(padding)
                 .verticalScroll(scrollState)
                 .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            AppHeader(appTagline = appTaglineText)
-
-            Spacer(modifier = Modifier.height(4.dp))
+            SettingsHeroCard(
+                title = appNameText,
+                subtitle = appTaglineText
+            )
 
             SectionTitle(stringResource(R.string.settings_section_behavior))
+
+            SettingsRow(
+                leading = Icons.Outlined.Accessibility,
+                title = stringResource(R.string.setup_accessibility_title),
+                subtitle = if (accessibilityState == AdaptiveHzRuntimeState.AccessibilityState.WORKING) {
+                    stringResource(R.string.settings_accessibility_working_summary)
+                } else {
+                    stringResource(R.string.settings_accessibility_required_summary)
+                },
+                onClick = onOpenAccessibilitySettings
+            )
+
+            SettingsRow(
+                leading = Icons.Outlined.Terminal,
+                title = stringResource(R.string.setup_adb_title),
+                subtitle = if (adbGranted) {
+                    stringResource(R.string.settings_adb_granted_summary)
+                } else if (rootAvailable) {
+                    stringResource(R.string.settings_adb_or_root_summary)
+                } else {
+                    stringResource(R.string.settings_adb_required_summary)
+                },
+                onClick = onVerifyAdb
+            )
+
+            if (!adbGranted && rootAvailable) {
+                SettingsRow(
+                    leading = Icons.Outlined.AdminPanelSettings,
+                    title = stringResource(R.string.setup_root_grant_button),
+                    subtitle = stringResource(R.string.setup_root_detected_desc),
+                    onClick = onGrantWithRoot
+                )
+            }
+
+            SettingsRow(
+                leading = Icons.Outlined.History,
+                title = stringResource(R.string.setup_usage_access_title),
+                subtitle = if (usageAccessGranted) {
+                    stringResource(R.string.settings_usage_access_granted_summary)
+                } else {
+                    stringResource(R.string.settings_usage_access_recommended_summary)
+                },
+                onClick = onOpenUsageAccessSettings
+            )
 
             SettingsRow(
                 leading = Icons.Outlined.BatterySaver,
                 title = stringResource(R.string.settings_item_battery_optimization),
                 subtitle = if (batteryOptimizationsIgnored) {
-                    stringResource(R.string.settings_value_battery_optimization_ok)
+                    stringResource(R.string.settings_battery_optimizations_disabled_summary)
                 } else {
-                    stringResource(R.string.settings_value_battery_optimization_recommended)
+                    stringResource(R.string.settings_battery_optimization_recommended_summary)
                 },
                 onClick = onRequestIgnoreBatteryOptimizations
             )
@@ -152,20 +212,21 @@ fun SettingsScreen(
                     leading = Icons.Outlined.Notifications,
                     title = stringResource(R.string.settings_item_notification_permission),
                     subtitle = if (notificationsGranted) {
-                        stringResource(R.string.settings_value_notification_permission_ok)
+                        stringResource(R.string.settings_notifications_enabled_summary)
                     } else {
-                        stringResource(R.string.settings_value_notification_permission_required)
+                        stringResource(R.string.settings_notifications_required_summary)
                     },
                     onClick = onRequestNotificationPermission
                 )
             }
 
             SettingsSwitchRow(
-                leading = Icons.Outlined.Notifications,
+                leading = Icons.Outlined.Sync,
                 title = stringResource(R.string.settings_item_stability_mode),
                 subtitle = stringResource(R.string.settings_value_stability_mode_summary),
                 checked = keepAliveEnabled,
                 onCheckedChange = { next ->
+                    // Stability mode requires foreground notifications on Android 13+.
                     if (
                         next &&
                         Build.VERSION.SDK_INT >= 33 &&
@@ -184,7 +245,19 @@ fun SettingsScreen(
                 }
             )
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp))
+            SectionTitle(stringResource(R.string.settings_section_debug))
+            SettingsRow(
+                leading = Icons.Outlined.BugReport,
+                title = stringResource(R.string.diagnostics_title),
+                subtitle = stringResource(R.string.settings_diagnostics_summary),
+                onClick = onOpenDiagnostics
+            )
+            SettingsRow(
+                leading = Icons.Outlined.BugReport,
+                title = stringResource(R.string.accessibility_event_inspector_title),
+                subtitle = stringResource(R.string.settings_event_inspector_summary),
+                onClick = onOpenEventInspector
+            )
 
             SectionTitle(stringResource(R.string.settings_section_about))
             SettingsRow(
@@ -201,8 +274,6 @@ fun SettingsScreen(
                 trailing = Icons.AutoMirrored.Outlined.OpenInNew,
                 onClick = { openUrl(context, githubRepoUrl) }
             )
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp))
 
             SectionTitle(stringResource(R.string.settings_section_developer))
             SettingsRow(
@@ -227,8 +298,6 @@ fun SettingsScreen(
                 onClick = { openUrl(context, websiteUrlText) }
             )
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp))
-
             SectionTitle(stringResource(R.string.settings_section_support))
             SettingsRow(
                 leading = Icons.Outlined.BugReport,
@@ -251,8 +320,6 @@ fun SettingsScreen(
                 }
             )
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp))
-
             SectionTitle(stringResource(R.string.settings_section_legal))
             SettingsRow(
                 leading = Icons.Outlined.PrivacyTip,
@@ -265,11 +332,6 @@ fun SettingsScreen(
                 title = stringResource(R.string.settings_item_open_source_notices),
                 subtitle = stringResource(R.string.settings_value_third_party_licenses),
                 onClick = { dialog.value = LegalDialog.OpenSourceNotices }
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-            FooterNote(
-                text = stringResource(R.string.settings_footer_tip)
             )
             Spacer(modifier = Modifier.height(4.dp))
         }
@@ -316,30 +378,58 @@ fun SettingsScreen(
     }
 }
 
-// Simple header displaying the app tagline
+/**
+ * Header card displaying the app name and tagline.
+ */
 @Composable
-private fun AppHeader(
-    appTagline: String
+private fun SettingsHeroCard(
+    title: String,
+    subtitle: String
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(
-            text = appTagline,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(32.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         )
+    ) {
+        Column(
+            modifier = Modifier.padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
 
-// Section label used to group related settings items
+/**
+ * Section label used to group related settings items.
+ */
 @Composable
 private fun SectionTitle(text: String) {
     Text(
-        text = text,
-        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-        color = MaterialTheme.colorScheme.onSurfaceVariant
+        text = text.uppercase(),
+        style = MaterialTheme.typography.labelMedium.copy(
+            fontWeight = FontWeight.Bold
+        ),
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(start = 4.dp, top = 2.dp)
     )
 }
 
+/**
+ * Reusable settings row with optional subtitle, trailing icon and click action.
+ */
 @Composable
 private fun SettingsRow(
     leading: ImageVector,
@@ -351,59 +441,85 @@ private fun SettingsRow(
 ) {
     val clickable = onClick != null
 
-    Row(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
             .then(
                 if (clickable) Modifier.clickable(onClick = onClick) else Modifier
-            )
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = leading,
-            contentDescription = null,
-            modifier = Modifier.size(22.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+            ),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         )
-
-        Spacer(modifier = Modifier.width(16.dp))
-
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = title,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            subtitle?.let {
-                Text(
-                    text = it,
-                    maxLines = subtitleMaxLines,
-                    overflow = TextOverflow.Ellipsis,
-                    softWrap = subtitleMaxLines != 1,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            Surface(
+                modifier = Modifier.size(46.dp),
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = leading,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
-        }
 
-        trailing?.let {
             Spacer(modifier = Modifier.width(16.dp))
 
-            Icon(
-                imageVector = it,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                subtitle?.let {
+                    Text(
+                        text = it,
+                        maxLines = subtitleMaxLines,
+                        overflow = TextOverflow.Ellipsis,
+                        softWrap = subtitleMaxLines != 1,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            trailing?.let {
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Icon(
+                    imageVector = it,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
 
+/**
+ * Reusable settings row for toggleable options.
+ */
 @Composable
 private fun SettingsSwitchRow(
     leading: ImageVector,
@@ -412,64 +528,79 @@ private fun SettingsSwitchRow(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
 ) {
-    Row(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onCheckedChange(!checked) }
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .clickable { onCheckedChange(!checked) },
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        )
     ) {
-        Icon(
-            imageVector = leading,
-            contentDescription = null,
-            modifier = Modifier.size(22.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Spacer(modifier = Modifier.width(16.dp))
-
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = title,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            subtitle?.let {
-                Text(
-                    text = it,
-                    maxLines = 10,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            Surface(
+                modifier = Modifier.size(46.dp),
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = leading,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                subtitle?.let {
+                    Text(
+                        text = it,
+                        maxLines = 10,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Switch(
+                checked = checked,
+                onCheckedChange = onCheckedChange,
+                colors = SwitchDefaults.colors()
+            )
         }
-
-        Spacer(modifier = Modifier.width(16.dp))
-
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            colors = SwitchDefaults.colors()
-        )
     }
 }
 
-// Small informational note shown at the bottom of the settings screen
-@Composable
-private fun FooterNote(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
-    )
-}
-
-// Represents the different legal dialogs that can be displayed
+/**
+ * Represents legal dialogs backed by string resources.
+ */
 @Immutable
 private sealed class LegalDialog(
     val titleRes: Int,
@@ -486,10 +617,9 @@ private sealed class LegalDialog(
     )
 }
 
-/* ---------- Intent helpers ---------- */
-// Utility functions for launching common Android intents
-
-// Opens a URL in the user's default browser
+/**
+ * Opens a URL in the default browser.
+ */
 private fun openUrl(context: Context, url: String) {
     val intent = Intent(Intent.ACTION_VIEW, url.toUri()).apply {
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -502,7 +632,9 @@ private fun openUrl(context: Context, url: String) {
     }
 }
 
-// Launches the email client with a prefilled recipient and subject
+/**
+ * Launches an email client with a prefilled recipient and subject.
+ */
 private fun composeEmail(context: Context, email: String, subject: String) {
     val intent = Intent(Intent.ACTION_SENDTO).apply {
         data = "mailto:$email".toUri()
@@ -517,7 +649,9 @@ private fun composeEmail(context: Context, email: String, subject: String) {
     }
 }
 
-// Opens the Android share sheet with plain text content
+/**
+ * Opens the Android share sheet with plain text content.
+ */
 private fun shareText(context: Context, title: String, text: String) {
     val sendIntent = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"

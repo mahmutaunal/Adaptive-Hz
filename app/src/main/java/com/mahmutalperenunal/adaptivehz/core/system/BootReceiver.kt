@@ -1,12 +1,13 @@
-package com.mahmutalperenunal.adaptivehz.core
+package com.mahmutalperenunal.adaptivehz.core.system
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Handler
 import android.os.Looper
-import com.mahmutalperenunal.adaptivehz.core.engine.AdaptiveHzMode
-import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateController
+import com.mahmutalperenunal.adaptivehz.core.engine.model.AdaptiveHzMode
+import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs
+import com.mahmutalperenunal.adaptivehz.core.service.StabilityForegroundService
 
 /**
  * Restores the last known app mode after device reboot.

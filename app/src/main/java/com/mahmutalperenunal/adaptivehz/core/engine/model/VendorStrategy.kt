@@ -1,7 +1,6 @@
-package com.mahmutalperenunal.adaptivehz.core.engine.strategy
+package com.mahmutalperenunal.adaptivehz.core.engine.model
 
 import android.content.Context
-import com.mahmutalperenunal.adaptivehz.core.engine.SettingWrite
 
 /**
  * Defines how each vendor (Samsung, Xiaomi, etc.) maps
@@ -14,4 +13,5 @@ interface VendorStrategy {
     val name: String
     fun desiredLow(context: Context): SettingWrite
     fun desiredHigh(context: Context): SettingWrite
+    fun tuning(): VendorTuning
 }

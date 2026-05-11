@@ -43,7 +43,7 @@
     <string name="maximum">Máximo</string>
 
     <string name="per_app_title">Tasa de refresco por aplicación</string>
-    <string name="per_app_desc">Próximamente: establecer Adaptativo / Mínimo / Máximo por aplicación.</string>
+    <string name="per_app_desc">Configura el comportamiento Adaptive, Minimum, Maximum o Respect para cada aplicación.</string>
     <string name="per_app_desc2">Esto requiere listar las aplicaciones instaladas y guardar preferencias por aplicación.</string>
 
     <string name="footer_title">Desarrollado por AlpWare Studio</string>
@@ -115,6 +115,26 @@
     <string name="cd_collapse">Contraer</string>
     <string name="error">Error</string>
 
+    <!-- Settings -->
+    <string name="settings_accessibility_working_summary">El servicio de accesibilidad está activo y funcionando correctamente.</string>
+    <string name="settings_accessibility_required_summary">Necesario para detectar interacciones táctiles y desplazamientos.</string>
+
+    <string name="settings_adb_granted_summary">El permiso WRITE_SECURE_SETTINGS ha sido concedido.</string>
+    <string name="settings_adb_or_root_summary">Concede el permiso usando ADB o acceso root.</string>
+    <string name="settings_adb_required_summary">Necesario para controlar el comportamiento de la frecuencia de actualización.</string>
+
+    <string name="settings_usage_access_granted_summary">Las aplicaciones usadas recientemente ahora pueden detectarse correctamente.</string>
+    <string name="settings_usage_access_recommended_summary">Recomendado para mostrar aplicaciones recientes reales en el Dashboard.</string>
+
+    <string name="settings_battery_optimizations_disabled_summary">Las optimizaciones de batería están desactivadas para Adaptive Hz.</string>
+    <string name="settings_battery_optimization_recommended_summary">Recomendado para mejorar la estabilidad en segundo plano.</string>
+
+    <string name="settings_notifications_enabled_summary">Las notificaciones están habilitadas para el Modo Estabilidad.</string>
+    <string name="settings_notifications_required_summary">Necesario para las notificaciones de estabilidad en primer plano.</string>
+
+    <string name="settings_diagnostics_summary">Ver el estado de ejecución y la información de depuración.</string>
+    <string name="settings_event_inspector_summary">Inspeccionar eventos recientes de accesibilidad y señales de desplazamiento.</string>
+
     <!-- Settings - header -->
     <string name="settings_title">Ajustes</string>
     <string name="settings_app_name">Adaptive Hz</string>
@@ -127,6 +147,7 @@
 
     <!-- Settings - sections -->
     <string name="settings_section_behavior">Comportamiento</string>
+    <string name="settings_section_debug">Depuración</string>
     <string name="settings_section_about">Acerca de</string>
     <string name="settings_section_developer">Desarrollador</string>
     <string name="settings_section_support">Soporte</string>
@@ -228,4 +249,113 @@
     <string name="retry">Reintentar</string>
     <string name="setup_continue_button">Continuar</string>
     <string name="setup_continue_required_hint">Completa los pasos obligatorios anteriores para continuar. Los pasos recomendados son opcionales.</string>
+
+
+    <string name="setup_usage_access_title">Acceso de uso</string>
+    <string name="setup_usage_access_desc">Recomendado. Permite que Adaptive Hz muestre tus aplicaciones usadas recientemente en el Dashboard.</string>
+    <string name="setup_usage_access_button">Abrir acceso de uso</string>
+    <string name="setup_accessibility_enabled_message">El Servicio de Accesibilidad está habilitado. Puedes volver a abrir la configuración en cualquier momento usando el icono de actualización.</string>
+    <string name="setup_adb_granted_message">El permiso ADB ha sido concedido y funciona correctamente. Puedes verificarlo nuevamente usando el icono de actualización.</string>
+    <string name="setup_battery_ok_message">La optimización de batería está desactivada. Adaptive Hz ahora puede ejecutarse de manera más estable en segundo plano.</string>
+    <string name="setup_usage_access_ok_message">El Acceso de uso está habilitado. Las aplicaciones usadas recientemente ahora pueden aparecer en el Dashboard.</string>
+
+    <string name="adaptive_hz_enabled">Adaptive Hz activado</string>
+    <string name="enable_recent_apps_access">Habilitar acceso a aplicaciones recientes</string>
+    <string name="no_recent_apps_found">Aún no se encontraron aplicaciones recientes.</string>
+    <string name="view_all_apps">Ver todas las aplicaciones</string>
+    <string name="per_app_profiles_title">Perfiles por aplicación</string>
+    <string name="back">Atrás</string>
+    <string name="per_app_profiles_description">Configura el comportamiento de actualización para aplicaciones individuales o aplica un perfil a todas las aplicaciones listadas.</string>
+    <string name="search_apps">Buscar aplicaciones</string>
+    <string name="show_system_apps">Mostrar aplicaciones del sistema</string>
+    <string name="show_system_apps_description">Incluye launcher, navegador, reproductor de video y aplicaciones del sistema del fabricante.</string>
+    <string name="loading_apps">Cargando aplicaciones…</string>
+    <string name="loading_more_apps">Cargando más aplicaciones…</string>
+    <string name="close">Cerrar</string>
+    <string name="apply_profile_to_all">Aplicar perfil a todo</string>
+    <string name="bulk_profile_dialog_message_including_system">Esto actualizará %1$d aplicaciones listadas, incluyendo aplicaciones del sistema.</string>
+    <string name="bulk_profile_dialog_message_user_apps">Esto actualizará %1$d aplicaciones de usuario listadas.</string>
+    <string name="all_listed_apps">Todas las aplicaciones listadas</string>
+    <string name="app_count_including_system_apps">%1$d aplicaciones incluyendo aplicaciones del sistema</string>
+    <string name="user_app_count">%1$d aplicaciones de usuario</string>
+    <string name="apply_profile">Aplicar perfil</string>
+    <string name="all">Todo</string>
+    <string name="event_inspector_title">Inspector de eventos</string>
+    <string name="accessibility_event_inspector_title">Inspector de eventos de accesibilidad</string>
+    <string name="accessibility_event_inspector_description">Inspecciona aplicaciones ruidosas, comportamiento de desplazamiento y eventos de accesibilidad específicos del fabricante.</string>
+    <string name="paused">Pausado</string>
+    <string name="live">En vivo</string>
+    <string name="scroll_only">Solo desplazamiento</string>
+    <string name="adaptive_hz_events_clip_label">Eventos de Adaptive Hz</string>
+    <string name="events_copied">Eventos copiados</string>
+    <string name="copy">Copiar</string>
+    <string name="clear">Limpiar</string>
+    <string name="events_captured">%1$d eventos capturados</string>
+    <string name="no_events_captured_yet">Aún no se han capturado eventos.</string>
+
+    <string name="event_scroll_delta_x">ΔX</string>
+    <string name="event_scroll_delta_y">ΔY</string>
+    <string name="event_content_change">cambioContenido</string>
+
+    <string name="accessibility_event_report_title">Eventos de accesibilidad de Adaptive Hz</string>
+    <string name="accessibility_event_report_separator">--------------------------------</string>
+    <string name="accessibility_event_report_row">%1$s | %2$s | %3$s | ΔX=%4$d ΔY=%5$d | cambioContenido=%6$d</string>
+    <string name="empty_value_dash">-</string>
+
+    <string name="diagnostics_title">Diagnósticos</string>
+    <string name="diagnostics_description">Inspecciona el estado de ejecución, la actividad del motor de actualización y la información de depuración.</string>
+    <string name="adaptive_hz_diagnostics_clip_label">Diagnósticos de Adaptive Hz</string>
+    <string name="diagnostics_copied">Diagnósticos copiados</string>
+    <string name="copy_report">Copiar informe</string>
+    <string name="refresh">Actualizar</string>
+    <string name="diagnostics_system_title">Sistema</string>
+    <string name="diagnostics_vendor">Fabricante</string>
+    <string name="diagnostics_current_display">Pantalla actual</string>
+    <string name="diagnostics_setting_key">Clave de configuración</string>
+    <string name="diagnostics_setting_value">Valor de configuración</string>
+    <string name="diagnostics_battery_saver">Ahorro de batería</string>
+    <string name="refresh_rate_hz">%1$d Hz</string>
+    <string name="diagnostics_current_mode">Modo actual</string>
+    <string name="diagnostics_adb_granted">ADB concedido</string>
+    <string name="diagnostics_keep_alive">Mantener activo</string>
+    <string name="diagnostics_accessibility">Accesibilidad</string>
+    <string name="diagnostics_last_heartbeat">Último heartbeat</string>
+    <string name="diagnostics_engine_debug_title">Depuración del motor</string>
+    <string name="diagnostics_foreground_package">Paquete en primer plano</string>
+    <string name="diagnostics_last_event">Último evento</string>
+    <string name="diagnostics_last_write">Última escritura</string>
+    <string name="diagnostics_last_write_success">Última escritura exitosa</string>
+    <string name="diagnostics_updated_at">Actualizado en</string>
+    <string name="diagnostics_report_title">Diagnósticos de Adaptive Hz</string>
+    <string name="diagnostics_report_separator">----------------------</string>
+    <string name="diagnostics_report_app_version">Versión de la app: %1$s (%2$d)</string>
+    <string name="diagnostics_report_vendor">Fabricante: %1$s</string>
+    <string name="diagnostics_report_current_display">Pantalla actual: %1$d Hz</string>
+    <string name="diagnostics_report_setting_key">Clave de configuración: %1$s</string>
+    <string name="diagnostics_report_setting_value">Valor de configuración: %1$s</string>
+    <string name="diagnostics_report_battery_saver">Ahorro de batería: %1$s</string>
+    <string name="diagnostics_report_current_mode">Modo actual: %1$s</string>
+    <string name="diagnostics_report_adb_granted">ADB concedido: %1$s</string>
+    <string name="diagnostics_report_keep_alive">Mantener activo: %1$s</string>
+    <string name="diagnostics_report_accessibility">Accesibilidad: %1$s</string>
+    <string name="diagnostics_report_last_heartbeat">Último heartbeat: %1$s</string>
+    <string name="diagnostics_report_foreground_package">Paquete en primer plano: %1$s</string>
+    <string name="diagnostics_report_last_event">Último evento: %1$s</string>
+    <string name="diagnostics_report_last_write">Última escritura: %1$s</string>
+    <string name="diagnostics_report_last_write_success">Última escritura exitosa: %1$s</string>
+    <string name="diagnostics_report_debug_updated_at">Depuración actualizada en: %1$s</string>
+
+    <string name="profile_mode_respect_app">Respetar aplicación</string>
+    <string name="profile_mode_default_description">Usar el comportamiento global de Adaptive Hz.</string>
+    <string name="profile_mode_adaptive_description">Adaptive Hz controla esta aplicación.</string>
+    <string name="profile_mode_minimum_description">Mantener esta aplicación en la frecuencia mínima.</string>
+    <string name="profile_mode_maximum_description">Mantener esta aplicación en la frecuencia máxima.</string>
+    <string name="profile_mode_respect_app_description">No sobrescribir el comportamiento de actualización de esta aplicación o del sistema.</string>
+    <string name="profile_mode_disabled_description">Ignorar esta aplicación y volver a un estado seguro de bajo consumo.</string>
+    <string name="profile_mode_default">Predeterminado</string>
+    <string name="profile_mode_adaptive">Adaptive</string>
+    <string name="profile_mode_minimum">Mínimo</string>
+    <string name="profile_mode_maximum">Máximo</string>
+    <string name="profile_mode_respect">Respetar</string>
+    <string name="profile_mode_disabled">Deshabilitado</string>
 </resources>

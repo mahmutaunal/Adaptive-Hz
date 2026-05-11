@@ -1,8 +1,9 @@
-package com.mahmutalperenunal.adaptivehz.core
+package com.mahmutalperenunal.adaptivehz.core.prefs
 
 import android.content.Context
 import androidx.core.content.edit
-import com.mahmutalperenunal.adaptivehz.core.engine.AdaptiveHzMode
+import com.mahmutalperenunal.adaptivehz.core.engine.model.AdaptiveHzMode
+import com.mahmutalperenunal.adaptivehz.core.engine.model.AppRefreshProfileMode
 
 /**
  * Centralized preferences access for lightweight app state.
@@ -24,6 +25,12 @@ object AdaptiveHzPrefs {
     const val KEY_ACCESSIBILITY_LAST_CONNECTED_AT = "accessibility_last_connected_at"
     const val KEY_ACCESSIBILITY_CONNECTED = "accessibility_connected"
     const val KEY_INITIAL_SETUP_COMPLETED = "initial_setup_completed"
+    private const val KEY_APP_PROFILE_PREFIX = "app_profile_"
+    const val KEY_DEBUG_FOREGROUND_PACKAGE = "debug_foreground_package"
+    const val KEY_DEBUG_LAST_EVENT = "debug_last_event"
+    const val KEY_DEBUG_LAST_WRITE = "debug_last_write"
+    const val KEY_DEBUG_LAST_WRITE_SUCCESS = "debug_last_write_success"
+    const val KEY_DEBUG_LAST_UPDATED_AT = "debug_last_updated_at"
 
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -156,5 +163,80 @@ object AdaptiveHzPrefs {
 
     fun setInitialSetupCompleted(context: Context, completed: Boolean) {
         prefs(context).edit { putBoolean(KEY_INITIAL_SETUP_COMPLETED, completed) }
+    }
+
+    fun getAppRefreshProfileMode(
+        context: Context,
+        packageName: String?
+    ): AppRefreshProfileMode {
+        if (packageName.isNullOrBlank()) return AppRefreshProfileMode.DEFAULT
+
+        val raw = prefs(context).getString(KEY_APP_PROFILE_PREFIX + packageName, null)
+            ?: return AppRefreshProfileMode.DEFAULT
+
+        return runCatching { AppRefreshProfileMode.valueOf(raw) }
+            .getOrDefault(AppRefreshProfileMode.DEFAULT)
+    }
+
+    fun setAppRefreshProfileMode(
+        context: Context,
+        packageName: String,
+        mode: AppRefreshProfileMode
+    ) {
+        if (packageName.isBlank()) return
+
+        prefs(context).edit {
+            if (mode == AppRefreshProfileMode.DEFAULT) {
+                remove(KEY_APP_PROFILE_PREFIX + packageName)
+            } else {
+                putString(KEY_APP_PROFILE_PREFIX + packageName, mode.name)
+            }
+        }
+    }
+
+    fun updateDebugForegroundPackage(context: Context, packageName: String?) {
+        prefs(context).edit {
+            putString(KEY_DEBUG_FOREGROUND_PACKAGE, packageName.orEmpty())
+            putLong(KEY_DEBUG_LAST_UPDATED_AT, System.currentTimeMillis())
+        }
+    }
+
+    fun updateDebugLastEvent(context: Context, eventName: String, packageName: String?) {
+        prefs(context).edit {
+            putString(KEY_DEBUG_LAST_EVENT, "$eventName / ${packageName.orEmpty()}")
+            putLong(KEY_DEBUG_LAST_UPDATED_AT, System.currentTimeMillis())
+        }
+    }
+
+    fun updateDebugLastWrite(
+        context: Context,
+        label: String,
+        success: Boolean
+    ) {
+        prefs(context).edit {
+            putString(KEY_DEBUG_LAST_WRITE, label)
+            putBoolean(KEY_DEBUG_LAST_WRITE_SUCCESS, success)
+            putLong(KEY_DEBUG_LAST_UPDATED_AT, System.currentTimeMillis())
+        }
+    }
+
+    fun getDebugForegroundPackage(context: Context): String {
+        return prefs(context).getString(KEY_DEBUG_FOREGROUND_PACKAGE, "") ?: ""
+    }
+
+    fun getDebugLastEvent(context: Context): String {
+        return prefs(context).getString(KEY_DEBUG_LAST_EVENT, "") ?: ""
+    }
+
+    fun getDebugLastWrite(context: Context): String {
+        return prefs(context).getString(KEY_DEBUG_LAST_WRITE, "") ?: ""
+    }
+
+    fun wasDebugLastWriteSuccess(context: Context): Boolean {
+        return prefs(context).getBoolean(KEY_DEBUG_LAST_WRITE_SUCCESS, false)
+    }
+
+    fun getDebugLastUpdatedAt(context: Context): Long {
+        return prefs(context).getLong(KEY_DEBUG_LAST_UPDATED_AT, 0L)
     }
 }

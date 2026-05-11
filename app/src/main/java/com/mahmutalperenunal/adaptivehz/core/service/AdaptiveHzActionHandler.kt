@@ -1,7 +1,8 @@
-package com.mahmutalperenunal.adaptivehz.core
+package com.mahmutalperenunal.adaptivehz.core.service
 
 import android.content.Context
-import com.mahmutalperenunal.adaptivehz.core.engine.AdaptiveHzMode
+import com.mahmutalperenunal.adaptivehz.core.engine.model.AdaptiveHzMode
+import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs
 import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateController
 import com.mahmutalperenunal.adaptivehz.widget.AdaptiveHzWidgetUpdater
 

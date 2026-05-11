@@ -2,7 +2,9 @@ package com.mahmutalperenunal.adaptivehz.core.engine.strategy
 
 import android.content.Context
 import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateController
-import com.mahmutalperenunal.adaptivehz.core.engine.SettingWrite
+import com.mahmutalperenunal.adaptivehz.core.engine.model.SettingWrite
+import com.mahmutalperenunal.adaptivehz.core.engine.model.VendorStrategy
+import com.mahmutalperenunal.adaptivehz.core.engine.model.VendorTuning
 
 /**
  * Xiaomi / HyperOS implementation.
@@ -30,6 +32,17 @@ class XiaomiStrategy : VendorStrategy {
             RefreshRateController.KEY_XIAOMI_REFRESH_RATE,
             maxHz,
             "miui_refresh_rate=$maxHz (Max)"
+        )
+    }
+
+    // Uses conservative interaction timings for broader compatibility.
+    override fun tuning(): VendorTuning {
+        return VendorTuning(
+            interactionIdleTimeoutMs = 2000L,
+            eventCoalescingWindowMs = 60L,
+            allowContentChangeBoost = true,
+            allowScrollBoost = true,
+            extendBoostOnWindowChange = true
         )
     }
 }

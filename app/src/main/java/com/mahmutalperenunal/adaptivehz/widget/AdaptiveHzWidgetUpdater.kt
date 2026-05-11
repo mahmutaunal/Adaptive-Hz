@@ -9,9 +9,9 @@ import android.os.Bundle
 import android.widget.RemoteViews
 import com.mahmutalperenunal.adaptivehz.MainActivity
 import com.mahmutalperenunal.adaptivehz.R
-import com.mahmutalperenunal.adaptivehz.core.AdaptiveHzRuntimeState
-import com.mahmutalperenunal.adaptivehz.core.AdaptiveHzPrefs
-import com.mahmutalperenunal.adaptivehz.core.engine.AdaptiveHzMode
+import com.mahmutalperenunal.adaptivehz.core.engine.AdaptiveHzRuntimeState
+import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs
+import com.mahmutalperenunal.adaptivehz.core.engine.model.AdaptiveHzMode
 
 // Updates all widget instances and maps app state to widget UI.
 object AdaptiveHzWidgetUpdater {

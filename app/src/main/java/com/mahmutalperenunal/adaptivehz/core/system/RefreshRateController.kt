@@ -4,6 +4,8 @@ import android.content.ContentValues
 import android.content.Context
 import android.provider.Settings
 import android.util.Log
+import com.mahmutalperenunal.adaptivehz.core.engine.model.DeviceVendor
+import com.mahmutalperenunal.adaptivehz.core.engine.model.DeviceVendorDetector
 import kotlin.math.roundToInt
 
 /**

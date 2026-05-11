@@ -1,4 +1,4 @@
-package com.mahmutalperenunal.adaptivehz.core.system
+package com.mahmutalperenunal.adaptivehz.core.engine.model
 
 import android.os.Build
 

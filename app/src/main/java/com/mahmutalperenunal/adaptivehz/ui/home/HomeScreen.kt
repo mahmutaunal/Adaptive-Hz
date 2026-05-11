@@ -1,5 +1,6 @@
 package com.mahmutalperenunal.adaptivehz.ui.home
 
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.provider.Settings
 import android.widget.Toast
@@ -17,12 +18,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.ReportProblem
@@ -43,20 +44,30 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.DisposableEffect
 import androidx.core.content.ContextCompat
-import com.mahmutalperenunal.adaptivehz.core.AdaptiveHzActionHandler
-import com.mahmutalperenunal.adaptivehz.core.AdaptiveHzPrefs
-import com.mahmutalperenunal.adaptivehz.core.StabilityForegroundService
-import com.mahmutalperenunal.adaptivehz.core.engine.AdaptiveHzMode
-import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateController
-import kotlinx.coroutines.delay
+import com.mahmutalperenunal.adaptivehz.core.service.AdaptiveHzActionHandler
+import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs
+import com.mahmutalperenunal.adaptivehz.core.service.StabilityForegroundService
+import com.mahmutalperenunal.adaptivehz.core.engine.model.AdaptiveHzMode
+import com.mahmutalperenunal.adaptivehz.core.engine.model.DeviceVendorDetector
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.mahmutalperenunal.adaptivehz.R
-import com.mahmutalperenunal.adaptivehz.core.AdaptiveHzRuntimeState
+import com.mahmutalperenunal.adaptivehz.core.engine.AdaptiveHzRuntimeState
+import com.mahmutalperenunal.adaptivehz.core.engine.AdaptiveHzRuntimeState.getAccessibilityState
+import com.mahmutalperenunal.adaptivehz.core.apps.InstalledAppInfo
+import com.mahmutalperenunal.adaptivehz.core.apps.InstalledAppsRepository
+import com.mahmutalperenunal.adaptivehz.core.apps.RecentAppsProvider
 import com.mahmutalperenunal.adaptivehz.core.system.RootManager
 import com.mahmutalperenunal.adaptivehz.ui.home.components.DashboardComponent
 import com.mahmutalperenunal.adaptivehz.ui.home.components.SetupComponent
 
+/**
+ * Home route that coordinates setup state, dashboard state and quick actions.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -67,11 +78,11 @@ fun HomeScreen(
     openAccessibilitySettings: () -> Unit,
     requestIgnoreBatteryOptimizations: () -> Unit,
     openSettingsScreen: () -> Unit,
+    openPerAppScreen: () -> Unit,
     keepAliveEnabled: Boolean,
     onKeepAliveEnabledChange: (Boolean) -> Unit
 ) {
     val context = LocalContext.current
-    // Shared preferences used to persist lightweight app state
     val prefs = remember { AdaptiveHzPrefs }
 
     val toastAdbVerified = stringResource(id = R.string.toast_adb_verified)
@@ -99,30 +110,67 @@ fun HomeScreen(
     val labelManualTargetMax = stringResource(id = R.string.label_target_maximum)
     val labelSystemDefault = stringResource(id = R.string.label_target_system_default)
 
-    // Scroll state for the main content area
     val scrollState = rememberScrollState()
 
-    // Restored state backed by SharedPreferences
+    // UI state restored from persisted app preferences.
     var adbGranted by remember { mutableStateOf(prefs.isAdbGranted(context)) }
     val currentMode = remember { mutableStateOf(prefs.getCurrentMode(context)) }
 
-    // Frequently refreshed runtime checks
     val accessibilityState = remember { mutableStateOf(getAccessibilityState()) }
-    var status by remember { mutableStateOf(RefreshRateController.readStatus(context)) }
+
+    // Vendor is stable during the app session.
+    val vendorLabel = remember { DeviceVendorDetector.detect().toString() }
 
     var rootAvailable by remember { mutableStateOf(false) }
 
     val initialSetupCompleted = remember { mutableStateOf(prefs.isInitialSetupCompleted(context)) }
 
+    val installedAppsRepository = remember { InstalledAppsRepository(context) }
+    val recentAppsProvider = remember { RecentAppsProvider(context) }
+    var dashboardApps by remember { mutableStateOf<List<InstalledAppInfo>>(emptyList()) }
+    var usagePermissionGranted by remember { mutableStateOf(recentAppsProvider.hasPermission()) }
+    val selectedDashboardApp = remember { mutableStateOf<InstalledAppInfo?>(null) }
 
-    // Periodically sync UI state with the latest system/app values
-    LaunchedEffect(Unit) {
-        while (true) {
-            accessibilityState.value = getAccessibilityState()
-            currentMode.value = prefs.getCurrentMode(context)
-            status = RefreshRateController.readStatus(context)
-            delay(1000)
+    // Refreshes the compact recent-app list shown on the dashboard.
+    fun reloadDashboardApps() {
+        dashboardApps = installedAppsRepository.getDashboardApps(limit = 5)
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Re-reads runtime state after setup changes or lifecycle resume.
+    fun refreshStates() {
+        accessibilityState.value = getAccessibilityState(context)
+        currentMode.value = prefs.getCurrentMode(context)
+        usagePermissionGranted = recentAppsProvider.hasPermission()
+
+        reloadDashboardApps()
+
+        adbGranted = prefs.isAdbGranted(context)
+
+        rootAvailable = when (RootManager.getRootState()) {
+            is RootManager.RootState.Available -> true
+            else -> false
         }
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                refreshStates()
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    // Performs the first state sync after composition.
+    LaunchedEffect(Unit) {
+        refreshStates()
     }
 
     LaunchedEffect(Unit) {
@@ -136,13 +184,12 @@ fun HomeScreen(
     val accessibilityWorking = accessibilityState.value == AdaptiveHzRuntimeState.AccessibilityState.WORKING
     val accessibilityBroken = accessibilityState.value == AdaptiveHzRuntimeState.AccessibilityState.BROKEN
 
-    // Home switches from setup to dashboard only after all required steps are completed
+    // Setup is complete only after required permissions are ready and acknowledged.
     val requiredSetupReady = accessibilityConfigured && adbGranted
     val setupComplete = requiredSetupReady && initialSetupCompleted.value
 
     val appEnabled = currentMode.value != AdaptiveHzMode.OFF
 
-    // Derived labels shown in the dashboard summary
     val currentModeLabel = when (currentMode.value) {
         AdaptiveHzMode.OFF -> stringResource(id = R.string.label_off)
         AdaptiveHzMode.ADAPTIVE -> stringResource(id = R.string.mode_adaptive)
@@ -193,7 +240,7 @@ fun HomeScreen(
             }
         )
 
-        // Main scrollable area showing either setup steps or the dashboard
+        // Main content switches between setup flow and dashboard.
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -216,20 +263,13 @@ fun HomeScreen(
             }
 
             if (!setupComplete) {
-                // Setup flow shown until all required permissions and services are ready
                 SetupComponent(
                     accessibilityEnabled = accessibilityConfigured,
                     adbGranted = adbGranted,
                     batteryOptimizationsIgnored = batteryOptimizationsIgnored,
                     notificationsGranted = notificationsGranted,
+                    usageAccessGranted = usagePermissionGranted,
                     keepAliveEnabled = keepAliveEnabled,
-                    requiredSetupReady = requiredSetupReady,
-                    onContinue = {
-                        if (requiredSetupReady) {
-                            prefs.setInitialSetupCompleted(context, true)
-                            initialSetupCompleted.value = true
-                        }
-                    },
                     labelOn = labelOn,
                     labelOff = labelOff,
                     labelGranted = labelGranted,
@@ -239,6 +279,7 @@ fun HomeScreen(
                     toastOpenNotificationSettingsFailed = toastOpenNotificationSettingsFailed,
                     rootAvailable = rootAvailable,
                     onOpenAccessibilitySettings = openAccessibilitySettings,
+                    // Verifies WRITE_SECURE_SETTINGS through permission and safe write checks.
                     onVerifyAdb = {
                         val permission = "android.permission.WRITE_SECURE_SETTINGS"
 
@@ -274,6 +315,7 @@ fun HomeScreen(
                             Toast.makeText(context, toastAdbPermissionMissing, Toast.LENGTH_LONG).show()
                         }
                     },
+                    // Optional root fallback for granting the secure settings permission.
                     onGrantWithRoot = {
                         when (val result = RootManager.grantWriteSecureSettings(context)) {
                             is RootManager.RootState.Available -> {
@@ -315,6 +357,9 @@ fun HomeScreen(
                         requestIgnoreBatteryOptimizations()
                     },
                     onRequestNotificationPermission = onRequestNotificationPermission,
+                    onOpenUsageAccessSettings = {
+                        context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                    },
                     onSetKeepAliveEnabled = { next ->
                         prefs.setKeepAliveEnabled(context, next)
                         onKeepAliveEnabledChange(next)
@@ -324,31 +369,28 @@ fun HomeScreen(
                         } else {
                             StabilityForegroundService.stop(context)
                         }
-                    },
-                    secondaryAdbContent = {
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text(
-                                text = stringResource(id = R.string.setup_adb_instruction),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            CodeLine(
-                                text = "adb shell pm grant com.mahmutalperenunal.adaptivehz android.permission.WRITE_SECURE_SETTINGS"
-                            )
-                        }
                     }
                 )
             } else {
-                // Main dashboard shown after setup is fully completed
                 DashboardComponent(
                     appEnabled = appEnabled,
                     accessibilityWorking = accessibilityWorking,
                     accessibilityBroken = accessibilityBroken,
-                    currentDisplayHz = status.displayHz.toInt(),
-                    vendorLabel = status.vendor.toString(),
+                    vendorLabel = vendorLabel,
                     currentModeLabel = currentModeLabel,
                     targetLabel = targetLabel,
                     interactionLabel = interactionLabel,
+                    usagePermissionGranted = usagePermissionGranted,
+                    onGrantUsageAccessClick = {
+                        context.startActivity(
+                            Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+                        )
+                    },
+                    recentApps = dashboardApps,
+                    onPerAppClick = openPerAppScreen,
+                    onAppProfileClick = { app ->
+                        selectedDashboardApp.value = app
+                    },
                     onAppEnabledChange = { enabled ->
                         try {
                             if (enabled) {
@@ -407,24 +449,62 @@ fun HomeScreen(
                 )
             }
         }
-    }
-}
 
-// Small helper used to present copyable-looking command text
-@Composable
-private fun CodeLine(text: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Text(
-            text = text,
-            modifier = Modifier.padding(10.dp),
-            style = MaterialTheme.typography.bodySmall
+        if (!setupComplete) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(max = 520.dp)
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                FilledTonalButton(
+                    onClick = {
+                        if (requiredSetupReady) {
+                            prefs.setInitialSetupCompleted(context, true)
+                            initialSetupCompleted.value = true
+                        }
+                    },
+                    enabled = requiredSetupReady,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(id = R.string.setup_continue_button))
+                }
+
+                if (!requiredSetupReady) {
+                    Text(
+                        text = stringResource(id = R.string.setup_continue_required_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        }
+    }
+
+    selectedDashboardApp.value?.let { app ->
+        ProfileModePickerDialog(
+            app = app,
+            onDismiss = { selectedDashboardApp.value = null },
+            onModeSelected = { mode ->
+                AdaptiveHzPrefs.setAppRefreshProfileMode(
+                    context = context,
+                    packageName = app.packageName,
+                    mode = mode
+                )
+                selectedDashboardApp.value = null
+                reloadDashboardApps()
+            }
         )
     }
 }
 
+/**
+ * Recovery prompt shown when accessibility is enabled but not sending heartbeats.
+ */
 @Composable
 private fun RecoveryCard(
     onRetry: () -> Unit,

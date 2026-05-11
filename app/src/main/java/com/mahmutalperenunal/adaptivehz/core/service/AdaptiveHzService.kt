@@ -1,4 +1,4 @@
-package com.mahmutalperenunal.adaptivehz.core
+package com.mahmutalperenunal.adaptivehz.core.service
 
 import android.accessibilityservice.AccessibilityService
 import android.annotation.SuppressLint
@@ -6,13 +6,14 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
+import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs
 import com.mahmutalperenunal.adaptivehz.core.engine.AdaptiveHzEngine
-import com.mahmutalperenunal.adaptivehz.core.engine.AdaptiveHzMode
+import com.mahmutalperenunal.adaptivehz.core.engine.model.AdaptiveHzMode
 import com.mahmutalperenunal.adaptivehz.core.engine.strategy.OtherStrategy
 import com.mahmutalperenunal.adaptivehz.core.engine.strategy.SamsungStrategy
 import com.mahmutalperenunal.adaptivehz.core.engine.strategy.XiaomiStrategy
-import com.mahmutalperenunal.adaptivehz.core.system.DeviceVendor
-import com.mahmutalperenunal.adaptivehz.core.system.DeviceVendorDetector
+import com.mahmutalperenunal.adaptivehz.core.engine.model.DeviceVendor
+import com.mahmutalperenunal.adaptivehz.core.engine.model.DeviceVendorDetector
 
 
 /**
@@ -31,6 +32,9 @@ class AdaptiveHzService : AccessibilityService() {
 
     private val heartbeatHandler by lazy { Handler(Looper.getMainLooper()) }
 
+    /**
+     * Periodically updates the runtime heartbeat state.
+     */
     private val heartbeatRunnable = object : Runnable {
         override fun run() {
             AdaptiveHzPrefs.markAccessibilityHeartbeat(this@AdaptiveHzService)
@@ -49,6 +53,7 @@ class AdaptiveHzService : AccessibilityService() {
         AdaptiveHzPrefs.markAccessibilityHeartbeat(this)
         startHeartbeat()
 
+        // Selects vendor-specific refresh rate behavior.
         val strategy = when (DeviceVendorDetector.detect()) {
             DeviceVendor.SAMSUNG -> SamsungStrategy()
             DeviceVendor.XIAOMI -> XiaomiStrategy()
@@ -58,9 +63,12 @@ class AdaptiveHzService : AccessibilityService() {
         engine = AdaptiveHzEngine(
             context = this,
             strategy = strategy,
-            isEnabled = { isAdaptiveModeEnabled() },
+            getGlobalMode = { AdaptiveHzPrefs.getCurrentMode(this) },
             shouldIgnorePackage = { pkg ->
-                pkg == null || pkg == packageName || pkg == "com.android.systemui"
+                pkg == null || pkg == "com.android.systemui"
+            },
+            getAppProfileMode = { pkg ->
+                AdaptiveHzPrefs.getAppRefreshProfileMode(this, pkg)
             },
             tag = "AdaptiveHzEngine"
         )
@@ -80,12 +88,15 @@ class AdaptiveHzService : AccessibilityService() {
 
         AdaptiveHzPrefs.markAccessibilityHeartbeat(this)
 
-        if (!isAdaptiveModeEnabled()) return
+        if (AdaptiveHzPrefs.getCurrentMode(this) == AdaptiveHzMode.OFF) return
 
         Log.d("AdaptiveHzRaw", "rawEvent=${event.eventType}")
         engine.onEvent(event)
     }
 
+    /**
+     * Triggered when the system temporarily interrupts accessibility feedback.
+     */
     override fun onInterrupt() {
         AdaptiveHzPrefs.setAccessibilityConnected(this, false)
     }
@@ -103,18 +114,19 @@ class AdaptiveHzService : AccessibilityService() {
         super.onDestroy()
     }
 
+    /**
+     * Starts periodic accessibility health updates.
+     */
     private fun startHeartbeat() {
         heartbeatHandler.removeCallbacks(heartbeatRunnable)
         heartbeatHandler.post(heartbeatRunnable)
     }
 
+    /**
+     * Stops periodic accessibility health updates.
+     */
     private fun stopHeartbeat() {
         heartbeatHandler.removeCallbacks(heartbeatRunnable)
-    }
-
-    /** Returns whether the app is currently in adaptive mode. */
-    private fun isAdaptiveModeEnabled(): Boolean {
-        return AdaptiveHzPrefs.getCurrentMode(this) == AdaptiveHzMode.ADAPTIVE
     }
 
     companion object {

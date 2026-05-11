@@ -1,4 +1,4 @@
-package com.mahmutalperenunal.adaptivehz.core
+package com.mahmutalperenunal.adaptivehz.core.service
 
 import android.graphics.drawable.Icon
 import android.service.quicksettings.Tile

@@ -43,7 +43,7 @@
     <string name="maximum">Maximum</string>
 
     <string name="per_app_title">Per-app refresh rate</string>
-    <string name="per_app_desc">Coming later: set Adaptive / Minimum / Maximum per app.</string>
+    <string name="per_app_desc">Set the behavior to Adaptive, Minimum, Maximum, or Respect for each application.</string>
     <string name="per_app_desc2">This requires listing installed apps and storing per-app preferences.</string>
 
     <string name="footer_title">Developed by AlpWare Studio</string>
@@ -115,6 +115,26 @@
     <string name="cd_collapse">Collapse</string>
     <string name="error">Error</string>
 
+    <!-- Settings -->
+    <string name="settings_accessibility_working_summary">Accessibility service is active and working properly.</string>
+    <string name="settings_accessibility_required_summary">Required for detecting touch and scroll interactions.</string>
+
+    <string name="settings_adb_granted_summary">WRITE_SECURE_SETTINGS permission has been granted.</string>
+    <string name="settings_adb_or_root_summary">Grant permission using ADB or root access.</string>
+    <string name="settings_adb_required_summary">Required for controlling refresh rate behavior.</string>
+
+    <string name="settings_usage_access_granted_summary">Recently used apps can now be detected correctly.</string>
+    <string name="settings_usage_access_recommended_summary">Recommended for showing real recent apps on Dashboard.</string>
+
+    <string name="settings_battery_optimizations_disabled_summary">Battery optimizations are disabled for Adaptive Hz.</string>
+    <string name="settings_battery_optimization_recommended_summary">Recommended to improve background stability.</string>
+
+    <string name="settings_notifications_enabled_summary">Notifications are enabled for Stability Mode.</string>
+    <string name="settings_notifications_required_summary">Required for foreground stability notifications.</string>
+
+    <string name="settings_diagnostics_summary">View runtime state and debug information.</string>
+    <string name="settings_event_inspector_summary">Inspect recent accessibility events and scroll signals.</string>
+
     <!-- Settings - header -->
     <string name="settings_title">Settings</string>
     <string name="settings_app_name">Adaptive Hz</string>
@@ -127,6 +147,7 @@
 
     <!-- Settings - sections -->
     <string name="settings_section_behavior">Behavior</string>
+    <string name="settings_section_debug">Debug</string>
     <string name="settings_section_about">About</string>
     <string name="settings_section_developer">Developer</string>
     <string name="settings_section_support">Support</string>
@@ -228,4 +249,109 @@
     <string name="retry">Retry</string>
     <string name="setup_continue_button">Continue</string>
     <string name="setup_continue_required_hint">Complete the required steps above to continue. Recommended steps are optional.</string>
+
+    <string name="setup_usage_access_title">Usage Access</string>
+    <string name="setup_usage_access_desc">Recommended. Allows Adaptive Hz to show your recently used apps on the dashboard.</string>
+    <string name="setup_usage_access_button">Open Usage Access</string>
+    <string name="setup_accessibility_enabled_message">Accessibility Service is enabled. You can reopen settings anytime using the refresh icon.</string>
+    <string name="setup_adb_granted_message">ADB permission is granted and working correctly. You can verify it again using the refresh icon.</string>
+    <string name="setup_battery_ok_message">Battery optimization is disabled. Adaptive Hz can continue running more reliably in the background.</string>
+    <string name="setup_usage_access_ok_message">Usage Access is enabled. Recently used apps can now appear on the dashboard.</string>
+    <string name="adaptive_hz_enabled">Adaptive Hz Enabled</string>
+    <string name="enable_recent_apps_access">Enable recent apps access</string>
+    <string name="no_recent_apps_found">No recent apps found yet.</string>
+    <string name="view_all_apps">View all apps</string>
+    <string name="per_app_profiles_title">Per-app profiles</string>
+    <string name="back">Back</string>
+    <string name="per_app_profiles_description">Set refresh behavior for individual apps or apply one profile to all listed apps.</string>
+    <string name="search_apps">Search apps</string>
+    <string name="show_system_apps">Show system apps</string>
+    <string name="show_system_apps_description">Include launcher, browser, video player and OEM system apps.</string>
+    <string name="loading_apps">Loading apps…</string>
+    <string name="loading_more_apps">Loading more apps…</string>
+    <string name="close">Close</string>
+    <string name="apply_profile_to_all">Apply profile to all</string>
+    <string name="bulk_profile_dialog_message_including_system">This will update %1$d listed apps, including system apps.</string>
+    <string name="bulk_profile_dialog_message_user_apps">This will update %1$d listed user apps.</string>
+    <string name="all_listed_apps">All listed apps</string>
+    <string name="app_count_including_system_apps">%1$d apps including system apps</string>
+    <string name="user_app_count">%1$d user apps</string>
+    <string name="apply_profile">Apply profile</string>
+    <string name="all">All</string>
+    <string name="event_inspector_title">Event Inspector</string>
+    <string name="accessibility_event_inspector_title">Accessibility Event Inspector</string>
+    <string name="accessibility_event_inspector_description">Inspect noisy apps, scroll behavior and vendor-specific accessibility events.</string>
+    <string name="paused">Paused</string>
+    <string name="live">Live</string>
+    <string name="scroll_only">Scroll only</string>
+    <string name="adaptive_hz_events_clip_label">Adaptive Hz events</string>
+    <string name="events_copied">Events copied</string>
+    <string name="copy">Copy</string>
+    <string name="clear">Clear</string>
+    <string name="events_captured">%1$d events captured</string>
+    <string name="no_events_captured_yet">No events captured yet.</string>
+    <string name="event_scroll_delta_x">ΔX</string>
+    <string name="event_scroll_delta_y">ΔY</string>
+    <string name="event_content_change">contentChange</string>
+    <string name="accessibility_event_report_title">Adaptive Hz Accessibility Events</string>
+    <string name="accessibility_event_report_separator">--------------------------------</string>
+    <string name="accessibility_event_report_row">%1$s | %2$s | %3$s | ΔX=%4$d ΔY=%5$d | contentChange=%6$d</string>
+    <string name="empty_value_dash">-</string>
+    <string name="diagnostics_title">Diagnostics</string>
+    <string name="diagnostics_description">Inspect runtime state, refresh engine activity and debug information.</string>
+    <string name="adaptive_hz_diagnostics_clip_label">Adaptive Hz diagnostics</string>
+    <string name="diagnostics_copied">Diagnostics copied</string>
+    <string name="copy_report">Copy report</string>
+    <string name="refresh">Refresh</string>
+
+    <string name="diagnostics_system_title">System</string>
+    <string name="diagnostics_vendor">Vendor</string>
+    <string name="diagnostics_current_display">Current display</string>
+    <string name="diagnostics_setting_key">Setting key</string>
+    <string name="diagnostics_setting_value">Setting value</string>
+    <string name="diagnostics_battery_saver">Battery saver</string>
+    <string name="refresh_rate_hz">%1$d Hz</string>
+    <string name="diagnostics_current_mode">Current mode</string>
+    <string name="diagnostics_adb_granted">ADB granted</string>
+    <string name="diagnostics_keep_alive">Keep alive</string>
+    <string name="diagnostics_accessibility">Accessibility</string>
+    <string name="diagnostics_last_heartbeat">Last heartbeat</string>
+    <string name="diagnostics_engine_debug_title">Engine debug</string>
+    <string name="diagnostics_foreground_package">Foreground package</string>
+    <string name="diagnostics_last_event">Last event</string>
+    <string name="diagnostics_last_write">Last write</string>
+    <string name="diagnostics_last_write_success">Last write success</string>
+    <string name="diagnostics_updated_at">Updated at</string>
+    <string name="diagnostics_report_title">Adaptive Hz Diagnostics</string>
+    <string name="diagnostics_report_separator">----------------------</string>
+    <string name="diagnostics_report_app_version">App version: %1$s (%2$d)</string>
+    <string name="diagnostics_report_vendor">Vendor: %1$s</string>
+    <string name="diagnostics_report_current_display">Current display: %1$d Hz</string>
+    <string name="diagnostics_report_setting_key">Setting key: %1$s</string>
+    <string name="diagnostics_report_setting_value">Setting value: %1$s</string>
+    <string name="diagnostics_report_battery_saver">Battery saver: %1$s</string>
+    <string name="diagnostics_report_current_mode">Current mode: %1$s</string>
+    <string name="diagnostics_report_adb_granted">ADB granted: %1$s</string>
+    <string name="diagnostics_report_keep_alive">Keep alive: %1$s</string>
+    <string name="diagnostics_report_accessibility">Accessibility: %1$s</string>
+    <string name="diagnostics_report_last_heartbeat">Last heartbeat: %1$s</string>
+    <string name="diagnostics_report_foreground_package">Foreground package: %1$s</string>
+    <string name="diagnostics_report_last_event">Last event: %1$s</string>
+    <string name="diagnostics_report_last_write">Last write: %1$s</string>
+    <string name="diagnostics_report_last_write_success">Last write success: %1$s</string>
+    <string name="diagnostics_report_debug_updated_at">Debug updated at: %1$s</string>
+
+    <string name="profile_mode_respect_app">Respect app</string>
+    <string name="profile_mode_default_description">Use global Adaptive Hz behavior.</string>
+    <string name="profile_mode_adaptive_description">Adaptive Hz controls this app.</string>
+    <string name="profile_mode_minimum_description">Keep this app at minimum refresh rate.</string>
+    <string name="profile_mode_maximum_description">Keep this app at maximum refresh rate.</string>
+    <string name="profile_mode_respect_app_description">Do not override this app or system refresh behavior.</string>
+    <string name="profile_mode_disabled_description">Ignore this app and return to a safe low state.</string>
+    <string name="profile_mode_default">Default</string>
+    <string name="profile_mode_adaptive">Adaptive</string>
+    <string name="profile_mode_minimum">Minimum</string>
+    <string name="profile_mode_maximum">Maximum</string>
+    <string name="profile_mode_respect">Respect</string>
+    <string name="profile_mode_disabled">Disabled</string>
 </resources>

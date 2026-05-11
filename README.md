@@ -65,6 +65,7 @@ Adaptive Hz was built to fix this gap with a simple, system-wide solution.
   <img src="assets/2.png" width="250" />
   <img src="assets/3.png" width="250" />
   <img src="assets/4.png" width="250" />
+  <img src="assets/5.png" width="250" />
 </p>
 
 - Setup & Permissions
@@ -91,9 +92,13 @@ Adaptive Hz solves this by:
 ## Key Features
 
 - Interaction-based refresh switching
-- Hybrid detection model (fast + stable)
-- Vendor-aware refresh control
+- Per-app refresh rate profiles
+- Respect app/system refresh behavior option
+- Recent apps shortcut powered by optional Usage Access
+- Event coalescing to reduce noisy Accessibility event spam
+- Vendor-aware refresh control and tuning
 - Optional Stability Mode (foreground service)
+- Diagnostics and Accessibility Event Inspector tools
 - Boot persistence
 - English & Turkish localization
 - Minimal, Material You UI
@@ -117,6 +122,31 @@ Some Android devices (especially aggressive OEM ROMs) may kill background proces
 - Can be disabled anytime from Settings
 
 > 💡 If you prefer a clean status bar, you can safely disable it — the app will still work, but background stability may be reduced on some devices.
+
+---
+
+## 🧩 Per-app Refresh Rate Profiles
+
+Adaptive Hz supports per-app refresh rate profiles so users can control how the engine behaves for specific apps.
+
+Available per-app modes:
+
+| Mode | Behavior |
+|------|----------|
+| Default | Follows the global Adaptive Hz mode |
+| Adaptive | Uses Adaptive Hz interaction-based switching for that app |
+| Minimum | Keeps that app at the minimum refresh rate |
+| Maximum | Keeps that app at the maximum refresh rate |
+| Respect app/system | Does not override the app or system refresh behavior |
+| Disabled | Ignores that app and returns to a safe low state |
+
+This is useful for apps that already manage their own refresh behavior, video playback apps, games, browsers, and battery-sensitive apps.
+
+### Recent apps
+
+Adaptive Hz can optionally show recently used apps on the dashboard for faster profile editing.
+
+This requires Android's **Usage Access** permission and is optional. If Usage Access is not granted, per-app profiles still work through the full app list.
 
 ---
 
@@ -144,10 +174,12 @@ Vendor detection is automatic.
 
 To balance responsiveness and stability:
 
-- Immediate boost on first touch
-- Grace window for scroll/focus events
-- Idle timeout fallback (default ≈3.5 seconds)
+- Immediate boost on real interaction
+- Event coalescing to reduce repeated Accessibility event bursts
+- Vendor-specific tuning for different OEM event behavior
+- Idle fallback to return to the minimum refresh rate
 - Lock screen and Always-On Display ignored
+- Per-app override handling before global mode decisions
 
 This prevents infinite refresh loops and unnecessary maximum-Hz usage.
 
@@ -159,8 +191,11 @@ This prevents infinite refresh loops and unnecessary maximum-Hz usage.
 |------------|----------|---------|
 | WRITE_SECURE_SETTINGS | Yes | Modify refresh rate system setting |
 | Accessibility Service | Yes | Detect global interaction |
+| PACKAGE_USAGE_STATS / Usage Access | Optional | Show recently used apps on the dashboard |
+| QUERY_ALL_PACKAGES | Optional | List installed apps for per-app profiles |
 | Foreground Service | Optional | Stability Mode |
 | Disable Battery Optimization | Recommended | Prevent background kill |
+| Notification Permission | Conditional | Required for Stability Mode on Android 13+ |
 
 Grant secure permission via ADB:
 
@@ -210,12 +245,14 @@ Settings → Accessibility → Installed Services → Adaptive Hz → Enable
 
 ## How It Works
 
-| Mode | Behavior |
-|------|----------|
+| Global Mode | Behavior |
+|-------------|----------|
 | Adaptive | Automatically switches between minimum and maximum based on interaction |
-| Minimum | Locks refresh rate to minimum |
-| Maximum | Locks refresh rate to maximum |
+| Minimum | Locks refresh rate to minimum globally |
+| Maximum | Locks refresh rate to maximum globally |
 | Off | Restores system default behavior |
+
+Per-app profiles can override the global mode for specific apps. For example, a browser can be set to **Respect app/system**, a game to **Maximum**, and a reader app to **Minimum**.
 
 ### Notification Controls
 
@@ -349,6 +386,10 @@ Adaptive Hz
 - Minimal CPU overhead
 - OEM-aware system setting control
 - Accessibility-based interaction detection
+- Per-app profile decision layer
+- Event coalescing for noisy Accessibility event streams
+- Diagnostics screen for runtime state inspection
+- Accessibility Event Inspector for device-specific debugging
 
 ---
 
@@ -372,6 +413,7 @@ Note: Results may vary depending on usage patterns and device behavior.
 - Some ROMs may override refresh policies
 - User force-stop disables background switching until reopened
 - Accessibility service must remain enabled
+- Recent apps shortcuts require optional Usage Access permission
 
 ---
 
@@ -441,6 +483,8 @@ Please include when relevant:
 - Android version
 - ROM / UI
 - Supported refresh rates
+- Diagnostics report if available
+- Accessibility Event Inspector output for event-related issues
 
 ---
 
@@ -452,14 +496,12 @@ MIT License
 
 ## 🗺️ Roadmap
 
+- [x] Per-app refresh rate profiles
+- [x] Diagnostics screen
+- [x] Accessibility Event Inspector
+- [x] Event coalescing
 - [ ] More vendor support (Pixel, OnePlus)
-- [ ] Per-app refresh rate profiles
-- [ ] Advanced tuning settings
-- [ ] UI/UX improvements
-- [ ] Public device compatibility dashboard
-- [ ] Advanced logging / debug mode
-
----
+- [ ] Export / import per-app profiles
 
 Made with care by AlpWare Studio
 

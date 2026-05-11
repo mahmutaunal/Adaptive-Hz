@@ -43,7 +43,7 @@
     <string name="maximum">Maksimum</string>
 
     <string name="per_app_title">Uygulama Bazlı Yenileme Hızı</string>
-    <string name="per_app_desc">Yakında: Her uygulama için Adaptif / Minimum / Maksimum seçimi.</string>
+    <string name="per_app_desc">Her uygulama için Adaptive, Minimum, Maximum veya Respect davranışını ayarlayın.</string>
     <string name="per_app_desc2">Bu özellik yüklü uygulamaların listelenmesini ve uygulama bazlı ayar saklanmasını gerektirir.</string>
 
     <string name="footer_title">AlpWare Studio tarafından geliştirildi</string>
@@ -115,9 +115,29 @@
     <string name="cd_collapse">Daralt</string>
     <string name="error">Hata</string>
 
+    <!-- Settings -->
+    <string name="settings_accessibility_working_summary">Erişilebilirlik servisi aktif ve düzgün çalışıyor.</string>
+    <string name="settings_accessibility_required_summary">Dokunma ve kaydırma etkileşimlerini algılamak için gereklidir.</string>
+
+    <string name="settings_adb_granted_summary">WRITE_SECURE_SETTINGS izni verilmiş durumda.</string>
+    <string name="settings_adb_or_root_summary">ADB veya root erişimi kullanarak izin verin.</string>
+    <string name="settings_adb_required_summary">Yenileme hızı davranışını kontrol etmek için gereklidir.</string>
+
+    <string name="settings_usage_access_granted_summary">Son kullanılan uygulamalar artık doğru şekilde algılanabiliyor.</string>
+    <string name="settings_usage_access_recommended_summary">Gerçek son kullanılan uygulamaları Dashboard ekranında göstermek için önerilir.</string>
+
+    <string name="settings_battery_optimizations_disabled_summary">Adaptive Hz için pil optimizasyonları devre dışı bırakıldı.</string>
+    <string name="settings_battery_optimization_recommended_summary">Arka plan kararlılığını artırmak için önerilir.</string>
+
+    <string name="settings_notifications_enabled_summary">Kararlılık Modu için bildirimler etkin.</string>
+    <string name="settings_notifications_required_summary">Ön plan kararlılık bildirimleri için gereklidir.</string>
+
+    <string name="settings_diagnostics_summary">Çalışma durumu ve hata ayıklama bilgilerini görüntüleyin.</string>
+    <string name="settings_event_inspector_summary">Son erişilebilirlik olaylarını ve kaydırma sinyallerini inceleyin.</string>
+
     <!-- Settings - header -->
     <string name="settings_title">Ayarlar</string>
-    <string name="settings_app_name">KeymapKit</string>
+    <string name="settings_app_name">Adaptive Hz</string>
     <string name="settings_app_tagline">Adaptif Hz, kullanıcı etkileşimine göre ekran yenileme hızını 60 Hz ile 120 Hz arasında otomatik olarak değiştirir.</string>
 
     <!-- Settings - defaults (developer) -->
@@ -127,6 +147,7 @@
 
     <!-- Settings - sections -->
     <string name="settings_section_behavior">Davranış</string>
+    <string name="settings_section_debug">Hata Ayıklama</string>
     <string name="settings_section_about">Hakkında</string>
     <string name="settings_section_developer">Geliştirici</string>
     <string name="settings_section_support">Destek</string>
@@ -228,4 +249,114 @@
     <string name="retry">Tekrar dene</string>
     <string name="setup_continue_button">Devam et</string>
     <string name="setup_continue_required_hint">Devam etmek için yukarıdaki zorunlu adımları tamamlayın. Önerilen adımlar isteğe bağlıdır.</string>
+
+    <string name="setup_usage_access_title">Kullanım Erişimi</string>
+    <string name="setup_usage_access_desc">Önerilir. Adaptive Hz’in son kullanılan uygulamaları Dashboard ekranında gösterebilmesini sağlar.</string>
+    <string name="setup_usage_access_button">Kullanım Erişimini Aç</string>
+    <string name="setup_accessibility_enabled_message">Erişilebilirlik Servisi etkin. Yenile simgesi ile ayarları istediğiniz zaman tekrar açabilirsiniz.</string>
+    <string name="setup_adb_granted_message">ADB izni verilmiş ve düzgün çalışıyor. Yenile simgesi ile tekrar doğrulayabilirsiniz.</string>
+    <string name="setup_battery_ok_message">Pil optimizasyonu devre dışı bırakıldı. Adaptive Hz artık arka planda daha kararlı çalışabilir.</string>
+    <string name="setup_usage_access_ok_message">Kullanım Erişimi etkin. Son kullanılan uygulamalar artık Dashboard ekranında görünebilir.</string>
+
+    <string name="adaptive_hz_enabled">Adaptive Hz Etkin</string>
+
+    <string name="enable_recent_apps_access">Son kullanılan uygulama erişimini etkinleştir</string>
+    <string name="no_recent_apps_found">Henüz son kullanılan uygulama bulunamadı.</string>
+    <string name="view_all_apps">Tüm uygulamaları görüntüle</string>
+
+    <string name="per_app_profiles_title">Uygulama bazlı profiller</string>
+    <string name="back">Geri</string>
+    <string name="per_app_profiles_description">Belirli uygulamalar için yenileme davranışını ayarlayın veya tüm uygulamalara tek profil uygulayın.</string>
+    <string name="search_apps">Uygulama ara</string>
+    <string name="show_system_apps">Sistem uygulamalarını göster</string>
+    <string name="show_system_apps_description">Launcher, tarayıcı, video oynatıcı ve üretici sistem uygulamalarını dahil et.</string>
+    <string name="loading_apps">Uygulamalar yükleniyor…</string>
+    <string name="loading_more_apps">Daha fazla uygulama yükleniyor…</string>
+    <string name="close">Kapat</string>
+    <string name="apply_profile_to_all">Profili tümüne uygula</string>
+    <string name="bulk_profile_dialog_message_including_system">Bu işlem sistem uygulamaları dahil %1$d uygulamayı güncelleyecek.</string>
+    <string name="bulk_profile_dialog_message_user_apps">Bu işlem %1$d kullanıcı uygulamasını güncelleyecek.</string>
+    <string name="all_listed_apps">Tüm listelenen uygulamalar</string>
+    <string name="app_count_including_system_apps">Sistem uygulamaları dahil %1$d uygulama</string>
+    <string name="user_app_count">%1$d kullanıcı uygulaması</string>
+    <string name="apply_profile">Profil uygula</string>
+    <string name="all">Tümü</string>
+
+    <string name="event_inspector_title">Olay İnceleyici</string>
+    <string name="accessibility_event_inspector_title">Erişilebilirlik Olay İnceleyici</string>
+    <string name="accessibility_event_inspector_description">Gürültülü uygulamaları, kaydırma davranışlarını ve üreticiye özel erişilebilirlik olaylarını inceleyin.</string>
+    <string name="paused">Duraklatıldı</string>
+    <string name="live">Canlı</string>
+    <string name="scroll_only">Sadece kaydırma</string>
+    <string name="adaptive_hz_events_clip_label">Adaptive Hz olayları</string>
+    <string name="events_copied">Olaylar kopyalandı</string>
+    <string name="copy">Kopyala</string>
+    <string name="clear">Temizle</string>
+    <string name="events_captured">%1$d olay yakalandı</string>
+    <string name="no_events_captured_yet">Henüz olay yakalanmadı.</string>
+    <string name="event_scroll_delta_x">ΔX</string>
+    <string name="event_scroll_delta_y">ΔY</string>
+    <string name="event_content_change">içerikDeğişimi</string>
+
+    <string name="accessibility_event_report_title">Adaptive Hz Erişilebilirlik Olayları</string>
+    <string name="accessibility_event_report_separator">--------------------------------</string>
+    <string name="accessibility_event_report_row">%1$s | %2$s | %3$s | ΔX=%4$d ΔY=%5$d | içerikDeğişimi=%6$d</string>
+    <string name="empty_value_dash">-</string>
+
+    <string name="diagnostics_title">Tanılama</string>
+    <string name="diagnostics_description">Çalışma durumu, yenileme motoru etkinliği ve hata ayıklama bilgilerini inceleyin.</string>
+    <string name="adaptive_hz_diagnostics_clip_label">Adaptive Hz tanılama</string>
+    <string name="diagnostics_copied">Tanılama kopyalandı</string>
+    <string name="copy_report">Raporu kopyala</string>
+    <string name="refresh">Yenile</string>
+    <string name="diagnostics_system_title">Sistem</string>
+    <string name="diagnostics_vendor">Üretici</string>
+    <string name="diagnostics_current_display">Mevcut ekran</string>
+    <string name="diagnostics_setting_key">Ayar anahtarı</string>
+    <string name="diagnostics_setting_value">Ayar değeri</string>
+    <string name="diagnostics_battery_saver">Pil tasarrufu</string>
+    <string name="refresh_rate_hz">%1$d Hz</string>
+    <string name="diagnostics_current_mode">Mevcut mod</string>
+    <string name="diagnostics_adb_granted">ADB izni</string>
+    <string name="diagnostics_keep_alive">Arka plan kararlılığı</string>
+    <string name="diagnostics_accessibility">Erişilebilirlik</string>
+    <string name="diagnostics_last_heartbeat">Son heartbeat</string>
+    <string name="diagnostics_engine_debug_title">Motor hata ayıklama</string>
+    <string name="diagnostics_foreground_package">Ön plandaki paket</string>
+    <string name="diagnostics_last_event">Son olay</string>
+    <string name="diagnostics_last_write">Son yazım</string>
+    <string name="diagnostics_last_write_success">Son yazım başarılı</string>
+    <string name="diagnostics_updated_at">Güncellenme zamanı</string>
+    <string name="diagnostics_report_title">Adaptive Hz Tanılama</string>
+    <string name="diagnostics_report_separator">----------------------</string>
+    <string name="diagnostics_report_app_version">Uygulama sürümü: %1$s (%2$d)</string>
+    <string name="diagnostics_report_vendor">Üretici: %1$s</string>
+    <string name="diagnostics_report_current_display">Mevcut ekran: %1$d Hz</string>
+    <string name="diagnostics_report_setting_key">Ayar anahtarı: %1$s</string>
+    <string name="diagnostics_report_setting_value">Ayar değeri: %1$s</string>
+    <string name="diagnostics_report_battery_saver">Pil tasarrufu: %1$s</string>
+    <string name="diagnostics_report_current_mode">Mevcut mod: %1$s</string>
+    <string name="diagnostics_report_adb_granted">ADB izni: %1$s</string>
+    <string name="diagnostics_report_keep_alive">Arka plan kararlılığı: %1$s</string>
+    <string name="diagnostics_report_accessibility">Erişilebilirlik: %1$s</string>
+    <string name="diagnostics_report_last_heartbeat">Son heartbeat: %1$s</string>
+    <string name="diagnostics_report_foreground_package">Ön plandaki paket: %1$s</string>
+    <string name="diagnostics_report_last_event">Son olay: %1$s</string>
+    <string name="diagnostics_report_last_write">Son yazım: %1$s</string>
+    <string name="diagnostics_report_last_write_success">Son yazım başarılı: %1$s</string>
+    <string name="diagnostics_report_debug_updated_at">Hata ayıklama güncelleme zamanı: %1$s</string>
+
+    <string name="profile_mode_respect_app">Uygulamaya saygı göster</string>
+    <string name="profile_mode_default_description">Genel Adaptive Hz davranışını kullan.</string>
+    <string name="profile_mode_adaptive_description">Adaptive Hz bu uygulamayı kontrol eder.</string>
+    <string name="profile_mode_minimum_description">Bu uygulamayı minimum yenileme hızında tut.</string>
+    <string name="profile_mode_maximum_description">Bu uygulamayı maksimum yenileme hızında tut.</string>
+    <string name="profile_mode_respect_app_description">Bu uygulamanın veya sistemin yenileme davranışını değiştirme.</string>
+    <string name="profile_mode_disabled_description">Bu uygulamayı yok say ve güvenli düşük moda dön.</string>
+    <string name="profile_mode_default">Varsayılan</string>
+    <string name="profile_mode_adaptive">Adaptive</string>
+    <string name="profile_mode_minimum">Minimum</string>
+    <string name="profile_mode_maximum">Maksimum</string>
+    <string name="profile_mode_respect">Saygı göster</string>
+    <string name="profile_mode_disabled">Devre dışı</string>
 </resources>
