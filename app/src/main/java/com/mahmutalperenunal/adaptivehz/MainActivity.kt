@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.content.Intent
 import android.provider.Settings
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
@@ -36,6 +35,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.DisposableEffect
 import androidx.core.content.ContextCompat
 import androidx.compose.runtime.LaunchedEffect
@@ -44,16 +44,17 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs
 import com.mahmutalperenunal.adaptivehz.core.apps.RecentAppsProvider
+import com.mahmutalperenunal.adaptivehz.core.locale.AppLocaleController
+import com.mahmutalperenunal.adaptivehz.core.prefs.AppThemeMode
 import com.mahmutalperenunal.adaptivehz.core.system.RootManager
 import com.mahmutalperenunal.adaptivehz.ui.home.PerAppRefreshScreen
 import com.mahmutalperenunal.adaptivehz.ui.settings.AccessibilityEventInspectorScreen
 import com.mahmutalperenunal.adaptivehz.ui.settings.DiagnosticsScreen
 
-
 /**
  * App entry point that wires Compose navigation with platform setup actions.
  */
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
 
     private fun openAccessibilitySettings() {
         try {
@@ -97,10 +98,27 @@ class MainActivity : ComponentActivity() {
      * Initializes app state, permission launchers and the Compose navigation graph.
      */
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
+        splashScreen.setKeepOnScreenCondition { false }
+
         super.onCreate(savedInstanceState)
-        installSplashScreen()
+
         setContent {
-            AdaptiveHzTheme {
+            var themeMode by remember {
+                mutableStateOf(AdaptiveHzPrefs.getThemeMode(this@MainActivity))
+            }
+
+            var appLanguage by remember {
+                mutableStateOf(AdaptiveHzPrefs.getAppLanguage(this@MainActivity))
+            }
+
+            val darkTheme = when (themeMode) {
+                AppThemeMode.SYSTEM -> isSystemInDarkTheme()
+                AppThemeMode.LIGHT -> false
+                AppThemeMode.DARK -> true
+            }
+
+            AdaptiveHzTheme(darkTheme = darkTheme) {
                 val navController = rememberNavController()
 
                 val prefs = remember {
@@ -273,7 +291,8 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                SetupSystemBars()
+                SetupSystemBars(darkTheme = darkTheme)
+
                 Surface(
                     modifier = Modifier.fillMaxSize()
                 ) {
@@ -333,6 +352,19 @@ class MainActivity : ComponentActivity() {
                                     } else {
                                         StabilityForegroundService.stop(this@MainActivity)
                                     }
+                                },
+                                themeMode = themeMode,
+                                onThemeModeChanged = { next ->
+                                    themeMode = next
+                                    AdaptiveHzPrefs.setThemeMode(this@MainActivity, next)
+                                },
+                                appLanguage = appLanguage,
+                                onAppLanguageChanged = { next ->
+                                    if (next == appLanguage) return@SettingsScreen
+
+                                    appLanguage = next
+                                    AdaptiveHzPrefs.setAppLanguage(this@MainActivity, next)
+                                    AppLocaleController.apply(next)
                                 }
                             )
                         }
@@ -365,9 +397,9 @@ class MainActivity : ComponentActivity() {
  * Applies transparent system bars for the Material 3 edge-to-edge layout.
  */
 @Composable
-fun SetupSystemBars() {
+fun SetupSystemBars(darkTheme: Boolean) {
     val systemUiController = rememberSystemUiController()
-    val useDarkIcons = !isSystemInDarkTheme()
+    val useDarkIcons = !darkTheme
 
     SideEffect {
         systemUiController.setStatusBarColor(

@@ -71,6 +71,7 @@ Adaptive Hz was built to fix this gap with a simple, system-wide solution.
 - Setup & Permissions
 - Dashboard (Light mode)
 - Settings
+- Per-App
 - Dashboard (Dark mode)
 
 Many Android devices offer multiple refresh rates (60Hz / 90Hz / 120Hz) but:
@@ -343,27 +344,49 @@ Adaptive Hz includes a **resizable home screen widget** for quick access to refr
 ```
 Adaptive Hz
 ├── core
+│   ├── apps
+│   │   ├── InstalledAppInfo
+│   │   ├── InstalledAppsRepository
+│   │   └── RecentAppsProvider
+│   ├── debug
+│   │   ├── DebugAccessibilityEvent
+│   │   └── DebugEventStore
 │   ├── engine
-│   │   ├── strategy
+│   │   ├── model
+│   │   │   ├── DeviceVendor.kt
+│   │   │   ├── EngineModels.kt
 │   │   │   ├── VendorStrategy
+│   │   │   └── VendorTuning
+│   │   ├── strategy
+│   │   │   ├── OtherStrategy
 │   │   │   ├── SamsungStrategy
-│   │   │   ├── XiaomiStrategy
-│   │   │   └── OtherStrategy
+│   │   │   └── XiaomiStrategy
 │   │   ├── AdaptiveHzEngine
-│   │   └── EngineModels.kt
-│   └── system
-│       ├── DeviceVendor.kt
-│       └── RefreshRateController
-    ├── BootReceiver
-    ├── AdaptiveHzService
-    ├── StabilityForegroundService
+│   │   └── AdaptiveHzRuntimeState
+│   ├── prefs
+│   │   └── AdaptiveHzPrefs
+│   ├── service
+│   │   ├── AdaptiveHzActionHandler
+│   │   ├── AdaptiveHzService
+│   │   ├── AdaptiveHzTileService
+│   │   └── StabilityForegroundService
+│   ├── system
+│   │   ├── BootReceiver
+│   │   ├── RefreshRateController
+│   │   └── RootManager
+│   └── widget
+│       ├── AdaptiveHzWidgetProvider
+│       └── AdaptiveHzWidgetUpdater
 ├── ui
 │   ├── home
 │   │   ├── components
 │   │   │   ├── DashboardContent.kt
 │   │   │   └── SetupContent.kt
-│   │   └── HomeScreen.kt
+│   │   ├── HomeScreen.kt
+│   │   └── PerAppRefreshScreen.kt
 │   ├── settings
+│   │   ├── AccessibilityEventInspectorScreen.kt
+│   │   ├── DiagnosticsScreen.kt
 │   │   └── SettingsScreen.kt
 │   └── theme
 │

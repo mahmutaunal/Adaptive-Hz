@@ -29,6 +29,7 @@ import androidx.compose.material.icons.outlined.Accessibility
 import androidx.compose.material.icons.outlined.AdminPanelSettings
 import androidx.compose.material.icons.outlined.BatterySaver
 import androidx.compose.material.icons.outlined.BugReport
+import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.History
@@ -71,6 +72,8 @@ import com.mahmutalperenunal.adaptivehz.BuildConfig
 import com.mahmutalperenunal.adaptivehz.R
 import androidx.core.net.toUri
 import com.mahmutalperenunal.adaptivehz.core.engine.AdaptiveHzRuntimeState
+import com.mahmutalperenunal.adaptivehz.core.prefs.AppLanguage
+import com.mahmutalperenunal.adaptivehz.core.prefs.AppThemeMode
 
 /**
  * Settings route for setup actions, diagnostics, support links and legal notices.
@@ -95,6 +98,10 @@ fun SettingsScreen(
     onRequestNotificationPermission: () -> Unit,
     onOpenDiagnostics: () -> Unit,
     onOpenEventInspector: () -> Unit,
+    themeMode: AppThemeMode,
+    onThemeModeChanged: (AppThemeMode) -> Unit,
+    appLanguage: AppLanguage,
+    onAppLanguageChanged: (AppLanguage) -> Unit,
     modifier: Modifier = Modifier,
     appName: String? = null,
     appTagline: String? = null,
@@ -118,6 +125,9 @@ fun SettingsScreen(
     val shareBody = stringResource(R.string.settings_share_text, appNameText, githubRepoUrl)
 
     val dialog = remember { mutableStateOf<LegalDialog?>(null) }
+    val themeDialogOpen = remember { mutableStateOf(false) }
+    val languageDialogOpen = remember { mutableStateOf(false) }
+
     val scrollState = rememberScrollState()
     val topBarState = rememberTopAppBarState()
 
@@ -243,6 +253,30 @@ fun SettingsScreen(
                         onKeepAliveChanged(next)
                     }
                 }
+            )
+
+            SectionTitle(stringResource(R.string.settings_section_appearance))
+            SettingsRow(
+                leading = Icons.Outlined.DarkMode,
+                title = stringResource(R.string.settings_item_theme),
+                subtitle = when (themeMode) {
+                    AppThemeMode.SYSTEM -> stringResource(R.string.settings_value_theme_system)
+                    AppThemeMode.LIGHT -> stringResource(R.string.settings_value_theme_light)
+                    AppThemeMode.DARK -> stringResource(R.string.settings_value_theme_dark)
+                },
+                onClick = { themeDialogOpen.value = true }
+            )
+
+            SettingsRow(
+                leading = Icons.Outlined.Language,
+                title = stringResource(R.string.settings_item_language),
+                subtitle = when (appLanguage) {
+                    AppLanguage.SYSTEM -> stringResource(R.string.settings_value_language_system)
+                    AppLanguage.EN -> stringResource(R.string.settings_value_language_english)
+                    AppLanguage.TR -> stringResource(R.string.settings_value_language_turkish)
+                    AppLanguage.ES -> stringResource(R.string.settings_value_language_spanish)
+                },
+                onClick = { languageDialogOpen.value = true }
             )
 
             SectionTitle(stringResource(R.string.settings_section_debug))
@@ -371,6 +405,79 @@ fun SettingsScreen(
                     Text(
                         text = stringResource(d.bodyRes),
                         style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        )
+    }
+
+    if (themeDialogOpen.value) {
+        AlertDialog(
+            onDismissRequest = { themeDialogOpen.value = false },
+            confirmButton = {},
+            title = { Text(stringResource(R.string.settings_dialog_theme_title)) },
+            text = {
+                Column {
+                    DialogOptionRow(
+                        text = stringResource(R.string.settings_value_theme_system),
+                        onClick = {
+                            onThemeModeChanged(AppThemeMode.SYSTEM)
+                            themeDialogOpen.value = false
+                        }
+                    )
+                    DialogOptionRow(
+                        text = stringResource(R.string.settings_value_theme_light),
+                        onClick = {
+                            onThemeModeChanged(AppThemeMode.LIGHT)
+                            themeDialogOpen.value = false
+                        }
+                    )
+                    DialogOptionRow(
+                        text = stringResource(R.string.settings_value_theme_dark),
+                        onClick = {
+                            onThemeModeChanged(AppThemeMode.DARK)
+                            themeDialogOpen.value = false
+                        }
+                    )
+                }
+            }
+        )
+    }
+
+    if (languageDialogOpen.value) {
+        AlertDialog(
+            onDismissRequest = { languageDialogOpen.value = false },
+            confirmButton = {},
+            title = { Text(stringResource(R.string.settings_dialog_language_title)) },
+            text = {
+                Column {
+                    DialogOptionRow(
+                        text = stringResource(R.string.settings_value_language_system),
+                        onClick = {
+                            onAppLanguageChanged(AppLanguage.SYSTEM)
+                            languageDialogOpen.value = false
+                        }
+                    )
+                    DialogOptionRow(
+                        text = stringResource(R.string.settings_value_language_english),
+                        onClick = {
+                            onAppLanguageChanged(AppLanguage.EN)
+                            languageDialogOpen.value = false
+                        }
+                    )
+                    DialogOptionRow(
+                        text = stringResource(R.string.settings_value_language_turkish),
+                        onClick = {
+                            onAppLanguageChanged(AppLanguage.TR)
+                            languageDialogOpen.value = false
+                        }
+                    )
+                    DialogOptionRow(
+                        text = stringResource(R.string.settings_value_language_spanish),
+                        onClick = {
+                            onAppLanguageChanged(AppLanguage.ES)
+                            languageDialogOpen.value = false
+                        }
                     )
                 }
             }
@@ -596,6 +703,21 @@ private fun SettingsSwitchRow(
             )
         }
     }
+}
+
+@Composable
+private fun DialogOptionRow(
+    text: String,
+    onClick: () -> Unit
+) {
+    Text(
+        text = text,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 14.dp),
+        style = MaterialTheme.typography.bodyLarge
+    )
 }
 
 /**

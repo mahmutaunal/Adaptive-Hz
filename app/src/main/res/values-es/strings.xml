@@ -147,6 +147,7 @@
 
     <!-- Settings - sections -->
     <string name="settings_section_behavior">Comportamiento</string>
+    <string name="settings_section_appearance">Apariencia</string>
     <string name="settings_section_debug">Depuración</string>
     <string name="settings_section_about">Acerca de</string>
     <string name="settings_section_developer">Desarrollador</string>
@@ -173,6 +174,18 @@
     <string name="settings_value_notification_permission_ok">El permiso de notificaciones está concedido.</string>
     <string name="settings_value_notification_permission_required">Es necesario para activar Stability Mode en Android 13 o superior.</string>
     <string name="settings_toast_notification_required_for_stability">Se requiere el permiso de notificaciones para activar Stability Mode.</string>
+
+    <string name="settings_item_theme">Tema</string>
+    <string name="settings_item_language">Idioma</string>
+    <string name="settings_value_theme_system">Predeterminado del sistema</string>
+    <string name="settings_value_theme_light">Claro</string>
+    <string name="settings_value_theme_dark">Oscuro</string>
+    <string name="settings_value_language_system">Predeterminado del sistema</string>
+    <string name="settings_value_language_english">Inglés</string>
+    <string name="settings_value_language_turkish">Turco</string>
+    <string name="settings_value_language_spanish">Español</string>
+    <string name="settings_dialog_theme_title">Elegir tema</string>
+    <string name="settings_dialog_language_title">Elegir idioma</string>
 
     <!-- Settings - values -->
     <string name="settings_value_stability_mode_summary">Mantiene Adaptive Hz funcionando de forma más estable en segundo plano mediante una notificación persistente. Al desactivarlo, la notificación desaparece, pero la estabilidad puede reducirse en algunos dispositivos.</string>

@@ -11,6 +11,20 @@ import com.mahmutalperenunal.adaptivehz.core.engine.model.AppRefreshProfileMode
  * This class also preserves backward compatibility with the existing preference
  * keys already used across the app.
  */
+
+enum class AppThemeMode {
+    SYSTEM,
+    LIGHT,
+    DARK
+}
+
+enum class AppLanguage {
+    SYSTEM,
+    EN,
+    TR,
+    ES
+}
+
 object AdaptiveHzPrefs {
 
     private const val PREFS_NAME = "adaptive_hz_prefs"
@@ -31,6 +45,8 @@ object AdaptiveHzPrefs {
     const val KEY_DEBUG_LAST_WRITE = "debug_last_write"
     const val KEY_DEBUG_LAST_WRITE_SUCCESS = "debug_last_write_success"
     const val KEY_DEBUG_LAST_UPDATED_AT = "debug_last_updated_at"
+    const val KEY_THEME_MODE = "theme_mode"
+    const val KEY_APP_LANGUAGE = "app_language"
 
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -238,5 +254,25 @@ object AdaptiveHzPrefs {
 
     fun getDebugLastUpdatedAt(context: Context): Long {
         return prefs(context).getLong(KEY_DEBUG_LAST_UPDATED_AT, 0L)
+    }
+
+    fun getThemeMode(context: Context): AppThemeMode {
+        val raw = prefs(context).getString(KEY_THEME_MODE, AppThemeMode.SYSTEM.name)
+        return runCatching { AppThemeMode.valueOf(raw ?: AppThemeMode.SYSTEM.name) }
+            .getOrDefault(AppThemeMode.SYSTEM)
+    }
+
+    fun setThemeMode(context: Context, mode: AppThemeMode) {
+        prefs(context).edit { putString(KEY_THEME_MODE, mode.name) }
+    }
+
+    fun getAppLanguage(context: Context): AppLanguage {
+        val raw = prefs(context).getString(KEY_APP_LANGUAGE, AppLanguage.SYSTEM.name)
+        return runCatching { AppLanguage.valueOf(raw ?: AppLanguage.SYSTEM.name) }
+            .getOrDefault(AppLanguage.SYSTEM)
+    }
+
+    fun setAppLanguage(context: Context, language: AppLanguage) {
+        prefs(context).edit { putString(KEY_APP_LANGUAGE, language.name) }
     }
 }
