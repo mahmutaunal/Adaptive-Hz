@@ -52,6 +52,7 @@ fun SetupComponent(
     notificationsGranted: Boolean,
     usageAccessGranted: Boolean,
     keepAliveEnabled: Boolean,
+    isXiaomiDevice: Boolean,
     labelOn: String,
     labelOff: String,
     labelGranted: String,
@@ -239,6 +240,14 @@ fun SetupComponent(
             }
         }
     )
+
+    if (isXiaomiDevice) {
+        Spacer(modifier = Modifier.height(16.dp))
+
+        XiaomiStabilityGuideCard(
+            onOpenBatterySettings = onRequestIgnoreBatteryOptimizations
+        )
+    }
 }
 
 /**
@@ -559,4 +568,36 @@ private fun SetupSwitchCard(
             }
         }
     }
+}
+
+@Composable
+private fun XiaomiStabilityGuideCard(
+    onOpenBatterySettings: () -> Unit
+) {
+    SetupCard(
+        icon = Icons.Outlined.BatterySaver,
+        title = stringResource(id = R.string.xiaomi_stability_title),
+        description = stringResource(id = R.string.xiaomi_stability_desc),
+        ok = false,
+        primaryButtonText = stringResource(id = R.string.open_battery_settings),
+        onPrimaryClick = onOpenBatterySettings,
+        okLabelOverride = stringResource(id = R.string.label_recommended),
+        secondaryContent = {
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = stringResource(id = R.string.xiaomi_stability_steps_intro),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = stringResource(id = R.string.xiaomi_stability_steps),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    )
 }

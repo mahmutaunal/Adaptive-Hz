@@ -14,6 +14,8 @@ import androidx.core.content.ContextCompat
 import com.mahmutalperenunal.adaptivehz.R
 import com.mahmutalperenunal.adaptivehz.core.engine.model.AdaptiveHzMode
 import android.os.Handler
+import android.provider.Settings
+import com.mahmutalperenunal.adaptivehz.core.engine.AdaptiveHzRuntimeState
 import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs
 
 /**
@@ -34,9 +36,24 @@ class StabilityForegroundService : Service() {
         stopSelf()
     }
 
+    private val healthMonitorRunnable = object : Runnable {
+        override fun run() {
+            if (
+                AdaptiveHzPrefs.isKeepAliveEnabled(this@StabilityForegroundService) &&
+                AdaptiveHzPrefs.isAppEnabled(this@StabilityForegroundService)
+            ) {
+                val nm = getSystemService(NotificationManager::class.java)
+                nm.notify(NOTIF_ID, buildNotification())
+
+                mainHandler.postDelayed(this, HEALTH_CHECK_INTERVAL_MS)
+            }
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
         startForeground(NOTIF_ID, buildNotification())
+        startHealthMonitor()
     }
 
     /**
@@ -111,6 +128,11 @@ class StabilityForegroundService : Service() {
 
         val currentMode = AdaptiveHzActionHandler.getCurrentMode(this)
 
+        val accessibilityState = AdaptiveHzRuntimeState.getAccessibilityState(this)
+        val needsRecovery =
+            currentMode != AdaptiveHzMode.OFF &&
+                    accessibilityState == AdaptiveHzRuntimeState.AccessibilityState.BROKEN
+
         val contentText = when (currentMode) {
             AdaptiveHzMode.OFF -> getString(R.string.label_off)
             AdaptiveHzMode.ADAPTIVE -> getString(R.string.mode_adaptive)
@@ -120,14 +142,44 @@ class StabilityForegroundService : Service() {
 
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle(getString(R.string.stability_notification_title))
-            .setContentText(contentText)
-            .setContentIntent(contentIntent)
+            .setContentTitle(
+                if (needsRecovery) {
+                    getString(R.string.stability_notification_recovery_title)
+                } else {
+                    getString(R.string.stability_notification_title)
+                }
+            )
+            .setContentText(
+                if (needsRecovery) {
+                    getString(R.string.stability_notification_recovery_text)
+                } else {
+                    contentText
+                }
+            )
+            .setContentIntent(
+                if (needsRecovery) {
+                    createAccessibilitySettingsIntent()
+                } else {
+                    contentIntent
+                }
+            )
             .setOngoing(true)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setOnlyAlertOnce(true)
 
-        if (currentMode == AdaptiveHzMode.OFF) {
+        if (needsRecovery) {
+            builder.addAction(
+                0,
+                getString(R.string.stability_notification_recovery_action),
+                createAccessibilitySettingsIntent()
+            )
+
+            builder.addAction(
+                0,
+                getString(R.string.disable),
+                createServiceIntent(ACTION_TOGGLE_OFF)
+            )
+        } else if (currentMode == AdaptiveHzMode.OFF) {
             builder.addAction(
                 0,
                 getString(R.string.enable),
@@ -211,8 +263,31 @@ class StabilityForegroundService : Service() {
         mainHandler.removeCallbacks(delayedStopRunnable)
     }
 
+    private fun createAccessibilitySettingsIntent(): PendingIntent {
+        val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+
+        return PendingIntent.getActivity(
+            this,
+            ACTION_OPEN_ACCESSIBILITY_SETTINGS.hashCode(),
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+    }
+
+    private fun startHealthMonitor() {
+        mainHandler.removeCallbacks(healthMonitorRunnable)
+        mainHandler.postDelayed(healthMonitorRunnable, HEALTH_CHECK_INTERVAL_MS)
+    }
+
+    private fun stopHealthMonitor() {
+        mainHandler.removeCallbacks(healthMonitorRunnable)
+    }
+
     override fun onDestroy() {
         cancelPendingStop()
+        stopHealthMonitor()
         super.onDestroy()
     }
 
@@ -230,6 +305,11 @@ class StabilityForegroundService : Service() {
         private const val ACTION_REFRESH_NOTIFICATION = "com.mahmutalperenunal.adaptivehz.action.REFRESH_NOTIFICATION"
 
         private const val OFF_GRACE_PERIOD_MS = 60_000L
+
+        private const val ACTION_OPEN_ACCESSIBILITY_SETTINGS =
+            "com.mahmutalperenunal.adaptivehz.action.OPEN_ACCESSIBILITY_SETTINGS"
+
+        private const val HEALTH_CHECK_INTERVAL_MS = 5_000L
 
         fun start(context: Context) {
             val intent = Intent(context, StabilityForegroundService::class.java)

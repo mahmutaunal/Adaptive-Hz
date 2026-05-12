@@ -294,6 +294,14 @@
     <string name="user_app_count">%1$d kullanıcı uygulaması</string>
     <string name="apply_profile">Profil uygula</string>
     <string name="all">Tümü</string>
+    <string name="xiaomi_stability_title">Xiaomi / HyperOS kararlılığı</string>
+    <string name="xiaomi_stability_desc">Xiaomi, ek izinler açılmadığında arka plan servislerini durdurabilir.</string>
+    <string name="xiaomi_stability_steps_intro">En iyi kararlılık için:</string>
+    <string name="xiaomi_stability_steps">• Uygulama pil tasarrufu: Kısıtlama yok\n• Otomatik başlatma: Açık\n• Son uygulamalar: Adaptive Hz kilitli\n• Bildirimler: İzinli\n• Erişilebilirlik: Açık</string>
+    <string name="xiaomi_stability_settings_summary">Daha kararlı arka plan çalışması için Kısıtlama yok, Otomatik başlatma, Son uygulamalarda kilitleme, bildirimler ve erişilebilirliği açın.</string>
+    <string name="stability_notification_recovery_title">Adaptive Hz dikkat gerektiriyor</string>
+    <string name="stability_notification_recovery_text">Erişilebilirlik Servisi durmuş olabilir. Kurtarmak için dokunun.</string>
+    <string name="stability_notification_recovery_action">Kurtar</string>
 
     <string name="event_inspector_title">Olay İnceleyici</string>
     <string name="accessibility_event_inspector_title">Erişilebilirlik Olay İnceleyici</string>

@@ -72,6 +72,8 @@ import com.mahmutalperenunal.adaptivehz.BuildConfig
 import com.mahmutalperenunal.adaptivehz.R
 import androidx.core.net.toUri
 import com.mahmutalperenunal.adaptivehz.core.engine.AdaptiveHzRuntimeState
+import com.mahmutalperenunal.adaptivehz.core.engine.model.DeviceVendor
+import com.mahmutalperenunal.adaptivehz.core.engine.model.DeviceVendorDetector
 import com.mahmutalperenunal.adaptivehz.core.prefs.AppLanguage
 import com.mahmutalperenunal.adaptivehz.core.prefs.AppThemeMode
 
@@ -130,6 +132,8 @@ fun SettingsScreen(
 
     val scrollState = rememberScrollState()
     val topBarState = rememberTopAppBarState()
+
+    val isXiaomiDevice = remember { DeviceVendorDetector.detect() == DeviceVendor.XIAOMI }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -254,6 +258,17 @@ fun SettingsScreen(
                     }
                 }
             )
+
+            if (isXiaomiDevice) {
+                SettingsRow(
+                    leading = Icons.Outlined.BatterySaver,
+                    title = stringResource(R.string.xiaomi_stability_title),
+                    subtitle = stringResource(R.string.xiaomi_stability_settings_summary),
+                    subtitleMaxLines = 6,
+                    trailing = Icons.AutoMirrored.Outlined.OpenInNew,
+                    onClick = onRequestIgnoreBatteryOptimizations
+                )
+            }
 
             SectionTitle(stringResource(R.string.settings_section_appearance))
             SettingsRow(

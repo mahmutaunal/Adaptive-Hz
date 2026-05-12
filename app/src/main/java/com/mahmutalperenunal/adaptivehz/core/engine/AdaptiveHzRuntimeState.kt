@@ -23,7 +23,7 @@ object AdaptiveHzRuntimeState {
     }
 
     private const val SERVICE_CLASS_NAME = "com.mahmutalperenunal.adaptivehz.core.service.AdaptiveHzService"
-    private const val HEARTBEAT_TIMEOUT_MS = 8_000L
+    const val HEARTBEAT_TIMEOUT_MS = 8_000L
 
     /**
      * Verifies whether the minimum required setup is completed.

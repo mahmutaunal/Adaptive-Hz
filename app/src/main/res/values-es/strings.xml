@@ -305,6 +305,14 @@
     <string name="clear">Limpiar</string>
     <string name="events_captured">%1$d eventos capturados</string>
     <string name="no_events_captured_yet">Aún no se han capturado eventos.</string>
+    <string name="xiaomi_stability_title">Estabilidad en Xiaomi / HyperOS</string>
+    <string name="xiaomi_stability_desc">Xiaomi puede detener los servicios en segundo plano a menos que se habiliten permisos adicionales.</string>
+    <string name="xiaomi_stability_steps_intro">Para obtener la mejor fiabilidad:</string>
+    <string name="xiaomi_stability_steps">• Ahorro de batería de la app: Sin restricciones\n• Inicio automático: Activado\n• Apps recientes: Bloquear Adaptive Hz\n• Notificaciones: Permitidas\n• Accesibilidad: Activada</string>
+    <string name="xiaomi_stability_settings_summary">Para una mejor fiabilidad en segundo plano, habilita Sin restricciones, Inicio automático, bloqueo en apps recientes, notificaciones y accesibilidad.</string>
+    <string name="stability_notification_recovery_title">Adaptive Hz necesita atención</string>
+    <string name="stability_notification_recovery_text">Es posible que el Servicio de Accesibilidad se haya detenido. Toca para recuperarlo.</string>
+    <string name="stability_notification_recovery_action">Recuperar</string>
 
     <string name="event_scroll_delta_x">ΔX</string>
     <string name="event_scroll_delta_y">ΔY</string>

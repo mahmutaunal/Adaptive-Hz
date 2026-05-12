@@ -316,6 +316,14 @@
     <string name="diagnostics_copied">Diagnostics copied</string>
     <string name="copy_report">Copy report</string>
     <string name="refresh">Refresh</string>
+    <string name="xiaomi_stability_title">Xiaomi / HyperOS stability</string>
+    <string name="xiaomi_stability_desc">Xiaomi may stop background services unless extra permissions are enabled.</string>
+    <string name="xiaomi_stability_steps_intro">For best reliability:</string>
+    <string name="xiaomi_stability_steps">• App battery saver: No restrictions\n• Autostart: Enabled\n• Recent apps: Lock Adaptive Hz\n• Notifications: Allowed\n• Accessibility: Enabled</string>
+    <string name="xiaomi_stability_settings_summary">For better background reliability, enable No restrictions, Autostart, Recent apps lock, notifications and accessibility.</string>
+    <string name="stability_notification_recovery_title">Adaptive Hz needs attention</string>
+    <string name="stability_notification_recovery_text">Accessibility Service may have stopped. Tap to recover.</string>
+    <string name="stability_notification_recovery_action">Recover</string>
 
     <string name="diagnostics_system_title">System</string>
     <string name="diagnostics_vendor">Vendor</string>

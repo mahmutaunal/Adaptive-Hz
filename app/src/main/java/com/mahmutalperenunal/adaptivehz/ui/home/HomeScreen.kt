@@ -61,6 +61,7 @@ import com.mahmutalperenunal.adaptivehz.core.engine.AdaptiveHzRuntimeState.getAc
 import com.mahmutalperenunal.adaptivehz.core.apps.InstalledAppInfo
 import com.mahmutalperenunal.adaptivehz.core.apps.InstalledAppsRepository
 import com.mahmutalperenunal.adaptivehz.core.apps.RecentAppsProvider
+import com.mahmutalperenunal.adaptivehz.core.engine.model.DeviceVendor
 import com.mahmutalperenunal.adaptivehz.core.system.RootManager
 import com.mahmutalperenunal.adaptivehz.ui.home.components.DashboardComponent
 import com.mahmutalperenunal.adaptivehz.ui.home.components.SetupComponent
@@ -120,6 +121,7 @@ fun HomeScreen(
 
     // Vendor is stable during the app session.
     val vendorLabel = remember { DeviceVendorDetector.detect().toString() }
+    val isXiaomiDevice = remember { DeviceVendorDetector.detect() == DeviceVendor.XIAOMI }
 
     var rootAvailable by remember { mutableStateOf(false) }
 
@@ -270,6 +272,7 @@ fun HomeScreen(
                     notificationsGranted = notificationsGranted,
                     usageAccessGranted = usagePermissionGranted,
                     keepAliveEnabled = keepAliveEnabled,
+                    isXiaomiDevice = isXiaomiDevice,
                     labelOn = labelOn,
                     labelOff = labelOff,
                     labelGranted = labelGranted,

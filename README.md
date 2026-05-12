@@ -363,6 +363,8 @@ Adaptive Hz
 │   │   │   └── XiaomiStrategy
 │   │   ├── AdaptiveHzEngine
 │   │   └── AdaptiveHzRuntimeState
+│   ├── locale
+│   │   └── AppLocaleController
 │   ├── prefs
 │   │   └── AdaptiveHzPrefs
 │   ├── service
