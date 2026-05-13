@@ -43,7 +43,7 @@
     <string name="maximum">Máximo</string>
 
     <string name="per_app_title">Tasa de refresco por aplicación</string>
-    <string name="per_app_desc">Configura el comportamiento Adaptive, Minimum, Maximum o Respect para cada aplicación.</string>
+    <string name="per_app_desc">Configura el comportamiento adaptativo, mínimo, máximo o respetar para cada aplicación.</string>
     <string name="per_app_desc2">Esto requiere listar las aplicaciones instaladas y guardar preferencias por aplicación.</string>
 
     <string name="footer_title">Desarrollado por AlpWare Studio</string>
@@ -100,7 +100,7 @@
     <string name="settings_enable_adaptive_hz">Activar Adaptive Hz</string>
     <string name="settings_enable_adaptive_hz_desc">Activa o desactiva el motor Adaptive Hz. Cuando está desactivado, la aplicación deja de controlar la tasa de refresco y se restaura el comportamiento predeterminado del sistema.</string>
 
-    <string name="setup_adb_desc_with_root">Otorga el permiso privilegiado requerido mediante ADB o usa la configuración automática con root si tu dispositivo lo permite.</string>
+    <string name="setup_adb_desc_with_root">Concede el permiso privilegiado requerido mediante ADB o usa la configuración automática con root si tu dispositivo lo permite.</string>
     <string name="setup_root_detected_desc">Se detectó acceso root en este dispositivo. Puedes intentar otorgar el permiso requerido automáticamente en lugar de usar ADB.</string>
     <string name="setup_root_grant_button">Conceder automáticamente</string>
     <string name="root_grant_success">El permiso requerido se otorgó correctamente.</string>
@@ -124,12 +124,12 @@
     <string name="settings_adb_required_summary">Necesario para controlar el comportamiento de la frecuencia de actualización.</string>
 
     <string name="settings_usage_access_granted_summary">Las aplicaciones usadas recientemente ahora pueden detectarse correctamente.</string>
-    <string name="settings_usage_access_recommended_summary">Recomendado para mostrar aplicaciones recientes reales en el Dashboard.</string>
+    <string name="settings_usage_access_recommended_summary">Recomendado para mostrar aplicaciones recientes reales en el panel.</string>
 
     <string name="settings_battery_optimizations_disabled_summary">Las optimizaciones de batería están desactivadas para Adaptive Hz.</string>
     <string name="settings_battery_optimization_recommended_summary">Recomendado para mejorar la estabilidad en segundo plano.</string>
 
-    <string name="settings_notifications_enabled_summary">Las notificaciones están habilitadas para el Modo Estabilidad.</string>
+    <string name="settings_notifications_enabled_summary">Las notificaciones están habilitadas para el modo de estabilidad.</string>
     <string name="settings_notifications_required_summary">Necesario para las notificaciones de estabilidad en primer plano.</string>
 
     <string name="settings_diagnostics_summary">Ver el estado de ejecución y la información de depuración.</string>
@@ -172,8 +172,8 @@
     <string name="settings_value_battery_optimization_recommended">Recomendado para mejorar la estabilidad en segundo plano en dispositivos agresivos.</string>
     <string name="settings_item_notification_permission">Permiso de notificaciones</string>
     <string name="settings_value_notification_permission_ok">El permiso de notificaciones está concedido.</string>
-    <string name="settings_value_notification_permission_required">Es necesario para activar Stability Mode en Android 13 o superior.</string>
-    <string name="settings_toast_notification_required_for_stability">Se requiere el permiso de notificaciones para activar Stability Mode.</string>
+    <string name="settings_value_notification_permission_required">Es necesario para activar el modo de estabilidad en Android 13 o superior.</string>
+    <string name="settings_toast_notification_required_for_stability">Se requiere el permiso de notificaciones para activar el modo de estabilidad.</string>
 
     <string name="settings_item_theme">Tema</string>
     <string name="settings_item_language">Idioma</string>
@@ -240,7 +240,7 @@
 
     <!-- Widgets -->
     <string name="widget_title">Adaptive Hz</string>
-    <string name="widget_description">Controla los modos de frecuencia de actualización desde el widget de inicio.</string>
+    <string name="widget_description">Controla los modos de frecuencia de actualización desde el widget de la pantalla de inicio.</string>
     <string name="widget_badge_setup">CONFIG</string>
     <string name="widget_off">OFF</string>
     <string name="widget_min">MIN</string>
@@ -250,12 +250,12 @@
     <string name="widget_status_minimum">Frecuencia mínima activa</string>
     <string name="widget_status_adaptive">Modo adaptativo activo</string>
     <string name="widget_status_maximum">Frecuencia máxima activa</string>
-    <string name="widget_status_setup_required">Configuración necesaria — toca para abrir la app</string>
+    <string name="widget_status_setup_required">Configuración necesaria — toca para abrir la aplicación</string>
 
-    <string name="accessibility_broken_adaptive_disabled">El modo Adaptive no está disponible temporalmente porque el Servicio de Accesibilidad no responde. Los modos manuales aún se pueden usar.</string>
+    <string name="accessibility_broken_adaptive_disabled">El modo adaptativo no está disponible temporalmente porque el servicio de accesibilidad no responde. Los modos manuales aún se pueden usar.</string>
     <string name="recovery_title">El servicio no responde</string>
     <string name="recovery_desc">
-        El Servicio de Accesibilidad parece estar activado pero no responde.
+        El servicio de accesibilidad parece estar activado pero no responde.
         Esto puede ocurrir debido a restricciones del sistema o limitaciones en segundo plano.
         Puedes intentar reiniciar el servicio o ajustar la configuración de batería.
     </string>
@@ -265,12 +265,12 @@
 
 
     <string name="setup_usage_access_title">Acceso de uso</string>
-    <string name="setup_usage_access_desc">Recomendado. Permite que Adaptive Hz muestre tus aplicaciones usadas recientemente en el Dashboard.</string>
+    <string name="setup_usage_access_desc">Recomendado. Permite que Adaptive Hz muestre tus aplicaciones usadas recientemente en el panel.</string>
     <string name="setup_usage_access_button">Abrir acceso de uso</string>
-    <string name="setup_accessibility_enabled_message">El Servicio de Accesibilidad está habilitado. Puedes volver a abrir la configuración en cualquier momento usando el icono de actualización.</string>
+    <string name="setup_accessibility_enabled_message">El servicio de accesibilidad está habilitado. Puedes volver a abrir la configuración en cualquier momento usando el icono de actualización.</string>
     <string name="setup_adb_granted_message">El permiso ADB ha sido concedido y funciona correctamente. Puedes verificarlo nuevamente usando el icono de actualización.</string>
     <string name="setup_battery_ok_message">La optimización de batería está desactivada. Adaptive Hz ahora puede ejecutarse de manera más estable en segundo plano.</string>
-    <string name="setup_usage_access_ok_message">El Acceso de uso está habilitado. Las aplicaciones usadas recientemente ahora pueden aparecer en el Dashboard.</string>
+    <string name="setup_usage_access_ok_message">El acceso de uso está habilitado. Las aplicaciones usadas recientemente ahora pueden aparecer en el panel.</string>
 
     <string name="adaptive_hz_enabled">Adaptive Hz activado</string>
     <string name="enable_recent_apps_access">Habilitar acceso a aplicaciones recientes</string>
@@ -307,16 +307,16 @@
     <string name="no_events_captured_yet">Aún no se han capturado eventos.</string>
     <string name="xiaomi_stability_title">Estabilidad en Xiaomi / HyperOS</string>
     <string name="xiaomi_stability_desc">Xiaomi puede detener los servicios en segundo plano a menos que se habiliten permisos adicionales.</string>
-    <string name="xiaomi_stability_steps_intro">Para obtener la mejor fiabilidad:</string>
-    <string name="xiaomi_stability_steps">• Ahorro de batería de la app: Sin restricciones\n• Inicio automático: Activado\n• Apps recientes: Bloquear Adaptive Hz\n• Notificaciones: Permitidas\n• Accesibilidad: Activada</string>
-    <string name="xiaomi_stability_settings_summary">Para una mejor fiabilidad en segundo plano, habilita Sin restricciones, Inicio automático, bloqueo en apps recientes, notificaciones y accesibilidad.</string>
-    <string name="stability_notification_recovery_title">Adaptive Hz necesita atención</string>
-    <string name="stability_notification_recovery_text">Es posible que el Servicio de Accesibilidad se haya detenido. Toca para recuperarlo.</string>
+    <string name="xiaomi_stability_steps_intro">Para una mejor estabilidad:</string>
+    <string name="xiaomi_stability_steps">• Ahorro de batería de la aplicación: Sin restricciones\n• Inicio automático: Activado\n• Aplicaciones recientes: Bloquear Adaptive Hz\n• Notificaciones: Permitidas\n• Accesibilidad: Activado</string>
+    <string name="xiaomi_stability_settings_summary">Para una mejor fiabilidad en segundo plano, habilita sin restricciones, inicio automático, bloqueo en aplicaciones recientes, notificaciones y accesibilidad.</string>
+    <string name="stability_notification_recovery_title">Adaptive Hz requiere atención</string>
+    <string name="stability_notification_recovery_text">Es posible que el servicio de accesibilidad se haya detenido. Toca para recuperarlo.</string>
     <string name="stability_notification_recovery_action">Recuperar</string>
 
     <string name="event_scroll_delta_x">ΔX</string>
     <string name="event_scroll_delta_y">ΔY</string>
-    <string name="event_content_change">cambioContenido</string>
+    <string name="event_content_change">contentChange</string>
 
     <string name="accessibility_event_report_title">Eventos de accesibilidad de Adaptive Hz</string>
     <string name="accessibility_event_report_separator">--------------------------------</string>
@@ -340,16 +340,16 @@
     <string name="diagnostics_adb_granted">ADB concedido</string>
     <string name="diagnostics_keep_alive">Mantener activo</string>
     <string name="diagnostics_accessibility">Accesibilidad</string>
-    <string name="diagnostics_last_heartbeat">Último heartbeat</string>
+    <string name="diagnostics_last_heartbeat">Última actividad</string>
     <string name="diagnostics_engine_debug_title">Depuración del motor</string>
     <string name="diagnostics_foreground_package">Paquete en primer plano</string>
     <string name="diagnostics_last_event">Último evento</string>
     <string name="diagnostics_last_write">Última escritura</string>
     <string name="diagnostics_last_write_success">Última escritura exitosa</string>
-    <string name="diagnostics_updated_at">Actualizado en</string>
+    <string name="diagnostics_updated_at">Actualizado a las</string>
     <string name="diagnostics_report_title">Diagnósticos de Adaptive Hz</string>
     <string name="diagnostics_report_separator">----------------------</string>
-    <string name="diagnostics_report_app_version">Versión de la app: %1$s (%2$d)</string>
+    <string name="diagnostics_report_app_version">Versión de la aplicación: %1$s (%2$d)</string>
     <string name="diagnostics_report_vendor">Fabricante: %1$s</string>
     <string name="diagnostics_report_current_display">Pantalla actual: %1$d Hz</string>
     <string name="diagnostics_report_setting_key">Clave de configuración: %1$s</string>
@@ -359,12 +359,12 @@
     <string name="diagnostics_report_adb_granted">ADB concedido: %1$s</string>
     <string name="diagnostics_report_keep_alive">Mantener activo: %1$s</string>
     <string name="diagnostics_report_accessibility">Accesibilidad: %1$s</string>
-    <string name="diagnostics_report_last_heartbeat">Último heartbeat: %1$s</string>
+    <string name="diagnostics_report_last_heartbeat">Última actividad: %1$s</string>
     <string name="diagnostics_report_foreground_package">Paquete en primer plano: %1$s</string>
     <string name="diagnostics_report_last_event">Último evento: %1$s</string>
     <string name="diagnostics_report_last_write">Última escritura: %1$s</string>
     <string name="diagnostics_report_last_write_success">Última escritura exitosa: %1$s</string>
-    <string name="diagnostics_report_debug_updated_at">Depuración actualizada en: %1$s</string>
+    <string name="diagnostics_report_debug_updated_at">Depuración actualizada a las: %1$s</string>
 
     <string name="profile_mode_respect_app">Respetar aplicación</string>
     <string name="profile_mode_default_description">Usar el comportamiento global de Adaptive Hz.</string>
@@ -374,7 +374,7 @@
     <string name="profile_mode_respect_app_description">No sobrescribir el comportamiento de actualización de esta aplicación o del sistema.</string>
     <string name="profile_mode_disabled_description">Ignorar esta aplicación y volver a un estado seguro de bajo consumo.</string>
     <string name="profile_mode_default">Predeterminado</string>
-    <string name="profile_mode_adaptive">Adaptive</string>
+    <string name="profile_mode_adaptive">Adaptativo</string>
     <string name="profile_mode_minimum">Mínimo</string>
     <string name="profile_mode_maximum">Máximo</string>
     <string name="profile_mode_respect">Respetar</string>
