@@ -868,11 +868,9 @@ private fun ProfileFilterChips(
 private fun AppRefreshProfileMode.title(): String {
     return when (this) {
         AppRefreshProfileMode.DEFAULT -> stringResource(id = R.string.profile_mode_default)
-        AppRefreshProfileMode.ADAPTIVE -> stringResource(id = R.string.profile_mode_adaptive)
+        AppRefreshProfileMode.SYSTEM_CONTROLLED -> stringResource(id = R.string.profile_mode_respect_app)
         AppRefreshProfileMode.FORCE_MIN -> stringResource(id = R.string.profile_mode_minimum)
         AppRefreshProfileMode.FORCE_MAX -> stringResource(id = R.string.profile_mode_maximum)
-        AppRefreshProfileMode.RESPECT_APP -> stringResource(id = R.string.profile_mode_respect_app)
-        AppRefreshProfileMode.DISABLED -> stringResource(id = R.string.profile_mode_disabled)
     }
 }
 
@@ -883,11 +881,9 @@ private fun AppRefreshProfileMode.title(): String {
 private fun AppRefreshProfileMode.description(): String {
     return when (this) {
         AppRefreshProfileMode.DEFAULT -> stringResource(id = R.string.profile_mode_default_description)
-        AppRefreshProfileMode.ADAPTIVE -> stringResource(id = R.string.profile_mode_adaptive_description)
+        AppRefreshProfileMode.SYSTEM_CONTROLLED -> stringResource(id = R.string.profile_mode_respect_app_description)
         AppRefreshProfileMode.FORCE_MIN -> stringResource(id = R.string.profile_mode_minimum_description)
         AppRefreshProfileMode.FORCE_MAX -> stringResource(id = R.string.profile_mode_maximum_description)
-        AppRefreshProfileMode.RESPECT_APP -> stringResource(id = R.string.profile_mode_respect_app_description)
-        AppRefreshProfileMode.DISABLED -> stringResource(id = R.string.profile_mode_disabled_description)
     }
 }
 

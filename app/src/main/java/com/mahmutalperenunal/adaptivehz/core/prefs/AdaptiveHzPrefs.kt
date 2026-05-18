@@ -187,11 +187,33 @@ object AdaptiveHzPrefs {
     ): AppRefreshProfileMode {
         if (packageName.isNullOrBlank()) return AppRefreshProfileMode.DEFAULT
 
-        val raw = prefs(context).getString(KEY_APP_PROFILE_PREFIX + packageName, null)
+        val key = KEY_APP_PROFILE_PREFIX + packageName
+
+        val raw = prefs(context).getString(key, null)
             ?: return AppRefreshProfileMode.DEFAULT
 
-        return runCatching { AppRefreshProfileMode.valueOf(raw) }
-            .getOrDefault(AppRefreshProfileMode.DEFAULT)
+        val migrated = when (raw) {
+            "DEFAULT" -> AppRefreshProfileMode.DEFAULT
+            "RESPECT_APP" -> AppRefreshProfileMode.SYSTEM_CONTROLLED
+            "DISABLED" -> AppRefreshProfileMode.SYSTEM_CONTROLLED
+            "ADAPTIVE" -> AppRefreshProfileMode.DEFAULT
+            "FORCE_MIN" -> AppRefreshProfileMode.FORCE_MIN
+            "FORCE_MAX" -> AppRefreshProfileMode.FORCE_MAX
+            "SYSTEM_CONTROLLED" -> AppRefreshProfileMode.SYSTEM_CONTROLLED
+            else -> AppRefreshProfileMode.DEFAULT
+        }
+
+        if (raw != migrated.name) {
+            prefs(context).edit {
+                if (migrated == AppRefreshProfileMode.DEFAULT) {
+                    remove(key)
+                } else {
+                    putString(key, migrated.name)
+                }
+            }
+        }
+
+        return migrated
     }
 
     fun setAppRefreshProfileMode(

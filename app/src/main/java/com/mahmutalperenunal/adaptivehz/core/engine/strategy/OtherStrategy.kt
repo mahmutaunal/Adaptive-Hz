@@ -23,6 +23,15 @@ class OtherStrategy : VendorStrategy {
     override fun desiredHigh(context: Context) =
         SettingWrite(RefreshRateController.KEY_REFRESH_MODE, 2, "refresh_rate_mode=2 (High)")
 
+    // Restores Other native refresh-rate handling by delegating
+    override fun desiredSystemControlled(context: Context): SettingWrite {
+        return SettingWrite(
+            RefreshRateController.KEY_REFRESH_MODE,
+            0,
+            "refresh_rate_mode=0 (System)"
+        )
+    }
+
     // Uses conservative interaction timings for broader compatibility.
     override fun tuning(): VendorTuning {
         return VendorTuning(

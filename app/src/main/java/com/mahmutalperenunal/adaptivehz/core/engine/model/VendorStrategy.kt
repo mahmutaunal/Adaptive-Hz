@@ -13,5 +13,6 @@ interface VendorStrategy {
     val name: String
     fun desiredLow(context: Context): SettingWrite
     fun desiredHigh(context: Context): SettingWrite
+    fun desiredSystemControlled(context: Context): SettingWrite?
     fun tuning(): VendorTuning
 }

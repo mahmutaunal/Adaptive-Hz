@@ -32,27 +32,18 @@ enum class AdaptiveHzMode {
  * DEFAULT:
  * Uses global AdaptiveHz mode.
  *
- * ADAPTIVE:
- * AdaptiveHz controls this app with touch-aware behavior.
+ * SYSTEM_CONTROLLED:
+ * AdaptiveHz fully steps back and lets the system/vendor handle refresh rate.
  *
  * FORCE_MIN:
  * Locks this app to minimum refresh rate.
  *
  * FORCE_MAX:
  * Locks this app to maximum refresh rate.
- *
- * RESPECT_APP:
- * AdaptiveHz does not write refresh settings while this app is foreground.
- * This allows the app/system/vendor refresh behavior to work naturally.
- *
- * DISABLED:
- * AdaptiveHz ignores this app and applies LOW as a safe state once.
  */
 enum class AppRefreshProfileMode {
     DEFAULT,
-    ADAPTIVE,
+    SYSTEM_CONTROLLED,
     FORCE_MIN,
-    FORCE_MAX,
-    RESPECT_APP,
-    DISABLED
+    FORCE_MAX
 }

@@ -8,7 +8,6 @@ import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs
 import com.mahmutalperenunal.adaptivehz.core.engine.AdaptiveHzEngine
-import com.mahmutalperenunal.adaptivehz.core.engine.model.AdaptiveHzMode
 import com.mahmutalperenunal.adaptivehz.core.engine.strategy.OtherStrategy
 import com.mahmutalperenunal.adaptivehz.core.engine.strategy.SamsungStrategy
 import com.mahmutalperenunal.adaptivehz.core.engine.strategy.XiaomiStrategy
@@ -87,8 +86,6 @@ class AdaptiveHzService : AccessibilityService() {
         if (event == null) return
 
         AdaptiveHzPrefs.markAccessibilityHeartbeat(this)
-
-        if (AdaptiveHzPrefs.getCurrentMode(this) == AdaptiveHzMode.OFF) return
 
         Log.d("AdaptiveHzRaw", "rawEvent=${event.eventType}")
         engine.onEvent(event)

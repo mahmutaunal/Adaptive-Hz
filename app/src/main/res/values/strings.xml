@@ -362,12 +362,12 @@
     <string name="diagnostics_report_last_write_success">Last write success: %1$s</string>
     <string name="diagnostics_report_debug_updated_at">Debug updated at: %1$s</string>
 
-    <string name="profile_mode_respect_app">Respect app</string>
+    <string name="profile_mode_respect_app">System Controlled</string>
     <string name="profile_mode_default_description">Use global Adaptive Hz behavior.</string>
     <string name="profile_mode_adaptive_description">Adaptive Hz controls this app.</string>
     <string name="profile_mode_minimum_description">Keep this app at minimum refresh rate.</string>
     <string name="profile_mode_maximum_description">Keep this app at maximum refresh rate.</string>
-    <string name="profile_mode_respect_app_description">Do not override this app or system refresh behavior.</string>
+    <string name="profile_mode_respect_app_description">Adaptive Hz will not control this app. The system or vendor refresh-rate behavior will be used.</string>
     <string name="profile_mode_disabled_description">Ignore this app and return to a safe low state.</string>
     <string name="profile_mode_default">Default</string>
     <string name="profile_mode_adaptive">Adaptive</string>

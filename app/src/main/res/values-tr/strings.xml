@@ -367,12 +367,12 @@
     <string name="diagnostics_report_last_write_success">Son yazım başarılı: %1$s</string>
     <string name="diagnostics_report_debug_updated_at">Hata ayıklama güncelleme zamanı: %1$s</string>
 
-    <string name="profile_mode_respect_app">Uygulamaya saygı göster</string>
+    <string name="profile_mode_respect_app">Sistem Kontrolünde</string>
     <string name="profile_mode_default_description">Genel Adaptive Hz davranışını kullan.</string>
     <string name="profile_mode_adaptive_description">Adaptive Hz bu uygulamayı kontrol eder.</string>
     <string name="profile_mode_minimum_description">Bu uygulamayı minimum yenileme hızında tut.</string>
     <string name="profile_mode_maximum_description">Bu uygulamayı maksimum yenileme hızında tut.</string>
-    <string name="profile_mode_respect_app_description">Bu uygulamanın veya sistemin yenileme davranışını değiştirme.</string>
+    <string name="profile_mode_respect_app_description">Adaptive Hz bu uygulamayı kontrol etmez. Yenileme hızı sistem veya üretici davranışına bırakılır.</string>
     <string name="profile_mode_disabled_description">Bu uygulamayı yok say ve güvenli düşük moda dön.</string>
     <string name="profile_mode_default">Varsayılan</string>
     <string name="profile_mode_adaptive">Adaptive</string>

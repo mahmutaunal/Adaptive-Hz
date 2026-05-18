@@ -556,10 +556,8 @@ private fun ModePill(
 private fun profileModeLabel(mode: AppRefreshProfileMode): String {
     return when (mode) {
         AppRefreshProfileMode.DEFAULT -> stringResource(id = R.string.profile_mode_default)
-        AppRefreshProfileMode.ADAPTIVE -> stringResource(id = R.string.profile_mode_adaptive)
+        AppRefreshProfileMode.SYSTEM_CONTROLLED -> stringResource(id = R.string.profile_mode_respect)
         AppRefreshProfileMode.FORCE_MIN -> stringResource(id = R.string.profile_mode_minimum)
         AppRefreshProfileMode.FORCE_MAX -> stringResource(id = R.string.profile_mode_maximum)
-        AppRefreshProfileMode.RESPECT_APP -> stringResource(id = R.string.profile_mode_respect)
-        AppRefreshProfileMode.DISABLED -> stringResource(id = R.string.profile_mode_disabled)
     }
 }

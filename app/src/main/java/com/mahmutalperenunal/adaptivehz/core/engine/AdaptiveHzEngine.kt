@@ -44,14 +44,20 @@ class AdaptiveHzEngine(
     // Single idle timer: every boost resets it; when it fires we drop to LOW.
     private val dropRunnable = Runnable {
         if (!started) return@Runnable
-        if (getGlobalMode() == AdaptiveHzMode.OFF) return@Runnable
+        if (getGlobalMode() == AdaptiveHzMode.OFF) {
+            applySystemControlled(force = true)
+            return@Runnable
+        }
         applyLow(force = false)
     }
 
     // Safety net: if HIGH is held too long (missing END/noisy events), force LOW.
     private val safetyRunnable = Runnable {
         if (!started) return@Runnable
-        if (getGlobalMode() == AdaptiveHzMode.OFF) return@Runnable
+        if (getGlobalMode() == AdaptiveHzMode.OFF) {
+            applySystemControlled(force = true)
+            return@Runnable
+        }
 
         val now = SystemClock.uptimeMillis()
         val heldTooLong = isHigh && (now - lastHighUptimeMs) >= tuning.interactionIdleTimeoutMs
@@ -69,15 +75,18 @@ class AdaptiveHzEngine(
         lastHighUptimeMs = 0L
         isTouchInteracting = false
 
-        // Start safe at LOW
-        applyLow(force = true)
+        when (getGlobalMode()) {
+            AdaptiveHzMode.OFF -> applySystemControlled(force = true)
+            else -> applyLow(force = true)
+        }
+
         scheduleSafety()
         Log.d(tag, "Started: ${strategy.name}")
     }
 
     /** Stops the engine and cancels all scheduled work. */
     fun stop() {
-        if (isHigh) applyLow(force = true)
+        applySystemControlled(force = true)
         started = false
         isTouchInteracting = false
         handler.removeCallbacksAndMessages(null)
@@ -92,7 +101,12 @@ class AdaptiveHzEngine(
         logEventDetails(event)
 
         if (!started) return
-        if (getGlobalMode() == AdaptiveHzMode.OFF) return
+
+        val globalMode = getGlobalMode()
+        if (globalMode == AdaptiveHzMode.OFF) {
+            applySystemControlled(force = true)
+            return
+        }
 
         val pkg = event.packageName?.toString()
 
@@ -172,82 +186,88 @@ class AdaptiveHzEngine(
         val appMode = getAppProfileMode(pkg)
 
         if (globalMode == AdaptiveHzMode.OFF) {
-            applyLow(force = true)
+            applySystemControlled(force = true)
             return false
         }
 
-        val finalMode = when (appMode) {
+        Log.d(tag, "Mode decision pkg=$pkg global=$globalMode app=$appMode")
 
-            // Follow global behavior
+        return when (appMode) {
             AppRefreshProfileMode.DEFAULT -> {
                 when (globalMode) {
-                    AdaptiveHzMode.ADAPTIVE -> AppRefreshProfileMode.ADAPTIVE
-                    AdaptiveHzMode.FORCE_MIN -> AppRefreshProfileMode.FORCE_MIN
-                    AdaptiveHzMode.FORCE_MAX -> AppRefreshProfileMode.FORCE_MAX
+                    AdaptiveHzMode.ADAPTIVE -> true
+                    AdaptiveHzMode.FORCE_MIN -> {
+                        handler.removeCallbacks(dropRunnable)
+                        handler.removeCallbacks(safetyRunnable)
+                        applyLow(force = true)
+                        false
+                    }
+                    AdaptiveHzMode.FORCE_MAX -> {
+                        handler.removeCallbacks(dropRunnable)
+                        handler.removeCallbacks(safetyRunnable)
+                        applyHigh(force = true)
+                        false
+                    }
                 }
             }
 
-            // Per-app override modes
-            AppRefreshProfileMode.ADAPTIVE -> {
-                AppRefreshProfileMode.ADAPTIVE
+            AppRefreshProfileMode.SYSTEM_CONTROLLED -> {
+                handler.removeCallbacks(dropRunnable)
+                handler.removeCallbacks(safetyRunnable)
+                applySystemControlled(force = true)
+                false
             }
 
             AppRefreshProfileMode.FORCE_MIN -> {
-                AppRefreshProfileMode.FORCE_MIN
+                handler.removeCallbacks(dropRunnable)
+                handler.removeCallbacks(safetyRunnable)
+                applyLow(force = true)
+                false
             }
 
             AppRefreshProfileMode.FORCE_MAX -> {
-                AppRefreshProfileMode.FORCE_MAX
-            }
-
-            AppRefreshProfileMode.RESPECT_APP -> {
-                AppRefreshProfileMode.RESPECT_APP
-            }
-
-            AppRefreshProfileMode.DISABLED -> {
-                AppRefreshProfileMode.DISABLED
+                handler.removeCallbacks(dropRunnable)
+                handler.removeCallbacks(safetyRunnable)
+                applyHigh(force = true)
+                false
             }
         }
+    }
 
-        Log.d(tag, "Mode decision pkg=$pkg global=$globalMode app=$appMode final=$finalMode")
+    private fun applySystemControlled(force: Boolean) {
+        if (!force && !isHigh) return
 
-        return when (finalMode) {
-            AppRefreshProfileMode.DEFAULT -> {
-                true
-            }
+        handler.removeCallbacks(dropRunnable)
+        handler.removeCallbacks(safetyRunnable)
 
-            AppRefreshProfileMode.ADAPTIVE -> {
-                if (globalMode == AdaptiveHzMode.FORCE_MIN || globalMode == AdaptiveHzMode.FORCE_MAX) isHigh = false
-                true
-            }
+        val w = strategy.desiredSystemControlled(context)
 
-            AppRefreshProfileMode.FORCE_MIN -> {
-                handler.removeCallbacks(dropRunnable)
-                handler.removeCallbacks(safetyRunnable)
-                applyLow(force = true)
-                false
-            }
+        if (w == null) {
+            isHigh = false
+            AdaptiveHzPrefs.updateDebugLastWrite(
+                context = context,
+                label = "SYSTEM_CONTROLLED no-op",
+                success = true
+            )
+            Log.d(tag, "SYSTEM_CONTROLLED no-op")
+            return
+        }
 
-            AppRefreshProfileMode.FORCE_MAX -> {
-                handler.removeCallbacks(dropRunnable)
-                handler.removeCallbacks(safetyRunnable)
-                if (!isHigh) applyHigh(force = true)
-                false
-            }
+        val ok = RefreshRateController.writeSetting(context, w.key, w.intValue)
 
-            AppRefreshProfileMode.RESPECT_APP -> {
-                handler.removeCallbacks(dropRunnable)
-                handler.removeCallbacks(safetyRunnable)
-                isHigh = false
-                false
-            }
+        AdaptiveHzPrefs.updateDebugLastWrite(
+            context = context,
+            label = "SYSTEM ${w.label}",
+            success = ok
+        )
 
-            AppRefreshProfileMode.DISABLED -> {
-                handler.removeCallbacks(dropRunnable)
-                handler.removeCallbacks(safetyRunnable)
-                applyLow(force = true)
-                false
-            }
+        if (ok) {
+            isHigh = false
+            lastHighUptimeMs = 0L
+            isTouchInteracting = false
+            Log.d(tag, "SYSTEM_CONTROLLED (${w.label}) success")
+        } else {
+            Log.w(tag, "SYSTEM_CONTROLLED (${w.label}) failed")
         }
     }
 

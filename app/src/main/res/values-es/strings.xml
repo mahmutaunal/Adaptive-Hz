@@ -366,12 +366,12 @@
     <string name="diagnostics_report_last_write_success">Última escritura exitosa: %1$s</string>
     <string name="diagnostics_report_debug_updated_at">Depuración actualizada a las: %1$s</string>
 
-    <string name="profile_mode_respect_app">Respetar aplicación</string>
+    <string name="profile_mode_respect_app">Controlado por el sistema</string>
     <string name="profile_mode_default_description">Usar el comportamiento global de Adaptive Hz.</string>
     <string name="profile_mode_adaptive_description">Adaptive Hz controla esta aplicación.</string>
     <string name="profile_mode_minimum_description">Mantener esta aplicación en la frecuencia mínima.</string>
     <string name="profile_mode_maximum_description">Mantener esta aplicación en la frecuencia máxima.</string>
-    <string name="profile_mode_respect_app_description">No sobrescribir el comportamiento de actualización de esta aplicación o del sistema.</string>
+    <string name="profile_mode_respect_app_description">Adaptive Hz no controlará esta aplicación. Se utilizará el comportamiento de frecuencia de actualización del sistema o del fabricante.</string>
     <string name="profile_mode_disabled_description">Ignorar esta aplicación y volver a un estado seguro de bajo consumo.</string>
     <string name="profile_mode_default">Predeterminado</string>
     <string name="profile_mode_adaptive">Adaptativo</string>

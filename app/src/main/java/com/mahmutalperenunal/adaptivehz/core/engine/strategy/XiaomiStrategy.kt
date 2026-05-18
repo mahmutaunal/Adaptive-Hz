@@ -35,6 +35,15 @@ class XiaomiStrategy : VendorStrategy {
         )
     }
 
+    // Restores Xiaomi/HyperOS native refresh-rate handling by delegating
+    override fun desiredSystemControlled(context: Context): SettingWrite {
+        return SettingWrite(
+            RefreshRateController.KEY_XIAOMI_REFRESH_RATE,
+            0,
+            "miui_refresh_rate=0 (System)"
+        )
+    }
+
     // Uses conservative interaction timings for broader compatibility.
     override fun tuning(): VendorTuning {
         return VendorTuning(
