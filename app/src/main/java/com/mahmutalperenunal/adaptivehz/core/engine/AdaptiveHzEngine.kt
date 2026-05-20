@@ -8,6 +8,7 @@ import android.os.PowerManager
 import android.os.SystemClock
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
+import com.mahmutalperenunal.adaptivehz.BuildConfig
 import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs
 import com.mahmutalperenunal.adaptivehz.core.debug.DebugAccessibilityEvent
 import com.mahmutalperenunal.adaptivehz.core.debug.DebugEventStore
@@ -16,6 +17,7 @@ import com.mahmutalperenunal.adaptivehz.core.engine.model.AppRefreshProfileMode
 import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateController
 import com.mahmutalperenunal.adaptivehz.core.engine.model.VendorStrategy
 import com.mahmutalperenunal.adaptivehz.core.engine.model.VendorTuning
+import com.mahmutalperenunal.adaptivehz.core.input.InteractionSignalProvider
 
 /**
  * Engine that toggles the device between LOW (min Hz) and HIGH (max Hz)
@@ -27,6 +29,7 @@ class AdaptiveHzEngine(
     private val getGlobalMode: () -> AdaptiveHzMode,
     private val shouldIgnorePackage: (String?) -> Boolean,
     private val getAppProfileMode: (String?) -> AppRefreshProfileMode = { AppRefreshProfileMode.DEFAULT },
+    private val interactionSignalProvider: InteractionSignalProvider? = null,
     private val tag: String = "AdaptiveHzEngine",
     private val tuning: VendorTuning = strategy.tuning()
 ) {
@@ -155,11 +158,23 @@ class AdaptiveHzEngine(
             }
 
             AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
-                if (tuning.allowContentChangeBoost && shouldBoostFromContentChange(event)) {
+                if (!tuning.allowContentChangeBoost) return
+
+                val hasRealInput = when {
+                    interactionSignalProvider == null -> true
+                    !interactionSignalProvider.isAvailable() -> true
+                    else -> interactionSignalProvider.wasRecentlyTouched(500L)
+                }
+
+                if (hasRealInput && shouldBoostFromContentChange(event)) {
                     if (isHigh) {
                         scheduleDrop(tuning.interactionIdleTimeoutMs)
                     } else {
                         requestHigh()
+                    }
+                } else {
+                    if (BuildConfig.DEBUG) {
+                        Log.d(tag, "WINDOW_CONTENT_CHANGED ignored. hasRealInput=$hasRealInput")
                     }
                 }
             }

@@ -13,7 +13,7 @@ import com.mahmutalperenunal.adaptivehz.core.engine.strategy.SamsungStrategy
 import com.mahmutalperenunal.adaptivehz.core.engine.strategy.XiaomiStrategy
 import com.mahmutalperenunal.adaptivehz.core.engine.model.DeviceVendor
 import com.mahmutalperenunal.adaptivehz.core.engine.model.DeviceVendorDetector
-
+import com.mahmutalperenunal.adaptivehz.core.shizuku.ShizukuInputManager
 
 /**
  * Accessibility bridge between the Android system and AdaptiveHzEngine.
@@ -30,6 +30,8 @@ class AdaptiveHzService : AccessibilityService() {
     private var started = false
 
     private val heartbeatHandler by lazy { Handler(Looper.getMainLooper()) }
+
+    private val shizukuInputManager by lazy { ShizukuInputManager() }
 
     /**
      * Periodically updates the runtime heartbeat state.
@@ -69,11 +71,13 @@ class AdaptiveHzService : AccessibilityService() {
             getAppProfileMode = { pkg ->
                 AdaptiveHzPrefs.getAppRefreshProfileMode(this, pkg)
             },
+            interactionSignalProvider = shizukuInputManager,
             tag = "AdaptiveHzEngine"
         )
 
         if (!started) {
             engine.start()
+            shizukuInputManager.checkStatus()
             started = true
         }
     }
@@ -102,6 +106,7 @@ class AdaptiveHzService : AccessibilityService() {
         stopHeartbeat()
 
         AdaptiveHzPrefs.markAccessibilityDisconnected(this)
+        shizukuInputManager.destroy()
 
         try {
             if (::engine.isInitialized) engine.stop()

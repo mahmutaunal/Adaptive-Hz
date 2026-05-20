@@ -44,6 +44,39 @@ Unlike OEM implementations, it works globally across apps and focuses on real to
 
 ---
 
+## ⚡ Quick Start
+
+### 1. Install the APK
+Download the latest release and install Adaptive Hz.
+
+### 2. Grant secure settings permission
+Run:
+
+```bash
+adb shell pm grant com.mahmutalperenunal.adaptivehz android.permission.WRITE_SECURE_SETTINGS
+```
+
+### 3. Enable Accessibility Service
+Go to:
+
+```text
+Settings → Accessibility → Installed Services → Adaptive Hz → Enable
+```
+
+### 4. (Optional) Enable Stability Mode
+Recommended for devices with aggressive battery optimization.
+
+### 5. (Optional) Enable Advanced Input Detection
+For the most accurate adaptive refresh-rate behavior:
+- Install Shizuku
+- Start Shizuku
+- Open Adaptive Hz
+- Grant Shizuku permission
+
+> 💡 Adaptive Hz works without Shizuku. Shizuku only improves interaction accuracy on some devices/apps.
+
+---
+
 ## Overview
 
 ### Why this exists
@@ -98,6 +131,7 @@ Adaptive Hz solves this by:
 - Recent apps shortcut powered by optional Usage Access
 - Event coalescing to reduce noisy Accessibility event spam
 - Vendor-aware refresh control and tuning
+- Optional Shizuku-powered real touch detection for improved accuracy
 - Optional Stability Mode (foreground service)
 - Diagnostics and Accessibility Event Inspector tools
 - Boot persistence
@@ -135,11 +169,9 @@ Available per-app modes:
 | Mode | Behavior |
 |------|----------|
 | Default | Follows the global Adaptive Hz mode |
-| Adaptive | Uses Adaptive Hz interaction-based switching for that app |
+| Respect app/system | Does not override the app or system refresh behavior |
 | Minimum | Keeps that app at the minimum refresh rate |
 | Maximum | Keeps that app at the maximum refresh rate |
-| Respect app/system | Does not override the app or system refresh behavior |
-| Disabled | Ignores that app and returns to a safe low state |
 
 This is useful for apps that already manage their own refresh behavior, video playback apps, games, browsers, and battery-sensitive apps.
 
@@ -181,6 +213,9 @@ To balance responsiveness and stability:
 - Idle fallback to return to the minimum refresh rate
 - Lock screen and Always-On Display ignored
 - Per-app override handling before global mode decisions
+- Accessibility-based interaction detection fallback
+- Optional Shizuku-powered low-level input monitoring
+- Real touch verification to ignore passive UI updates (video subtitles, animations, etc.)
 
 This prevents infinite refresh loops and unnecessary maximum-Hz usage.
 
@@ -192,6 +227,7 @@ This prevents infinite refresh loops and unnecessary maximum-Hz usage.
 |------------|----------|---------|
 | WRITE_SECURE_SETTINGS | Yes | Modify refresh rate system setting |
 | Accessibility Service | Yes | Detect global interaction |
+| Shizuku Permission | Optional | Enables low-level real touch detection via input events |
 | PACKAGE_USAGE_STATS / Usage Access | Optional | Show recently used apps on the dashboard |
 | QUERY_ALL_PACKAGES | Optional | List installed apps for per-app profiles |
 | Foreground Service | Optional | Stability Mode |
@@ -223,6 +259,51 @@ However, if your device is rooted, you can optionally grant the required permiss
 - No background or persistent root access is used — only a one-time permission grant attempt
 
 > 💡 If automatic setup fails, you can always use the manual ADB command above.
+
+---
+
+## ⚡ Advanced Input Detection (Shizuku Optional)
+
+Adaptive Hz includes an optional advanced interaction detection mode powered by Shizuku.
+
+### Why this exists
+Some Android apps continuously emit noisy Accessibility events even when the user is not touching the screen.
+
+Common examples:
+- YouTube subtitle updates
+- Passive animations
+- UI auto-refresh events
+- Dynamic content updates
+
+This can cause traditional Accessibility-only refresh switching systems to incorrectly keep the display at maximum refresh rate.
+
+### What Adaptive Hz does differently
+When Shizuku is enabled, Adaptive Hz can monitor low-level Linux input events directly from the touchscreen device.
+
+This allows the engine to:
+- Detect real physical touch input
+- Distinguish passive UI updates from actual user interaction
+- Prevent false refresh-rate boosts during video playback
+- Improve battery efficiency while keeping scrolling smooth
+
+### Behavior
+- Shizuku support is completely optional
+- The app still works normally without Shizuku
+- Accessibility remains the fallback interaction system
+- Input monitoring is only used to verify real touch behavior
+- No continuous polling loops are used
+
+### Privacy
+Adaptive Hz does not collect, store, or transmit touch data.
+All processing happens locally on-device.
+
+### Setup
+1. Install Shizuku
+2. Start Shizuku using wireless debugging or ADB
+3. Open Adaptive Hz
+4. Grant the Shizuku permission when prompted
+
+> 💡 This mode is intended for advanced users who want the most accurate adaptive refresh-rate behavior possible.
 
 ---
 
@@ -365,6 +446,8 @@ Adaptive Hz
 │   │   └── AdaptiveHzRuntimeState
 │   ├── locale
 │   │   └── AppLocaleController
+│   ├── input
+│   │   └── InteractionSignalProvider
 │   ├── prefs
 │   │   └── AdaptiveHzPrefs
 │   ├── service
@@ -372,6 +455,11 @@ Adaptive Hz
 │   │   ├── AdaptiveHzService
 │   │   ├── AdaptiveHzTileService
 │   │   └── StabilityForegroundService
+│   ├── shizuku
+│   │   ├── InputMonitorUserService
+│   │   ├── ShizukuInputManager
+│   │   ├── IInputEventCallback.aidl
+│   │   └── IInputMonitorService.aidl
 │   ├── system
 │   │   ├── BootReceiver
 │   │   ├── RefreshRateController
@@ -411,6 +499,8 @@ Adaptive Hz
 - Minimal CPU overhead
 - OEM-aware system setting control
 - Accessibility-based interaction detection
+- Optional Shizuku-based low-level input monitoring
+- Real touch validation against noisy Accessibility events
 - Per-app profile decision layer
 - Event coalescing for noisy Accessibility event streams
 - Diagnostics screen for runtime state inspection
@@ -536,4 +626,4 @@ Made with care by AlpWare Studio
 
 Inspired by limitations in OEM adaptive refresh rate implementations.
 
----
+---</file>
