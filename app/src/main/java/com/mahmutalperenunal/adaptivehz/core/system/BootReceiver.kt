@@ -19,6 +19,17 @@ import com.mahmutalperenunal.adaptivehz.core.service.StabilityForegroundService
  */
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
+        if (intent?.action == Intent.ACTION_MY_PACKAGE_REPLACED) {
+            AdaptiveHzPrefs.markAccessibilityDisconnected(context)
+
+            val keepAlive = AdaptiveHzPrefs.isKeepAliveEnabled(context)
+            if (keepAlive) {
+                try { StabilityForegroundService.start(context) } catch (_: Throwable) {}
+            }
+
+            return
+        }
+
         if (intent?.action != Intent.ACTION_BOOT_COMPLETED) return
 
         val currentMode = AdaptiveHzPrefs.getCurrentMode(context)

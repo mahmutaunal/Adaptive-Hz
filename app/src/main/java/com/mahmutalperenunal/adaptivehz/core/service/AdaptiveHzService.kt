@@ -33,6 +33,8 @@ class AdaptiveHzService : AccessibilityService() {
 
     private val shizukuInputManager by lazy { ShizukuInputManager() }
 
+    private var lastShizukuRetryAt = 0L
+
     /**
      * Periodically updates the runtime heartbeat state.
      */
@@ -90,6 +92,7 @@ class AdaptiveHzService : AccessibilityService() {
         if (event == null) return
 
         AdaptiveHzPrefs.markAccessibilityHeartbeat(this)
+        ensureShizukuReady()
 
         Log.d("AdaptiveHzRaw", "rawEvent=${event.eventType}")
         engine.onEvent(event)
@@ -129,6 +132,16 @@ class AdaptiveHzService : AccessibilityService() {
      */
     private fun stopHeartbeat() {
         heartbeatHandler.removeCallbacks(heartbeatRunnable)
+    }
+
+    private fun ensureShizukuReady() {
+        val now = System.currentTimeMillis()
+
+        if (shizukuInputManager.isAvailable()) return
+        if (now - lastShizukuRetryAt < 5_000L) return
+
+        lastShizukuRetryAt = now
+        shizukuInputManager.checkStatus()
     }
 
     companion object {

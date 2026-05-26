@@ -5,6 +5,7 @@ import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.IBinder
 import android.util.Log
+import com.mahmutalperenunal.adaptivehz.BuildConfig
 import com.mahmutalperenunal.adaptivehz.core.input.InteractionSignalProvider
 import rikka.shizuku.Shizuku
 import rikka.shizuku.Shizuku.UserServiceArgs
@@ -146,24 +147,27 @@ class ShizukuInputManager : InteractionSignalProvider {
 
         bindingInProgress = true
 
-        val args = UserServiceArgs(
-            ComponentName(
-                PACKAGE_NAME,
-                InputMonitorUserService::class.java.name
-            )
-        )
-            .daemon(false)
-            .processNameSuffix("input_monitor")
-            .debuggable(true)
-            .version(VERSION)
-
         runCatching {
-            Shizuku.bindUserService(args, connection)
+            Shizuku.bindUserService(userServiceArgs(), connection)
             Log.d(TAG, "bindUserService called")
         }.onFailure {
             bindingInProgress = false
             Log.e(TAG, "bindUserService failed", it)
         }
+    }
+
+    private fun userServiceArgs(): UserServiceArgs {
+        return UserServiceArgs(
+            ComponentName(
+                BuildConfig.APPLICATION_ID,
+                InputMonitorUserService::class.java.name
+            )
+        )
+            .tag("adaptive_hz_input_monitor")
+            .daemon(false)
+            .processNameSuffix("input_monitor")
+            .debuggable(BuildConfig.DEBUG)
+            .version(VERSION)
     }
 
     /**
@@ -252,12 +256,13 @@ class ShizukuInputManager : InteractionSignalProvider {
         }
 
         runCatching {
-            service?.destroy()
+            Shizuku.unbindUserService(userServiceArgs(), connection, true)
         }
 
         service = null
         touchActive = false
         inputMonitoringActive = false
+        bindingInProgress = false
     }
 
     override fun isTouchActive(): Boolean {
@@ -280,11 +285,7 @@ class ShizukuInputManager : InteractionSignalProvider {
 
     companion object {
         private const val TAG = "AdaptiveHzShizuku"
-
         private const val REQUEST_CODE = 6201
-        private const val VERSION = 2
-
-        private const val PACKAGE_NAME =
-            "com.mahmutalperenunal.adaptivehz"
+        private const val VERSION = 3
     }
 }

@@ -444,10 +444,10 @@ Adaptive Hz
 │   │   │   └── XiaomiStrategy
 │   │   ├── AdaptiveHzEngine
 │   │   └── AdaptiveHzRuntimeState
-│   ├── locale
-│   │   └── AppLocaleController
 │   ├── input
 │   │   └── InteractionSignalProvider
+│   ├── locale
+│   │   └── AppLocaleController
 │   ├── prefs
 │   │   └── AdaptiveHzPrefs
 │   ├── service
