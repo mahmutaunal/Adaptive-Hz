@@ -38,6 +38,7 @@ import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.outlined.Storefront
 import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material.icons.outlined.Terminal
@@ -49,6 +50,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -58,8 +60,12 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -74,6 +80,8 @@ import androidx.core.net.toUri
 import com.mahmutalperenunal.adaptivehz.core.engine.AdaptiveHzRuntimeState
 import com.mahmutalperenunal.adaptivehz.core.engine.model.DeviceVendor
 import com.mahmutalperenunal.adaptivehz.core.engine.model.DeviceVendorDetector
+import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs
+import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs.getInteractionDropDelayMs
 import com.mahmutalperenunal.adaptivehz.core.prefs.AppLanguage
 import com.mahmutalperenunal.adaptivehz.core.prefs.AppThemeMode
 
@@ -134,6 +142,7 @@ fun SettingsScreen(
     val topBarState = rememberTopAppBarState()
 
     val isXiaomiDevice = remember { DeviceVendorDetector.detect() == DeviceVendor.XIAOMI }
+    var interactionDropDelayMs by remember { mutableLongStateOf(getInteractionDropDelayMs(context)) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -269,6 +278,21 @@ fun SettingsScreen(
                     onClick = onRequestIgnoreBatteryOptimizations
                 )
             }
+
+            SettingsSliderRow(
+                leading = Icons.Outlined.Speed,
+                title = stringResource(R.string.settings_item_drop_delay),
+                subtitle = stringResource(
+                    R.string.settings_value_drop_delay_summary,
+                    formatDropDelay(interactionDropDelayMs)
+                ),
+                options = AdaptiveHzPrefs.INTERACTION_DROP_DELAY_OPTIONS_MS,
+                selectedValue = interactionDropDelayMs,
+                onValueSelected = { delay ->
+                    interactionDropDelayMs = delay
+                    AdaptiveHzPrefs.setInteractionDropDelayMs(context, delay)
+                }
+            )
 
             SectionTitle(stringResource(R.string.settings_section_appearance))
             SettingsRow(
@@ -717,6 +741,137 @@ private fun SettingsSwitchRow(
                 colors = SwitchDefaults.colors()
             )
         }
+    }
+}
+
+@Composable
+private fun SettingsSliderRow(
+    leading: ImageVector,
+    title: String,
+    subtitle: String,
+    options: List<Long>,
+    selectedValue: Long,
+    onValueSelected: (Long) -> Unit,
+) {
+    val selectedIndex = options.indexOf(selectedValue)
+        .takeIf { it >= 0 }
+        ?: options.indexOf(
+            AdaptiveHzPrefs.DEFAULT_INTERACTION_DROP_DELAY_MS
+        ).coerceAtLeast(0)
+
+    var sliderValue by remember(selectedIndex) {
+        mutableFloatStateOf(selectedIndex.toFloat())
+    }
+
+    val activeIndex = sliderValue
+        .toInt()
+        .coerceIn(0, options.lastIndex)
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    modifier = Modifier.size(46.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = leading,
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Slider(
+                value = sliderValue,
+                onValueChange = { sliderValue = it },
+                valueRange = 0f..options.lastIndex.toFloat(),
+                steps = (options.size - 2).coerceAtLeast(0),
+                onValueChangeFinished = {
+                    val normalizedIndex = sliderValue
+                        .toInt()
+                        .coerceIn(0, options.lastIndex)
+
+                    onValueSelected(options[normalizedIndex])
+                }
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                options.forEachIndexed { index, option ->
+                    val selected = index == activeIndex
+
+                    Text(
+                        text = if (selected) formatDropDelay(option) else "",
+                        style = if (selected) {
+                            MaterialTheme.typography.labelLarge
+                        } else {
+                            MaterialTheme.typography.labelMedium
+                        },
+                        color = if (selected) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f)
+                        },
+                        fontWeight = if (selected) {
+                            FontWeight.Bold
+                        } else {
+                            FontWeight.Normal
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+private fun formatDropDelay(delayMs: Long): String {
+    return when {
+        delayMs == 0L -> "Instant"
+        delayMs < 1000L -> "${delayMs}ms"
+        delayMs % 1000L == 0L -> "${delayMs / 1000L}s"
+        else -> "${delayMs / 1000f}s"
     }
 }
 

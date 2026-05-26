@@ -127,6 +127,7 @@ Adaptive Hz solves this by:
 
 - Interaction-based refresh switching
 - Per-app refresh rate profiles
+- Configurable drop delay after touch interaction
 - Respect app/system refresh behavior option
 - Recent apps shortcut powered by optional Usage Access
 - Event coalescing to reduce noisy Accessibility event spam
@@ -210,7 +211,7 @@ To balance responsiveness and stability:
 - Immediate boost on real interaction
 - Event coalescing to reduce repeated Accessibility event bursts
 - Vendor-specific tuning for different OEM event behavior
-- Idle fallback to return to the minimum refresh rate
+- Configurable idle fallback delay to return to the minimum refresh rate after touch interaction ends
 - Lock screen and Always-On Display ignored
 - Per-app override handling before global mode decisions
 - Accessibility-based interaction detection fallback
@@ -335,6 +336,16 @@ Settings → Accessibility → Installed Services → Adaptive Hz → Enable
 | Off | Restores system default behavior |
 
 Per-app profiles can override the global mode for specific apps. For example, a browser can be set to **Respect app/system**, a game to **Maximum**, and a reader app to **Minimum**.
+
+### Configurable Drop Delay
+
+Adaptive Hz lets users control how quickly the display returns to the minimum refresh rate after touch interaction ends.
+
+This can be adjusted from Settings using the **Drop delay after touch** slider.
+
+Lower values make the device return to minimum Hz more aggressively for better battery savings, while higher values keep maximum Hz active slightly longer for a smoother feel.
+
+The default value is **2 seconds**, matching the app's original adaptive behavior.
 
 ### Notification Controls
 
@@ -615,6 +626,7 @@ MIT License
 - [x] Diagnostics screen
 - [x] Accessibility Event Inspector
 - [x] Event coalescing
+- [x] Configurable drop delay after touch interaction
 - [ ] More vendor support (Pixel, OnePlus)
 - [ ] Export / import per-app profiles
 

@@ -174,6 +174,8 @@
     <string name="settings_value_notification_permission_ok">Notification permission is granted.</string>
     <string name="settings_value_notification_permission_required">Required to enable Stability Mode on Android 13 and above.</string>
     <string name="settings_toast_notification_required_for_stability">Notification permission is required to enable Stability Mode.</string>
+    <string name="settings_item_drop_delay">Drop delay after touch</string>
+    <string name="settings_value_drop_delay_summary">Switch back to minimum refresh rate after %1$s when touch interaction ends. (Default: 2s)</string>
 
     <string name="settings_item_theme">Theme</string>
     <string name="settings_item_language">Language</string>

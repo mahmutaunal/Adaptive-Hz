@@ -47,6 +47,9 @@ object AdaptiveHzPrefs {
     const val KEY_DEBUG_LAST_UPDATED_AT = "debug_last_updated_at"
     const val KEY_THEME_MODE = "theme_mode"
     const val KEY_APP_LANGUAGE = "app_language"
+    const val KEY_INTERACTION_DROP_DELAY_MS = "interaction_drop_delay_ms"
+    const val DEFAULT_INTERACTION_DROP_DELAY_MS = 2000L
+    val INTERACTION_DROP_DELAY_OPTIONS_MS = listOf(250L, 500L, 750L, 1000L, 1500L, 2000L, 2500L, 3000L, 3500L, 4000L, 4500L)
 
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -229,6 +232,24 @@ object AdaptiveHzPrefs {
             } else {
                 putString(KEY_APP_PROFILE_PREFIX + packageName, mode.name)
             }
+        }
+    }
+
+    fun getInteractionDropDelayMs(context: Context): Long {
+        val value = prefs(context).getLong(
+            KEY_INTERACTION_DROP_DELAY_MS,
+            DEFAULT_INTERACTION_DROP_DELAY_MS
+        )
+
+        return INTERACTION_DROP_DELAY_OPTIONS_MS.minBy { kotlin.math.abs(it - value) }
+    }
+
+    fun setInteractionDropDelayMs(context: Context, delayMs: Long) {
+        val normalized = INTERACTION_DROP_DELAY_OPTIONS_MS
+            .minBy { kotlin.math.abs(it - delayMs) }
+
+        prefs(context).edit {
+            putLong(KEY_INTERACTION_DROP_DELAY_MS, normalized)
         }
     }
 

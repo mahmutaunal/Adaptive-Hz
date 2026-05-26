@@ -30,6 +30,7 @@ class AdaptiveHzEngine(
     private val shouldIgnorePackage: (String?) -> Boolean,
     private val getAppProfileMode: (String?) -> AppRefreshProfileMode = { AppRefreshProfileMode.DEFAULT },
     private val interactionSignalProvider: InteractionSignalProvider? = null,
+    private val getInteractionDropDelayMs: () -> Long = { AdaptiveHzPrefs.getInteractionDropDelayMs(context) },
     private val tag: String = "AdaptiveHzEngine",
     private val tuning: VendorTuning = strategy.tuning()
 ) {
@@ -63,7 +64,8 @@ class AdaptiveHzEngine(
         }
 
         val now = SystemClock.uptimeMillis()
-        val heldTooLong = isHigh && (now - lastHighUptimeMs) >= tuning.interactionIdleTimeoutMs
+        val safetyTimeoutMs = effectiveDropDelayMs() + tuning.interactionIdleTimeoutMs
+        val heldTooLong = isHigh && (now - lastHighUptimeMs) >= safetyTimeoutMs
         if (heldTooLong) {
             Log.w(tag, "Safety drop -> LOW")
             applyLow(force = true)
@@ -145,7 +147,7 @@ class AdaptiveHzEngine(
 
             AccessibilityEvent.TYPE_TOUCH_INTERACTION_END -> {
                 isTouchInteracting = false
-                scheduleDrop(tuning.interactionIdleTimeoutMs)
+                scheduleDrop(getInteractionDropDelayMs())
             }
 
             AccessibilityEvent.TYPE_VIEW_CLICKED,
@@ -168,7 +170,7 @@ class AdaptiveHzEngine(
 
                 if (hasRealInput && shouldBoostFromContentChange(event)) {
                     if (isHigh) {
-                        scheduleDrop(tuning.interactionIdleTimeoutMs)
+                        scheduleDrop(getInteractionDropDelayMs())
                     } else {
                         requestHigh()
                     }
@@ -311,7 +313,7 @@ class AdaptiveHzEngine(
         // Do not force a fresh boost if we are already LOW and idle.
         // But if the UI is already active, keep the HIGH window alive across screen/dialog transitions.
         if (tuning.extendBoostOnWindowChange && isHigh) {
-            scheduleDrop(tuning.interactionIdleTimeoutMs)
+            scheduleDrop(getInteractionDropDelayMs())
         }
     }
 
@@ -362,7 +364,7 @@ class AdaptiveHzEngine(
         if (shouldCoalesceBoost()) {
             if (isHigh) {
                 lastHighUptimeMs = SystemClock.uptimeMillis()
-                scheduleDrop(tuning.interactionIdleTimeoutMs)
+                scheduleDrop(getInteractionDropDelayMs())
                 scheduleSafety()
             }
             return
@@ -370,7 +372,7 @@ class AdaptiveHzEngine(
 
         if (isHigh) {
             lastHighUptimeMs = SystemClock.uptimeMillis()
-            scheduleDrop(tuning.interactionIdleTimeoutMs)
+            scheduleDrop(getInteractionDropDelayMs())
             scheduleSafety()
             return
         }
@@ -406,7 +408,7 @@ class AdaptiveHzEngine(
             Log.w(tag, "HIGH (${w.label}) failed")
         }
 
-        scheduleDrop(tuning.interactionIdleTimeoutMs)
+        scheduleDrop(getInteractionDropDelayMs())
     }
 
     /**
@@ -441,7 +443,7 @@ class AdaptiveHzEngine(
     }
 
     /** Resets the idle timer that drops the device back to LOW. */
-    private fun scheduleDrop(delayMs: Long = tuning.interactionIdleTimeoutMs) {
+    private fun scheduleDrop(delayMs: Long) {
         handler.removeCallbacks(dropRunnable)
         handler.postDelayed(dropRunnable, delayMs)
     }
@@ -472,7 +474,8 @@ class AdaptiveHzEngine(
     /** Schedules the safety check that prevents staying on HIGH indefinitely. */
     private fun scheduleSafety() {
         handler.removeCallbacks(safetyRunnable)
-        handler.postDelayed(safetyRunnable, tuning.interactionIdleTimeoutMs)
+        val safetyDelayMs = effectiveDropDelayMs() + tuning.interactionIdleTimeoutMs
+        handler.postDelayed(safetyRunnable, safetyDelayMs)
     }
 
     /**
@@ -493,6 +496,10 @@ class AdaptiveHzEngine(
 
         lastCoalescedEventUptimeMs = now
         return false
+    }
+
+    private fun effectiveDropDelayMs(): Long {
+        return getInteractionDropDelayMs()
     }
 
     /**
