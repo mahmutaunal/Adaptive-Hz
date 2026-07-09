@@ -455,6 +455,8 @@ Adaptive Hz
 │   │   │   └── XiaomiStrategy
 │   │   ├── AdaptiveHzEngine
 │   │   └── AdaptiveHzRuntimeState
+│   ├── health
+│   │   └── AccessibilityHealthMonitor
 │   ├── input
 │   │   └── InteractionSignalProvider
 │   ├── locale

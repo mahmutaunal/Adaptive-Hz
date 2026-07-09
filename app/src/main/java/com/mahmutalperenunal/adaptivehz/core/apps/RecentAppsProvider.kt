@@ -12,13 +12,15 @@ import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs
  */
 
 class RecentAppsProvider(
-    private val context: Context
+    context: Context
 ) {
+    private val appContext = context.applicationContext
+
     private val usageStatsManager =
-        context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        appContext.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
 
     private val packageManager: PackageManager =
-        context.packageManager
+        appContext.packageManager
 
     /**
      * Verifies Usage Access permission state.
@@ -66,7 +68,7 @@ class RecentAppsProvider(
             .mapNotNull { usage ->
                 val pkg = usage.packageName
 
-                if (pkg == context.packageName) {
+                if (pkg == appContext.packageName) {
                     return@mapNotNull null
                 }
 
@@ -84,7 +86,7 @@ class RecentAppsProvider(
                         packageName = pkg,
                         label = packageManager.getApplicationLabel(appInfo).toString(),
                         profileMode = AdaptiveHzPrefs.getAppRefreshProfileMode(
-                            context = context,
+                            context = appContext,
                             packageName = pkg
                         ),
                         lastUpdatedTime = usage.lastTimeUsed,

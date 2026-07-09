@@ -4,6 +4,8 @@ import android.os.RemoteException
 import android.util.Log
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.system.exitProcess
 
 /**
@@ -11,12 +13,15 @@ import kotlin.system.exitProcess
  */
 class InputMonitorUserService : IInputMonitorService.Stub() {
 
-    @Volatile
-    private var monitoring = false
+    private val monitoring = AtomicBoolean(false)
 
+    @Volatile
     private var monitorProcess: Process? = null
+
+    @Volatile
     private var monitorThread: Thread? = null
 
+    @Volatile
     private var lastMoveCallbackAt = 0L
 
     /**
@@ -25,19 +30,51 @@ class InputMonitorUserService : IInputMonitorService.Stub() {
     override fun runCommand(command: String?): String {
         if (command.isNullOrBlank()) return ""
 
-        return runCatching {
-            val process = ProcessBuilder("sh", "-c", command)
+        var process: Process? = null
+
+        return try {
+            process = ProcessBuilder("/system/bin/sh", "-c", command)
                 .redirectErrorStream(true)
                 .start()
 
-            val output = BufferedReader(InputStreamReader(process.inputStream))
-                .use { it.readText() }
+            val output = StringBuilder()
 
-            process.waitFor()
-            output.take(8_000)
-        }.getOrElse {
-            Log.e(TAG, "runCommand failed", it)
-            it.stackTraceToString()
+            val readerThread = Thread {
+                runCatching {
+                    BufferedReader(InputStreamReader(process.inputStream)).use { reader ->
+                        var line: String?
+                        while (true) {
+                            line = reader.readLine() ?: break
+                            output.append(line).append('\n')
+
+                            if (output.length >= MAX_COMMAND_OUTPUT_CHARS) {
+                                break
+                            }
+                        }
+                    }
+                }
+            }.apply {
+                name = "AdaptiveHzCommandReader"
+                isDaemon = true
+                start()
+            }
+
+            val finished = process.waitFor(COMMAND_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+
+            if (!finished) {
+                Log.w(TAG, "runCommand timed out: $command")
+                process.destroySafely()
+                return ""
+            }
+
+            readerThread.join(READER_JOIN_TIMEOUT_MS)
+
+            output.toString().take(MAX_COMMAND_OUTPUT_CHARS)
+        } catch (t: Throwable) {
+            Log.e(TAG, "runCommand failed", t)
+            ""
+        } finally {
+            process?.destroySafely()
         }
     }
 
@@ -49,16 +86,19 @@ class InputMonitorUserService : IInputMonitorService.Stub() {
         callback: IInputEventCallback?
     ) {
         if (devicePath.isNullOrBlank() || callback == null) return
-        if (monitoring) return
 
-        monitoring = true
+        if (!monitoring.compareAndSet(false, true)) {
+            Log.d(TAG, "startMonitoring skipped: already monitoring")
+            return
+        }
 
         monitorThread = Thread {
-            runCatching {
+            var process: Process? = null
+
+            try {
                 Log.d(TAG, "Starting input monitor: $devicePath")
 
-                // Use exec so the spawned shell process is fully replaced by getevent.
-                val process = ProcessBuilder(
+                process = ProcessBuilder(
                     "/system/bin/sh",
                     "-c",
                     "exec /system/bin/getevent -lt $devicePath"
@@ -69,17 +109,21 @@ class InputMonitorUserService : IInputMonitorService.Stub() {
                 monitorProcess = process
 
                 BufferedReader(InputStreamReader(process.inputStream)).use { reader ->
-                    while (monitoring) {
+                    while (monitoring.get()) {
                         val line = reader.readLine() ?: break
                         handleInputLine(line, callback)
                     }
                 }
-            }.onFailure {
-                Log.e(TAG, "Input monitor failed", it)
-            }
+            } catch (t: Throwable) {
+                Log.e(TAG, "Input monitor failed", t)
+            } finally {
+                monitoring.set(false)
+                monitorProcess = null
 
-            monitoring = false
-            Log.d(TAG, "Input monitor stopped")
+                process?.destroySafely()
+
+                Log.d(TAG, "Input monitor stopped")
+            }
         }.apply {
             name = "AdaptiveHzInputMonitor"
             isDaemon = false
@@ -91,26 +135,33 @@ class InputMonitorUserService : IInputMonitorService.Stub() {
      * Stops the active getevent process and releases monitoring resources.
      */
     override fun stopMonitoring() {
-        monitoring = false
+        Log.d(TAG, "stopMonitoring")
 
-        runCatching {
-            monitorProcess?.destroy()
-        }
+        monitoring.set(false)
 
+        val process = monitorProcess
         monitorProcess = null
+
+        process?.destroySafely()
+
+        val thread = monitorThread
         monitorThread = null
 
-        Log.d(TAG, "stopMonitoring")
+        if (thread != null && thread != Thread.currentThread()) {
+            runCatching {
+                thread.join(MONITOR_THREAD_JOIN_TIMEOUT_MS)
+            }.onFailure {
+                Log.e(TAG, "Failed to join monitor thread", it)
+            }
+        }
     }
 
     override fun destroy() {
+        Log.d(TAG, "destroy")
         stopMonitoring()
         exitProcess(0)
     }
 
-    /**
-     * Maps raw getevent output into simplified touch lifecycle callbacks.
-     */
     private fun handleInputLine(
         line: String,
         callback: IInputEventCallback
@@ -133,7 +184,6 @@ class InputMonitorUserService : IInputMonitorService.Stub() {
                     line.contains("ABS_MT_POSITION_Y") -> {
                 val now = System.currentTimeMillis()
 
-                // Throttle move events to avoid excessive Binder traffic during continuous gestures.
                 if (now - lastMoveCallbackAt >= MOVE_CALLBACK_THROTTLE_MS) {
                     lastMoveCallbackAt = now
                     safeCallback { callback.onTouchMove() }
@@ -142,9 +192,6 @@ class InputMonitorUserService : IInputMonitorService.Stub() {
         }
     }
 
-    /**
-     * Prevents Binder callback failures from crashing the monitoring loop.
-     */
     private inline fun safeCallback(block: () -> Unit) {
         try {
             block()
@@ -155,9 +202,40 @@ class InputMonitorUserService : IInputMonitorService.Stub() {
         }
     }
 
+    private fun Process.destroySafely() {
+        runCatching {
+            outputStream?.close()
+        }
+
+        runCatching {
+            inputStream?.close()
+        }
+
+        runCatching {
+            errorStream?.close()
+        }
+
+        runCatching {
+            destroy()
+        }
+
+        runCatching {
+            if (!waitFor(PROCESS_DESTROY_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                destroyForcibly()
+            }
+        }
+    }
+
     companion object {
         private const val TAG = "InputMonitorService"
-        // Continuous move events can be extremely noisy on high refresh rate touch panels.
+
         private const val MOVE_CALLBACK_THROTTLE_MS = 75L
+
+        private const val COMMAND_TIMEOUT_MS = 3_000L
+        private const val READER_JOIN_TIMEOUT_MS = 500L
+        private const val MONITOR_THREAD_JOIN_TIMEOUT_MS = 1_000L
+        private const val PROCESS_DESTROY_TIMEOUT_MS = 500L
+
+        private const val MAX_COMMAND_OUTPUT_CHARS = 8_000
     }
 }

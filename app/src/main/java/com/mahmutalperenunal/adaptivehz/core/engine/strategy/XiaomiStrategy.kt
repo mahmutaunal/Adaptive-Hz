@@ -1,46 +1,55 @@
 package com.mahmutalperenunal.adaptivehz.core.engine.strategy
 
 import android.content.Context
-import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateController
 import com.mahmutalperenunal.adaptivehz.core.engine.model.SettingWrite
 import com.mahmutalperenunal.adaptivehz.core.engine.model.VendorStrategy
 import com.mahmutalperenunal.adaptivehz.core.engine.model.VendorTuning
+import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateController
 
 /**
- * Xiaomi / HyperOS implementation.
+ * Xiaomi / MIUI / HyperOS implementation.
  *
- * Unlike Samsung, Xiaomi expects the actual Hz value
- * (e.g. 60 / 120) to be written into "miui_refresh_rate".
+ * Xiaomi refresh-rate behavior differs between MIUI and HyperOS builds:
+ *
+ * - MIUI / some older HyperOS builds may use "miui_refresh_rate".
+ * - HyperOS 1 may require "user_refresh_rate" under the secure table.
+ *
+ * The strategy still returns a single SettingWrite to keep the current engine model stable.
+ * RefreshRateController handles Xiaomi writes by applying both supported keys.
  */
 class XiaomiStrategy : VendorStrategy {
     override val name = "Xiaomi"
 
-    // Resolve device-supported minimum Hz and write it explicitly
+    // Resolve device-supported minimum Hz and write it explicitly.
     override fun desiredLow(context: Context): SettingWrite {
-        val (minHz, _) = RefreshRateController.resolveDisplayMinMax(context)
+        val appContext = context.applicationContext
+        val (minHz, _) = RefreshRateController.resolveDisplayMinMax(appContext)
+
         return SettingWrite(
-            RefreshRateController.KEY_XIAOMI_REFRESH_RATE,
-            minHz,
-            "miui_refresh_rate=$minHz (Min)"
+            key = RefreshRateController.KEY_XIAOMI_USER_REFRESH_RATE,
+            intValue = minHz,
+            label = "user_refresh_rate/miui_refresh_rate=$minHz (Min)"
         )
     }
 
-    // Resolve device-supported maximum Hz and write it explicitly
+    // Resolve device-supported maximum Hz and write it explicitly.
     override fun desiredHigh(context: Context): SettingWrite {
-        val (_, maxHz) = RefreshRateController.resolveDisplayMinMax(context)
+        val appContext = context.applicationContext
+        val (_, maxHz) = RefreshRateController.resolveDisplayMinMax(appContext)
+
         return SettingWrite(
-            RefreshRateController.KEY_XIAOMI_REFRESH_RATE,
-            maxHz,
-            "miui_refresh_rate=$maxHz (Max)"
+            key = RefreshRateController.KEY_XIAOMI_USER_REFRESH_RATE,
+            intValue = maxHz,
+            label = "user_refresh_rate/miui_refresh_rate=$maxHz (Max)"
         )
     }
 
-    // Restores Xiaomi/HyperOS native refresh-rate handling by delegating
+    // Restores Xiaomi/HyperOS native refresh-rate handling.
     override fun desiredSystemControlled(context: Context): SettingWrite {
         return SettingWrite(
-            RefreshRateController.KEY_XIAOMI_REFRESH_RATE,
-            0,
-            "miui_refresh_rate=0 (System)"
+            key = RefreshRateController.KEY_XIAOMI_USER_REFRESH_RATE,
+            intValue = 0,
+            label = "user_refresh_rate/miui_refresh_rate=0 (System)"
         )
     }
 

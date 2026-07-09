@@ -174,8 +174,12 @@
     <string name="settings_value_notification_permission_ok">Notification permission is granted.</string>
     <string name="settings_value_notification_permission_required">Required to enable Stability Mode on Android 13 and above.</string>
     <string name="settings_toast_notification_required_for_stability">Notification permission is required to enable Stability Mode.</string>
+    <string name="settings_item_keep_active_during_battery_saver">Keep Adaptive Hz active during Battery Saver</string>
+    <string name="settings_value_keep_active_during_battery_saver_summary">When enabled, Adaptive Hz will continue applying your selected refresh rate behavior while Battery Saver is on. Some devices may still force 60Hz at system level.</string>
     <string name="settings_item_drop_delay">Drop delay after touch</string>
     <string name="settings_value_drop_delay_summary">Switch back to minimum refresh rate after %1$s when touch interaction ends. (Default: 2s)</string>
+    <string name="settings_dialog_battery_saver_override_title">Battery Saver compatibility</string>
+    <string name="settings_dialog_battery_saver_override_body">Adaptive Hz will keep trying to apply your selected refresh rate behavior while Battery Saver is enabled. However, some devices block high refresh rates at system level during Battery Saver, so this option may not work on every phone. If your device still stays at 60Hz, it means the system is enforcing the limit.</string>
 
     <string name="settings_item_theme">Theme</string>
     <string name="settings_item_language">Language</string>
@@ -326,6 +330,8 @@
     <string name="stability_notification_recovery_title">Adaptive Hz needs attention</string>
     <string name="stability_notification_recovery_text">Accessibility Service may have stopped. Tap to recover.</string>
     <string name="stability_notification_recovery_action">Recover</string>
+    <string name="action_enable">Enable</string>
+    <string name="action_cancel">Cancel</string>
 
     <string name="diagnostics_system_title">System</string>
     <string name="diagnostics_vendor">Vendor</string>
@@ -377,4 +383,10 @@
     <string name="profile_mode_maximum">Maximum</string>
     <string name="profile_mode_respect">Respect</string>
     <string name="profile_mode_disabled">Disabled</string>
+
+    <string name="accessibility_health_notification_channel_name">Adaptive Hz health</string>
+    <string name="accessibility_health_notification_title">Adaptive Hz needs attention</string>
+    <string name="accessibility_health_notification_broken_text">Accessibility Service is not responding. Adaptive Hz may stop switching refresh rates. Tap to reopen Accessibility Settings.</string>
+    <string name="accessibility_health_notification_disabled_text">Accessibility Service is disabled. Adaptive Hz needs it to detect interactions and switch refresh rates. Tap to enable it again.</string>
+    <string name="accessibility_health_notification_action">Open Accessibility Settings</string>
 </resources>

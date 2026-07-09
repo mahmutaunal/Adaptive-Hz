@@ -69,7 +69,7 @@ fun SetupComponent(
     onOpenUsageAccessSettings: () -> Unit,
     onSetKeepAliveEnabled: (Boolean) -> Unit
 ) {
-    val context = LocalContext.current
+    val context = LocalContext.current.applicationContext
 
     SetupHeroCard(
         title = stringResource(id = R.string.setup_title),

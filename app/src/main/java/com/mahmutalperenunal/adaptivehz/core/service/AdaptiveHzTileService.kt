@@ -26,8 +26,10 @@ class AdaptiveHzTileService : TileService() {
     override fun onClick() {
         super.onClick()
 
+        val appContext = applicationContext
+
         try {
-            AdaptiveHzActionHandler.toggle(this)
+            AdaptiveHzActionHandler.toggle(appContext)
         } catch (_: Throwable) {
         }
 
@@ -37,7 +39,8 @@ class AdaptiveHzTileService : TileService() {
     // Syncs the tile UI with current app state (enabled/disabled)
     private fun updateTile() {
         val tile = qsTile ?: return
-        val enabled = AdaptiveHzActionHandler.isAppEnabled(this)
+        val appContext = applicationContext
+        val enabled = AdaptiveHzActionHandler.isAppEnabled(appContext)
 
         tile.icon = Icon.createWithResource(this, R.drawable.ic_qs_tile_adaptive_hz)
         tile.label = getString(R.string.app_name)

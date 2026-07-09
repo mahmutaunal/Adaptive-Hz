@@ -17,15 +17,16 @@ import com.mahmutalperenunal.adaptivehz.core.engine.model.AdaptiveHzMode
 object AdaptiveHzWidgetUpdater {
 
     fun refreshAll(context: Context) {
-        val appWidgetManager = AppWidgetManager.getInstance(context)
-        val provider = ComponentName(context, AdaptiveHzWidgetProvider::class.java)
+        val appContext = context.applicationContext
+        val appWidgetManager = AppWidgetManager.getInstance(appContext)
+        val provider = ComponentName(appContext, AdaptiveHzWidgetProvider::class.java)
         val widgetIds = appWidgetManager.getAppWidgetIds(provider)
 
         if (widgetIds.isEmpty()) return
 
         // Refresh each placed widget instance individually
         widgetIds.forEach { widgetId ->
-            updateWidget(context, appWidgetManager, widgetId)
+            updateWidget(appContext, appWidgetManager, widgetId)
         }
     }
 
@@ -34,8 +35,9 @@ object AdaptiveHzWidgetUpdater {
         appWidgetManager: AppWidgetManager,
         widgetId: Int
     ) {
+        val appContext = context.applicationContext
         val options = appWidgetManager.getAppWidgetOptions(widgetId)
-        val views = buildRemoteViews(context, options)
+        val views = buildRemoteViews(appContext, options)
         appWidgetManager.updateAppWidget(widgetId, views)
     }
 
@@ -43,8 +45,9 @@ object AdaptiveHzWidgetUpdater {
         context: Context,
         options: Bundle?
     ): RemoteViews {
-        val currentMode = AdaptiveHzPrefs.getCurrentMode(context)
-        val setupReady = AdaptiveHzRuntimeState.isSetupReady(context)
+        val appContext = context.applicationContext
+        val currentMode = AdaptiveHzPrefs.getCurrentMode(appContext)
+        val setupReady = AdaptiveHzRuntimeState.isSetupReady(appContext)
         val compact = isCompactWidget(options)
 
         // Choose layout based on current widget size
@@ -54,18 +57,18 @@ object AdaptiveHzWidgetUpdater {
             R.layout.widget_adaptive_hz
         }
 
-        val views = RemoteViews(context.packageName, layoutRes)
+        val views = RemoteViews(appContext.packageName, layoutRes)
 
         // Header always opens the app when tapped
-        bindOpenAppClicks(context, views)
+        bindOpenAppClicks(appContext, views)
 
-        setHeaderState(context, views, currentMode, setupReady)
+        setHeaderState(appContext, views, currentMode, setupReady)
 
         // Action buttons only change modes after setup is completed
         if (setupReady) {
-            bindActionClicks(context, views)
+            bindActionClicks(appContext, views)
         } else {
-            clearActionClicks(context, views)
+            clearActionClicks(appContext, views)
         }
 
         if (compact) {
@@ -93,24 +96,26 @@ object AdaptiveHzWidgetUpdater {
         currentMode: AdaptiveHzMode,
         setupReady: Boolean
     ) {
+        val appContext = context.applicationContext
         views.setTextViewText(
             R.id.tvWidgetBadge,
             when {
-                !setupReady -> context.getString(R.string.widget_badge_setup)
-                currentMode == AdaptiveHzMode.OFF -> context.getString(R.string.widget_off)
-                currentMode == AdaptiveHzMode.FORCE_MIN -> context.getString(R.string.widget_min)
-                currentMode == AdaptiveHzMode.ADAPTIVE -> context.getString(R.string.widget_adaptive)
-                currentMode == AdaptiveHzMode.FORCE_MAX -> context.getString(R.string.widget_max)
-                else -> context.getString(R.string.widget_off)
+                !setupReady -> appContext.getString(R.string.widget_badge_setup)
+                currentMode == AdaptiveHzMode.OFF -> appContext.getString(R.string.widget_off)
+                currentMode == AdaptiveHzMode.FORCE_MIN -> appContext.getString(R.string.widget_min)
+                currentMode == AdaptiveHzMode.ADAPTIVE -> appContext.getString(R.string.widget_adaptive)
+                currentMode == AdaptiveHzMode.FORCE_MAX -> appContext.getString(R.string.widget_max)
+                else -> appContext.getString(R.string.widget_off)
             }
         )
     }
 
     private fun bindActionClicks(context: Context, views: RemoteViews) {
+        val appContext = context.applicationContext
         views.setOnClickPendingIntent(
             R.id.btnWidgetOff,
             AdaptiveHzWidgetProvider.getBroadcastPendingIntent(
-                context,
+                appContext,
                 AdaptiveHzWidgetProvider.ACTION_SET_OFF,
                 100
             )
@@ -119,7 +124,7 @@ object AdaptiveHzWidgetUpdater {
         views.setOnClickPendingIntent(
             R.id.btnWidgetMin,
             AdaptiveHzWidgetProvider.getBroadcastPendingIntent(
-                context,
+                appContext,
                 AdaptiveHzWidgetProvider.ACTION_SET_MIN,
                 101
             )
@@ -128,7 +133,7 @@ object AdaptiveHzWidgetUpdater {
         views.setOnClickPendingIntent(
             R.id.btnWidgetAdaptive,
             AdaptiveHzWidgetProvider.getBroadcastPendingIntent(
-                context,
+                appContext,
                 AdaptiveHzWidgetProvider.ACTION_SET_ADAPTIVE,
                 102
             )
@@ -137,7 +142,7 @@ object AdaptiveHzWidgetUpdater {
         views.setOnClickPendingIntent(
             R.id.btnWidgetMax,
             AdaptiveHzWidgetProvider.getBroadcastPendingIntent(
-                context,
+                appContext,
                 AdaptiveHzWidgetProvider.ACTION_SET_MAX,
                 103
             )
@@ -145,8 +150,9 @@ object AdaptiveHzWidgetUpdater {
     }
 
     private fun clearActionClicks(context: Context, views: RemoteViews) {
+        val appContext = context.applicationContext
         // Redirect mode taps to the app until setup is completed
-        val openAppIntent = getLaunchAppPendingIntent(context)
+        val openAppIntent = getLaunchAppPendingIntent(appContext)
 
         views.setOnClickPendingIntent(R.id.btnWidgetOff, openAppIntent)
         views.setOnClickPendingIntent(R.id.btnWidgetMin, openAppIntent)
@@ -155,19 +161,21 @@ object AdaptiveHzWidgetUpdater {
     }
 
     private fun bindOpenAppClicks(context: Context, views: RemoteViews) {
-        val launchIntent = getLaunchAppPendingIntent(context)
+        val appContext = context.applicationContext
+        val launchIntent = getLaunchAppPendingIntent(appContext)
         views.setOnClickPendingIntent(R.id.widgetRoot, launchIntent)
         views.setOnClickPendingIntent(R.id.tvWidgetTitle, launchIntent)
         views.setOnClickPendingIntent(R.id.tvWidgetBadge, launchIntent)
     }
 
     private fun getLaunchAppPendingIntent(context: Context): PendingIntent {
-        val launchIntent = Intent(context, MainActivity::class.java).apply {
+        val appContext = context.applicationContext
+        val launchIntent = Intent(appContext, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
 
         return PendingIntent.getActivity(
-            context,
+            appContext,
             200,
             launchIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE

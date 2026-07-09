@@ -34,10 +34,13 @@ object AdaptiveHzPrefs {
     const val KEY_DYNAMIC_ENABLED = "dynamic_enabled"
     const val KEY_MANUAL_TARGET = "manual_target"
     const val KEY_KEEP_ALIVE_ENABLED = "keep_alive_enabled"
+    const val KEY_KEEP_ACTIVE_DURING_BATTERY_SAVER = "keep_active_during_battery_saver"
     const val KEY_CURRENT_MODE = "current_mode"
     const val KEY_ACCESSIBILITY_LAST_HEARTBEAT = "accessibility_last_heartbeat"
     const val KEY_ACCESSIBILITY_LAST_CONNECTED_AT = "accessibility_last_connected_at"
     const val KEY_ACCESSIBILITY_CONNECTED = "accessibility_connected"
+    const val KEY_ACCESSIBILITY_LAST_HEALTH_STATE = "accessibility_last_health_state"
+    const val KEY_ACCESSIBILITY_LAST_RECOVERY_NOTIFIED_AT = "accessibility_last_recovery_notified_at"
     const val KEY_INITIAL_SETUP_COMPLETED = "initial_setup_completed"
     private const val KEY_APP_PROFILE_PREFIX = "app_profile_"
     const val KEY_DEBUG_FOREGROUND_PACKAGE = "debug_foreground_package"
@@ -92,6 +95,16 @@ object AdaptiveHzPrefs {
 
     fun setKeepAliveEnabled(context: Context, enabled: Boolean) {
         prefs(context).edit { putBoolean(KEY_KEEP_ALIVE_ENABLED, enabled) }
+    }
+
+    fun shouldKeepActiveDuringBatterySaver(context: Context): Boolean {
+        return prefs(context).getBoolean(KEY_KEEP_ACTIVE_DURING_BATTERY_SAVER, false)
+    }
+
+    fun setKeepActiveDuringBatterySaver(context: Context, enabled: Boolean) {
+        prefs(context).edit {
+            putBoolean(KEY_KEEP_ACTIVE_DURING_BATTERY_SAVER, enabled)
+        }
     }
 
     fun getCurrentMode(context: Context): AdaptiveHzMode {
@@ -174,6 +187,26 @@ object AdaptiveHzPrefs {
 
     fun markAccessibilityDisconnected(context: Context) {
         prefs(context).edit { putBoolean(KEY_ACCESSIBILITY_CONNECTED, false) }
+    }
+
+    fun getAccessibilityLastHealthState(context: Context): String {
+        return prefs(context).getString(KEY_ACCESSIBILITY_LAST_HEALTH_STATE, "") ?: ""
+    }
+
+    fun setAccessibilityLastHealthState(context: Context, state: String) {
+        prefs(context).edit {
+            putString(KEY_ACCESSIBILITY_LAST_HEALTH_STATE, state)
+        }
+    }
+
+    fun getAccessibilityLastRecoveryNotifiedAt(context: Context): Long {
+        return prefs(context).getLong(KEY_ACCESSIBILITY_LAST_RECOVERY_NOTIFIED_AT, 0L)
+    }
+
+    fun setAccessibilityLastRecoveryNotifiedAt(context: Context, timestamp: Long) {
+        prefs(context).edit {
+            putLong(KEY_ACCESSIBILITY_LAST_RECOVERY_NOTIFIED_AT, timestamp)
+        }
     }
 
     fun isInitialSetupCompleted(context: Context): Boolean {

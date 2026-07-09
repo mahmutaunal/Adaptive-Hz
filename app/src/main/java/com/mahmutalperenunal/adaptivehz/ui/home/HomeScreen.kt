@@ -84,6 +84,7 @@ fun HomeScreen(
     onKeepAliveEnabledChange: (Boolean) -> Unit
 ) {
     val context = LocalContext.current
+    val appContext = context.applicationContext
     val prefs = remember { AdaptiveHzPrefs }
 
     val toastAdbVerified = stringResource(id = R.string.toast_adb_verified)
@@ -114,8 +115,8 @@ fun HomeScreen(
     val scrollState = rememberScrollState()
 
     // UI state restored from persisted app preferences.
-    var adbGranted by remember { mutableStateOf(prefs.isAdbGranted(context)) }
-    val currentMode = remember { mutableStateOf(prefs.getCurrentMode(context)) }
+    var adbGranted by remember { mutableStateOf(prefs.isAdbGranted(appContext)) }
+    val currentMode = remember { mutableStateOf(prefs.getCurrentMode(appContext)) }
 
     val accessibilityState = remember { mutableStateOf(getAccessibilityState()) }
 
@@ -125,10 +126,10 @@ fun HomeScreen(
 
     var rootAvailable by remember { mutableStateOf(false) }
 
-    val initialSetupCompleted = remember { mutableStateOf(prefs.isInitialSetupCompleted(context)) }
+    val initialSetupCompleted = remember { mutableStateOf(prefs.isInitialSetupCompleted(appContext)) }
 
-    val installedAppsRepository = remember { InstalledAppsRepository(context) }
-    val recentAppsProvider = remember { RecentAppsProvider(context) }
+    val installedAppsRepository = remember(appContext) { InstalledAppsRepository(appContext) }
+    val recentAppsProvider = remember(appContext) { RecentAppsProvider(appContext) }
     var dashboardApps by remember { mutableStateOf<List<InstalledAppInfo>>(emptyList()) }
     var usagePermissionGranted by remember { mutableStateOf(recentAppsProvider.hasPermission()) }
     val selectedDashboardApp = remember { mutableStateOf<InstalledAppInfo?>(null) }
@@ -142,13 +143,13 @@ fun HomeScreen(
 
     // Re-reads runtime state after setup changes or lifecycle resume.
     fun refreshStates() {
-        accessibilityState.value = getAccessibilityState(context)
-        currentMode.value = prefs.getCurrentMode(context)
+        accessibilityState.value = getAccessibilityState(appContext)
+        currentMode.value = prefs.getCurrentMode(appContext)
         usagePermissionGranted = recentAppsProvider.hasPermission()
 
         reloadDashboardApps()
 
-        adbGranted = prefs.isAdbGranted(context)
+        adbGranted = prefs.isAdbGranted(appContext)
 
         rootAvailable = when (RootManager.getRootState()) {
             is RootManager.RootState.Available -> true
@@ -256,7 +257,7 @@ fun HomeScreen(
             if (accessibilityBroken) {
                 RecoveryCard(
                     onRetry = {
-                        accessibilityState.value = getAccessibilityState()
+                        accessibilityState.value = getAccessibilityState(appContext)
                     },
                     onOpenAccessibilitySettings = openAccessibilitySettings,
                     onOpenBatterySettings = requestIgnoreBatteryOptimizations
@@ -288,11 +289,11 @@ fun HomeScreen(
 
                         val verified = try {
                             val pmGranted = ContextCompat.checkSelfPermission(
-                                context,
+                                appContext,
                                 permission
                             ) == PackageManager.PERMISSION_GRANTED
 
-                            val cr = context.contentResolver
+                            val cr = appContext.contentResolver
                             val key = Settings.Global.ANIMATOR_DURATION_SCALE
                             val current = Settings.Global.getFloat(cr, key, 1f)
                             val wrote = Settings.Global.putFloat(cr, key, current)
@@ -303,29 +304,29 @@ fun HomeScreen(
                             false
                         } catch (_: Exception) {
                             ContextCompat.checkSelfPermission(
-                                context,
+                                appContext,
                                 permission
                             ) == PackageManager.PERMISSION_GRANTED
                         }
 
                         if (verified) {
-                            prefs.setAdbGranted(context, true)
+                            prefs.setAdbGranted(appContext, true)
                             adbGranted = true
-                            Toast.makeText(context, toastAdbVerified, Toast.LENGTH_SHORT).show()
+                            Toast.makeText(appContext, toastAdbVerified, Toast.LENGTH_SHORT).show()
                         } else {
-                            prefs.setAdbGranted(context, false)
+                            prefs.setAdbGranted(appContext, false)
                             adbGranted = false
-                            Toast.makeText(context, toastAdbPermissionMissing, Toast.LENGTH_LONG).show()
+                            Toast.makeText(appContext, toastAdbPermissionMissing, Toast.LENGTH_LONG).show()
                         }
                     },
                     // Optional root fallback for granting the secure settings permission.
                     onGrantWithRoot = {
-                        when (val result = RootManager.grantWriteSecureSettings(context)) {
+                        when (val result = RootManager.grantWriteSecureSettings(appContext)) {
                             is RootManager.RootState.Available -> {
-                                prefs.setAdbGranted(context, true)
+                                prefs.setAdbGranted(appContext, true)
                                 adbGranted = true
                                 Toast.makeText(
-                                    context,
+                                    appContext,
                                     toastRootGrantSuccess,
                                     Toast.LENGTH_LONG
                                 ).show()
@@ -333,7 +334,7 @@ fun HomeScreen(
 
                             is RootManager.RootState.Denied -> {
                                 Toast.makeText(
-                                    context,
+                                    appContext,
                                     toastRootGrantDenied,
                                     Toast.LENGTH_LONG
                                 ).show()
@@ -341,7 +342,7 @@ fun HomeScreen(
 
                             is RootManager.RootState.Unavailable -> {
                                 Toast.makeText(
-                                    context,
+                                    appContext,
                                     toastRootNotAvailable,
                                     Toast.LENGTH_LONG
                                 ).show()
@@ -349,7 +350,7 @@ fun HomeScreen(
 
                             is RootManager.RootState.Failed -> {
                                 Toast.makeText(
-                                    context,
+                                    appContext,
                                     result.reason ?: toastRootGrantFailed,
                                     Toast.LENGTH_LONG
                                 ).show()
@@ -364,13 +365,13 @@ fun HomeScreen(
                         context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
                     },
                     onSetKeepAliveEnabled = { next ->
-                        prefs.setKeepAliveEnabled(context, next)
+                        prefs.setKeepAliveEnabled(appContext, next)
                         onKeepAliveEnabledChange(next)
 
                         if (next) {
-                            StabilityForegroundService.start(context)
+                            StabilityForegroundService.start(appContext)
                         } else {
-                            StabilityForegroundService.stop(context)
+                            StabilityForegroundService.stop(appContext)
                         }
                     }
                 )
@@ -397,14 +398,14 @@ fun HomeScreen(
                     onAppEnabledChange = { enabled ->
                         try {
                             if (enabled) {
-                                AdaptiveHzActionHandler.turnOn(context)
+                                AdaptiveHzActionHandler.turnOn(appContext)
                             } else {
-                                AdaptiveHzActionHandler.turnOff(context)
+                                AdaptiveHzActionHandler.turnOff(appContext)
                             }
-                            currentMode.value = AdaptiveHzActionHandler.getCurrentMode(context)
+                            currentMode.value = AdaptiveHzActionHandler.getCurrentMode(appContext)
                         } catch (_: SecurityException) {
                             Toast.makeText(
-                                context,
+                                appContext,
                                 toastSecureSettingsMissing,
                                 Toast.LENGTH_LONG
                             ).show()
@@ -412,12 +413,12 @@ fun HomeScreen(
                     },
                     onAdaptiveClick = {
                         try {
-                            AdaptiveHzActionHandler.setAdaptive(context)
-                            currentMode.value = AdaptiveHzActionHandler.getCurrentMode(context)
-                            Toast.makeText(context, toastAdaptiveApplied, Toast.LENGTH_SHORT).show()
+                            AdaptiveHzActionHandler.setAdaptive(appContext)
+                            currentMode.value = AdaptiveHzActionHandler.getCurrentMode(appContext)
+                            Toast.makeText(appContext, toastAdaptiveApplied, Toast.LENGTH_SHORT).show()
                         } catch (_: SecurityException) {
                             Toast.makeText(
-                                context,
+                                appContext,
                                 toastSecureSettingsMissing,
                                 Toast.LENGTH_LONG
                             ).show()
@@ -425,12 +426,12 @@ fun HomeScreen(
                     },
                     onMinimumClick = {
                         try {
-                            AdaptiveHzActionHandler.setMinimum(context)
-                            currentMode.value = AdaptiveHzActionHandler.getCurrentMode(context)
-                            Toast.makeText(context, toastMinimumApplied, Toast.LENGTH_SHORT).show()
+                            AdaptiveHzActionHandler.setMinimum(appContext)
+                            currentMode.value = AdaptiveHzActionHandler.getCurrentMode(appContext)
+                            Toast.makeText(appContext, toastMinimumApplied, Toast.LENGTH_SHORT).show()
                         } catch (_: SecurityException) {
                             Toast.makeText(
-                                context,
+                                appContext,
                                 toastSecureSettingsMissing,
                                 Toast.LENGTH_LONG
                             ).show()
@@ -438,12 +439,12 @@ fun HomeScreen(
                     },
                     onMaximumClick = {
                         try {
-                            AdaptiveHzActionHandler.setMaximum(context)
-                            currentMode.value = AdaptiveHzActionHandler.getCurrentMode(context)
-                            Toast.makeText(context, toastMaximumApplied, Toast.LENGTH_SHORT).show()
+                            AdaptiveHzActionHandler.setMaximum(appContext)
+                            currentMode.value = AdaptiveHzActionHandler.getCurrentMode(appContext)
+                            Toast.makeText(appContext, toastMaximumApplied, Toast.LENGTH_SHORT).show()
                         } catch (_: SecurityException) {
                             Toast.makeText(
-                                context,
+                                appContext,
                                 toastSecureSettingsMissing,
                                 Toast.LENGTH_LONG
                             ).show()
@@ -465,7 +466,7 @@ fun HomeScreen(
                 FilledTonalButton(
                     onClick = {
                         if (requiredSetupReady) {
-                            prefs.setInitialSetupCompleted(context, true)
+                            prefs.setInitialSetupCompleted(appContext, true)
                             initialSetupCompleted.value = true
                         }
                     },
@@ -494,7 +495,7 @@ fun HomeScreen(
             onDismiss = { selectedDashboardApp.value = null },
             onModeSelected = { mode ->
                 AdaptiveHzPrefs.setAppRefreshProfileMode(
-                    context = context,
+                    context = appContext,
                     packageName = app.packageName,
                     mode = mode
                 )

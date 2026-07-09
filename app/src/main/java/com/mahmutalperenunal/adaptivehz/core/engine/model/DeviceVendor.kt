@@ -1,6 +1,7 @@
 package com.mahmutalperenunal.adaptivehz.core.engine.model
 
 import android.os.Build
+import java.util.Locale
 
 // Supported device vendors with custom refresh-rate handling
 enum class DeviceVendor { SAMSUNG, XIAOMI, OTHER }
@@ -10,8 +11,8 @@ object DeviceVendorDetector {
     // Determines the current device vendor using Build manufacturer and brand fields
     fun detect(): DeviceVendor {
         // Manufacturer and brand are normalized to lowercase for reliable matching
-        val m = Build.MANUFACTURER.lowercase()
-        val b = Build.BRAND.lowercase()
+        val m = Build.MANUFACTURER.lowercase(Locale.ROOT)
+        val b = Build.BRAND.lowercase(Locale.ROOT)
 
         // Samsung devices usually report "samsung" in manufacturer or brand
         val isSamsung = m.contains("samsung") || b.contains("samsung")

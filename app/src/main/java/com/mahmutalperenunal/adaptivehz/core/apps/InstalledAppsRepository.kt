@@ -11,11 +11,13 @@ import com.mahmutalperenunal.adaptivehz.core.engine.model.AppRefreshProfileMode
  */
 
 class InstalledAppsRepository(
-    private val context: Context
+    context: Context
 ) {
-    private val pm = context.packageManager
+    private val appContext = context.applicationContext
 
-    private val recentAppsProvider = RecentAppsProvider(context)
+    private val pm = appContext.packageManager
+
+    private val recentAppsProvider = RecentAppsProvider(appContext)
 
     /**
      * Returns the full installed app list.
@@ -25,7 +27,7 @@ class InstalledAppsRepository(
     ): List<InstalledAppInfo> {
         return pm.getInstalledApplications(PackageManager.GET_META_DATA)
             .asSequence()
-            .filter { it.packageName != context.packageName }
+            .filter { it.packageName != appContext.packageName }
             .mapNotNull { app ->
                 runCatching {
                     val isSystem = (app.flags and ApplicationInfo.FLAG_SYSTEM) != 0
@@ -36,7 +38,7 @@ class InstalledAppsRepository(
                         packageName = app.packageName,
                         label = pm.getApplicationLabel(app).toString(),
                         profileMode = AdaptiveHzPrefs.getAppRefreshProfileMode(
-                            context = context,
+                            context = appContext,
                             packageName = app.packageName
                         ),
                         lastUpdatedTime = runCatching {
@@ -64,7 +66,7 @@ class InstalledAppsRepository(
 
         return pm.getInstalledApplications(PackageManager.GET_META_DATA)
             .asSequence()
-            .filter { it.packageName != context.packageName }
+            .filter { it.packageName != appContext.packageName }
             .filter { app ->
                 val isSystem = (app.flags and ApplicationInfo.FLAG_SYSTEM) != 0
                 includeSystemApps || !isSystem
@@ -97,7 +99,7 @@ class InstalledAppsRepository(
 
                 runCatching {
                     val profileMode = AdaptiveHzPrefs.getAppRefreshProfileMode(
-                        context = context,
+                        context = appContext,
                         packageName = app.packageName
                     )
 

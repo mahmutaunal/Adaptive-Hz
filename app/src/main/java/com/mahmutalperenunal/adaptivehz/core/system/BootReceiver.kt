@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import com.mahmutalperenunal.adaptivehz.core.engine.model.AdaptiveHzMode
+import com.mahmutalperenunal.adaptivehz.core.health.AccessibilityHealthMonitor
 import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs
 import com.mahmutalperenunal.adaptivehz.core.service.StabilityForegroundService
 
@@ -19,12 +20,29 @@ import com.mahmutalperenunal.adaptivehz.core.service.StabilityForegroundService
  */
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
-        if (intent?.action == Intent.ACTION_MY_PACKAGE_REPLACED) {
-            AdaptiveHzPrefs.markAccessibilityDisconnected(context)
+        val appContext = context.applicationContext
+        val mainHandler = Handler(Looper.getMainLooper())
 
-            val keepAlive = AdaptiveHzPrefs.isKeepAliveEnabled(context)
+        if (intent?.action == Intent.ACTION_MY_PACKAGE_REPLACED) {
+            AdaptiveHzPrefs.markAccessibilityDisconnected(appContext)
+
+            val keepAlive = AdaptiveHzPrefs.isKeepAliveEnabled(appContext)
             if (keepAlive) {
-                try { StabilityForegroundService.start(context) } catch (_: Throwable) {}
+                try { StabilityForegroundService.start(appContext) } catch (_: Throwable) {}
+            }
+
+            try {
+                mainHandler.postDelayed({
+                    AccessibilityHealthMonitor.check(
+                        context = appContext,
+                        reason = "package_replaced"
+                    )
+                }, 5_000L)
+            } catch (_: Throwable) {
+                AccessibilityHealthMonitor.check(
+                    context = appContext,
+                    reason = "package_replaced"
+                )
             }
 
             return
@@ -32,7 +50,7 @@ class BootReceiver : BroadcastReceiver() {
 
         if (intent?.action != Intent.ACTION_BOOT_COMPLETED) return
 
-        val currentMode = AdaptiveHzPrefs.getCurrentMode(context)
+        val currentMode = AdaptiveHzPrefs.getCurrentMode(appContext)
 
         when (currentMode) {
             AdaptiveHzMode.OFF -> {
@@ -42,30 +60,44 @@ class BootReceiver : BroadcastReceiver() {
             AdaptiveHzMode.ADAPTIVE,
             AdaptiveHzMode.FORCE_MIN -> {
                 try {
-                    Handler(Looper.getMainLooper()).postDelayed({
-                        try { RefreshRateController.applyForceMinimum(context) } catch (_: Throwable) {}
+                    mainHandler.postDelayed({
+                        try { RefreshRateController.applyForceMinimum(appContext) } catch (_: Throwable) {}
                     }, 1500L)
                 } catch (_: Throwable) {
                     // Fallback: no delay
-                    try { RefreshRateController.applyForceMinimum(context) } catch (_: Throwable) {}
+                    try { RefreshRateController.applyForceMinimum(appContext) } catch (_: Throwable) {}
                 }
             }
 
             AdaptiveHzMode.FORCE_MAX -> {
                 try {
-                    Handler(Looper.getMainLooper()).postDelayed({
-                        try { RefreshRateController.applyForceMaximum(context) } catch (_: Throwable) {}
+                    mainHandler.postDelayed({
+                        try { RefreshRateController.applyForceMaximum(appContext) } catch (_: Throwable) {}
                     }, 1500L)
                 } catch (_: Throwable) {
                     // Fallback: no delay
-                    try { RefreshRateController.applyForceMaximum(context) } catch (_: Throwable) {}
+                    try { RefreshRateController.applyForceMaximum(appContext) } catch (_: Throwable) {}
                 }
             }
         }
 
-        val keepAlive = AdaptiveHzPrefs.isKeepAliveEnabled(context)
+        val keepAlive = AdaptiveHzPrefs.isKeepAliveEnabled(appContext)
         if (keepAlive) {
-            try { StabilityForegroundService.start(context) } catch (_: Throwable) {}
+            try { StabilityForegroundService.start(appContext) } catch (_: Throwable) {}
+        }
+
+        try {
+            mainHandler.postDelayed({
+                AccessibilityHealthMonitor.check(
+                    context = appContext,
+                    reason = "boot_completed"
+                )
+            }, 8_000L)
+        } catch (_: Throwable) {
+            AccessibilityHealthMonitor.check(
+                context = appContext,
+                reason = "boot_completed"
+            )
         }
     }
 }

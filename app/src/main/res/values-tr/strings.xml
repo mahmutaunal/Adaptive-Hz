@@ -174,8 +174,12 @@
     <string name="settings_value_notification_permission_ok">Bildirim izni verilmiş.</string>
     <string name="settings_value_notification_permission_required">Android 13 ve üzeri cihazlarda Stability Mode için gereklidir.</string>
     <string name="settings_toast_notification_required_for_stability">Stability Mode’u etkinleştirmek için bildirim izni gereklidir.</string>
+    <string name="settings_item_keep_active_during_battery_saver">Pil tasarrufu sırasında Adaptive Hz aktif kalsın</string>
+    <string name="settings_value_keep_active_during_battery_saver_summary">Etkinleştirildiğinde Adaptive Hz, Pil Tasarrufu açıkken de seçili yenileme hızı davranışını uygulamaya devam eder. Bazı cihazlar yine de sistem seviyesinde 60Hz sınırı uygulayabilir.</string>
     <string name="settings_item_drop_delay">Dokunma sonrası düşüş gecikmesi</string>
     <string name="settings_value_drop_delay_summary">Dokunma bittikten %1$s sonra minimum yenileme hızına geri döner. (Varsayılan: 2s)</string>
+    <string name="settings_dialog_battery_saver_override_title">Pil Tasarrufu uyumluluğu</string>
+    <string name="settings_dialog_battery_saver_override_body">Adaptive Hz, Pil Tasarrufu açıkken de seçili yenileme hızı davranışını uygulamaya çalışır. Ancak bazı cihazlar Pil Tasarrufu sırasında yüksek yenileme hızını sistem seviyesinde engeller. Bu nedenle bu seçenek her telefonda çalışmayabilir. Cihazınız hâlâ 60Hz’de kalıyorsa, sınır sistem tarafından uygulanıyor demektir.</string>
 
     <string name="settings_item_theme">Tema</string>
     <string name="settings_item_language">Dil</string>
@@ -304,6 +308,8 @@
     <string name="stability_notification_recovery_title">Adaptive Hz dikkat gerektiriyor</string>
     <string name="stability_notification_recovery_text">Erişilebilirlik Servisi durmuş olabilir. Kurtarmak için dokunun.</string>
     <string name="stability_notification_recovery_action">Kurtar</string>
+    <string name="action_enable">Etkinleştir</string>
+    <string name="action_cancel">İptal</string>
 
     <string name="event_inspector_title">Olay İnceleyici</string>
     <string name="accessibility_event_inspector_title">Erişilebilirlik Olay İnceleyici</string>
@@ -382,4 +388,10 @@
     <string name="profile_mode_maximum">Maksimum</string>
     <string name="profile_mode_respect">Saygı göster</string>
     <string name="profile_mode_disabled">Devre dışı</string>
+
+    <string name="accessibility_health_notification_channel_name">Adaptive Hz sağlık durumu</string>
+    <string name="accessibility_health_notification_title">Adaptive Hz dikkat gerektiriyor</string>
+    <string name="accessibility_health_notification_broken_text">Erişilebilirlik Servisi yanıt vermiyor. Adaptive Hz yenileme hızını değiştirmeyi durdurabilir. Erişilebilirlik Ayarları’nı yeniden açmak için dokunun.</string>
+    <string name="accessibility_health_notification_disabled_text">Erişilebilirlik Servisi kapalı. Adaptive Hz, etkileşimleri algılamak ve yenileme hızını değiştirmek için bu servise ihtiyaç duyar. Yeniden etkinleştirmek için dokunun.</string>
+    <string name="accessibility_health_notification_action">Erişilebilirlik Ayarları’nı aç</string>
 </resources>

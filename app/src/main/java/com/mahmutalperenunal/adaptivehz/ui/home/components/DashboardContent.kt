@@ -463,7 +463,7 @@ private fun DashboardAppIconImage(
     packageName: String,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
+    val context = LocalContext.current.applicationContext
 
     val iconBitmap by produceState<ImageBitmap?>(
         initialValue = null,

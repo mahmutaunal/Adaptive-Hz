@@ -14,7 +14,7 @@ object DebugEventStore {
      */
     @Synchronized
     fun add(event: DebugAccessibilityEvent) {
-        if (events.size >= MAX_EVENTS) {
+        while (events.size >= MAX_EVENTS) {
             events.removeFirst()
         }
 

@@ -29,24 +29,27 @@ object AdaptiveHzRuntimeState {
      * Verifies whether the minimum required setup is completed.
      */
     fun isSetupReady(context: Context): Boolean {
+        val appContext = context.applicationContext
         // Setup is considered ready only if both ADB permission and Accessibility Service are enabled
-        return isAdbReady(context) && isAccessibilityReady(context)
+        return isAdbReady(appContext) && isAccessibilityReady(appContext)
     }
 
     fun isAdbReady(context: Context): Boolean {
+        val appContext = context.applicationContext
         // Checks whether privileged ADB permission has been granted and persisted
-        return AdaptiveHzPrefs.isAdbGranted(context)
+        return AdaptiveHzPrefs.isAdbGranted(appContext)
     }
 
     /**
      * Uses heartbeat timestamps to detect broken accessibility states.
      */
     fun getAccessibilityState(context: Context): AccessibilityState {
-        val configured = isAccessibilityConfigured(context)
+        val appContext = context.applicationContext
+        val configured = isAccessibilityConfigured(appContext)
         if (!configured) return AccessibilityState.DISABLED
 
         val now = System.currentTimeMillis()
-        val lastHeartbeat = AdaptiveHzPrefs.getAccessibilityLastHeartbeat(context)
+        val lastHeartbeat = AdaptiveHzPrefs.getAccessibilityLastHeartbeat(appContext)
         val alive = now - lastHeartbeat <= HEARTBEAT_TIMEOUT_MS
 
         return if (alive) AccessibilityState.WORKING else AccessibilityState.BROKEN
@@ -56,11 +59,12 @@ object AdaptiveHzRuntimeState {
      * Checks whether the service is enabled in system accessibility settings.
      */
     fun isAccessibilityConfigured(context: Context): Boolean {
-        val expectedShort = ComponentName(context, AdaptiveHzService::class.java).flattenToShortString()
-        val expectedFull = ComponentName(context, AdaptiveHzService::class.java).flattenToString()
+        val appContext = context.applicationContext
+        val expectedShort = ComponentName(appContext, AdaptiveHzService::class.java).flattenToShortString()
+        val expectedFull = ComponentName(appContext, AdaptiveHzService::class.java).flattenToString()
 
         val enabledServices = Settings.Secure.getString(
-            context.contentResolver,
+            appContext.contentResolver,
             Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
         ).orEmpty()
 
@@ -73,10 +77,11 @@ object AdaptiveHzRuntimeState {
      * Confirms that the accessibility service is actively running.
      */
     fun isAccessibilityReady(context: Context): Boolean {
+        val appContext = context.applicationContext
         // Primary check using AccessibilityManager API
         return runCatching {
             val accessibilityManager =
-                context.getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
+                appContext.getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
 
             val enabledServices = accessibilityManager.getEnabledAccessibilityServiceList(
                 AccessibilityServiceInfo.FEEDBACK_ALL_MASK
@@ -87,8 +92,8 @@ object AdaptiveHzRuntimeState {
                 val id = service.resolveInfo.serviceInfo.packageName + "/" +
                         service.resolveInfo.serviceInfo.name
 
-                id == "${context.packageName}/com.mahmutalperenunal.adaptivehz.core.service.AdaptiveHzService" ||
-                        service.resolveInfo.serviceInfo.packageName == context.packageName &&
+                id == "${appContext.packageName}/com.mahmutalperenunal.adaptivehz.core.service.AdaptiveHzService" ||
+                        service.resolveInfo.serviceInfo.packageName == appContext.packageName &&
                         service.resolveInfo.serviceInfo.name == "com.mahmutalperenunal.adaptivehz.core.service.AdaptiveHzService"
             }
         }.getOrElse {
@@ -96,11 +101,11 @@ object AdaptiveHzRuntimeState {
             // Raw colon-separated list of enabled accessibility services
             val enabledServices =
                 Settings.Secure.getString(
-                    context.contentResolver,
+                    appContext.contentResolver,
                     Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
                 ).orEmpty()
 
-            enabledServices.contains("${context.packageName}/com.mahmutalperenunal.adaptivehz.core.service.AdaptiveHzService")
+            enabledServices.contains("${appContext.packageName}/com.mahmutalperenunal.adaptivehz.core.service.AdaptiveHzService")
         }
     }
 }

@@ -16,6 +16,7 @@ import com.mahmutalperenunal.adaptivehz.core.engine.model.AdaptiveHzMode
 import android.os.Handler
 import android.provider.Settings
 import com.mahmutalperenunal.adaptivehz.core.engine.AdaptiveHzRuntimeState
+import com.mahmutalperenunal.adaptivehz.core.health.AccessibilityHealthMonitor
 import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs
 
 /**
@@ -42,6 +43,11 @@ class StabilityForegroundService : Service() {
                 AdaptiveHzPrefs.isKeepAliveEnabled(this@StabilityForegroundService) &&
                 AdaptiveHzPrefs.isAppEnabled(this@StabilityForegroundService)
             ) {
+                AccessibilityHealthMonitor.check(
+                    context = this@StabilityForegroundService,
+                    reason = "stability_foreground_service"
+                )
+
                 val nm = getSystemService(NotificationManager::class.java)
                 nm.notify(NOTIF_ID, buildNotification())
 
@@ -288,6 +294,7 @@ class StabilityForegroundService : Service() {
     override fun onDestroy() {
         cancelPendingStop()
         stopHealthMonitor()
+        mainHandler.removeCallbacksAndMessages(null)
         super.onDestroy()
     }
 
@@ -312,30 +319,33 @@ class StabilityForegroundService : Service() {
         private const val HEALTH_CHECK_INTERVAL_MS = 5_000L
 
         fun start(context: Context) {
-            val intent = Intent(context, StabilityForegroundService::class.java)
-            ContextCompat.startForegroundService(context, intent)
+            val appContext = context.applicationContext
+            val intent = Intent(appContext, StabilityForegroundService::class.java)
+            ContextCompat.startForegroundService(appContext, intent)
         }
 
         fun stop(context: Context) {
-            val intent = Intent(context, StabilityForegroundService::class.java).apply {
+            val appContext = context.applicationContext
+            val intent = Intent(appContext, StabilityForegroundService::class.java).apply {
                 action = ACTION_STOP
             }
-            context.startService(intent)
+            appContext.startService(intent)
         }
 
         /**
          * Refreshes notification state without restarting engine logic.
          */
         fun refreshNotification(context: Context) {
-            if (!AdaptiveHzPrefs.isKeepAliveEnabled(context)) return
-            if (!AdaptiveHzPrefs.isAppEnabled(context)) return
+            val appContext = context.applicationContext
+            if (!AdaptiveHzPrefs.isKeepAliveEnabled(appContext)) return
+            if (!AdaptiveHzPrefs.isAppEnabled(appContext)) return
 
-            val intent = Intent(context, StabilityForegroundService::class.java).apply {
+            val intent = Intent(appContext, StabilityForegroundService::class.java).apply {
                 action = ACTION_REFRESH_NOTIFICATION
             }
 
             try {
-                ContextCompat.startForegroundService(context, intent)
+                ContextCompat.startForegroundService(appContext, intent)
             } catch (_: Throwable) { }
         }
     }

@@ -52,6 +52,7 @@ import com.mahmutalperenunal.adaptivehz.core.debug.DebugEventStore
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.time.Duration.Companion.milliseconds
 
 
 /**
@@ -63,6 +64,7 @@ fun AccessibilityEventInspectorScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
+    val appContext = context.applicationContext
 
     val clipboardLabel = stringResource(id = R.string.adaptive_hz_events_clip_label)
     val eventsCopiedMessage = stringResource(id = R.string.events_copied)
@@ -75,7 +77,7 @@ fun AccessibilityEventInspectorScreen(
     LaunchedEffect(paused) {
         while (!paused) {
             refreshTick++
-            delay(1000L)
+            delay(1000L.milliseconds)
         }
     }
 
@@ -215,9 +217,9 @@ fun AccessibilityEventInspectorScreen(
                     ) {
                         TextButton(
                             onClick = {
-                                val report = buildEventReport(context, events)
+                                val report = buildEventReport(appContext, events)
                                 val clipboard =
-                                    context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                    appContext.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
 
                                 clipboard.setPrimaryClip(
                                     ClipData.newPlainText(
@@ -227,7 +229,7 @@ fun AccessibilityEventInspectorScreen(
                                 )
 
                                 Toast.makeText(
-                                    context,
+                                    appContext,
                                     eventsCopiedMessage,
                                     Toast.LENGTH_SHORT
                                 ).show()
@@ -415,16 +417,17 @@ private fun buildEventReport(
     context: Context,
     events: List<DebugAccessibilityEvent>
 ): String {
+    val appContext = context.applicationContext
     return buildString {
-        appendLine(context.getString(R.string.accessibility_event_report_title))
-        appendLine(context.getString(R.string.accessibility_event_report_separator))
+        appendLine(appContext.getString(R.string.accessibility_event_report_title))
+        appendLine(appContext.getString(R.string.accessibility_event_report_separator))
         events.forEach { event ->
             appendLine(
-                context.getString(
+                appContext.getString(
                     R.string.accessibility_event_report_row,
                     formatEventTime(event.timestamp),
                     event.eventType,
-                    event.packageName.ifBlank { context.getString(R.string.empty_value_dash) },
+                    event.packageName.ifBlank { appContext.getString(R.string.empty_value_dash) },
                     event.scrollDeltaX,
                     event.scrollDeltaY,
                     event.contentChangeTypes

@@ -83,7 +83,8 @@ fun PerAppRefreshScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
-    val repository = remember { InstalledAppsRepository(context) }
+    val appContext = context.applicationContext
+    val repository = remember(appContext) { InstalledAppsRepository(appContext) }
     val listState = rememberLazyListState()
 
     var query by remember { mutableStateOf("") }
@@ -334,7 +335,7 @@ fun PerAppRefreshScreen(
             onDismiss = { selectedApp.value = null },
             onModeSelected = { mode ->
                 AdaptiveHzPrefs.setAppRefreshProfileMode(
-                    context = context,
+                    context = appContext,
                     packageName = app.packageName,
                     mode = mode
                 )
@@ -362,7 +363,7 @@ fun PerAppRefreshScreen(
 
                 apps.forEach { app ->
                     AdaptiveHzPrefs.setAppRefreshProfileMode(
-                        context = context,
+                        context = appContext,
                         packageName = app.packageName,
                         mode = mode
                     )
@@ -449,7 +450,7 @@ private fun AppIconImage(
     packageName: String,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
+    val appContext = LocalContext.current.applicationContext
     val cachedIcon = remember(packageName) { AppIconMemoryCache.get(packageName) }
 
     val iconBitmap by produceState(
@@ -459,7 +460,7 @@ private fun AppIconImage(
         if (cachedIcon == null) {
             value = withContext(Dispatchers.IO) {
                 runCatching {
-                    context.packageManager
+                    appContext.packageManager
                         .getApplicationIcon(packageName)
                         .toBitmap(width = 48, height = 48)
                         .asImageBitmap()

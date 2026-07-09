@@ -123,6 +123,7 @@ fun SettingsScreen(
     playStoreDeveloperUrl: String = "https://play.google.com/store/apps/dev?id=5245599652065968716",
 ) {
     val context = LocalContext.current
+    val appContext = context.applicationContext
 
     val appNameText = appName ?: stringResource(R.string.settings_app_name)
     val appTaglineText = appTagline ?: stringResource(R.string.settings_app_tagline)
@@ -137,12 +138,16 @@ fun SettingsScreen(
     val dialog = remember { mutableStateOf<LegalDialog?>(null) }
     val themeDialogOpen = remember { mutableStateOf(false) }
     val languageDialogOpen = remember { mutableStateOf(false) }
+    val batterySaverOverrideDialogOpen = remember { mutableStateOf(false) }
 
     val scrollState = rememberScrollState()
     val topBarState = rememberTopAppBarState()
 
     val isXiaomiDevice = remember { DeviceVendorDetector.detect() == DeviceVendor.XIAOMI }
-    var interactionDropDelayMs by remember { mutableLongStateOf(getInteractionDropDelayMs(context)) }
+    var interactionDropDelayMs by remember { mutableLongStateOf(getInteractionDropDelayMs(appContext)) }
+    var keepActiveDuringBatterySaver by remember {
+        mutableStateOf(AdaptiveHzPrefs.shouldKeepActiveDuringBatterySaver(appContext))
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -256,7 +261,7 @@ fun SettingsScreen(
                         !notificationsGranted
                     ) {
                         Toast.makeText(
-                            context,
+                            appContext,
                             R.string.settings_toast_notification_required_for_stability,
                             Toast.LENGTH_LONG
                         ).show()
@@ -279,6 +284,24 @@ fun SettingsScreen(
                 )
             }
 
+            SettingsSwitchRow(
+                leading = Icons.Outlined.BatterySaver,
+                title = stringResource(R.string.settings_item_keep_active_during_battery_saver),
+                subtitle = stringResource(R.string.settings_value_keep_active_during_battery_saver_summary),
+                checked = keepActiveDuringBatterySaver,
+                onCheckedChange = { next ->
+                    if (next) {
+                        batterySaverOverrideDialogOpen.value = true
+                    } else {
+                        keepActiveDuringBatterySaver = false
+                        AdaptiveHzPrefs.setKeepActiveDuringBatterySaver(
+                            context = appContext,
+                            enabled = false
+                        )
+                    }
+                }
+            )
+
             SettingsSliderRow(
                 leading = Icons.Outlined.Speed,
                 title = stringResource(R.string.settings_item_drop_delay),
@@ -290,7 +313,7 @@ fun SettingsScreen(
                 selectedValue = interactionDropDelayMs,
                 onValueSelected = { delay ->
                     interactionDropDelayMs = delay
-                    AdaptiveHzPrefs.setInteractionDropDelayMs(context, delay)
+                    AdaptiveHzPrefs.setInteractionDropDelayMs(appContext, delay)
                 }
             )
 
@@ -519,6 +542,58 @@ fun SettingsScreen(
                         }
                     )
                 }
+            }
+        )
+    }
+
+    if (batterySaverOverrideDialogOpen.value) {
+        AlertDialog(
+            onDismissRequest = {
+                batterySaverOverrideDialogOpen.value = false
+            },
+            confirmButton = {
+                Text(
+                    text = stringResource(R.string.action_enable),
+                    modifier = Modifier
+                        .padding(PaddingValues(12.dp))
+                        .clickable {
+                            batterySaverOverrideDialogOpen.value = false
+                            keepActiveDuringBatterySaver = true
+                            AdaptiveHzPrefs.setKeepActiveDuringBatterySaver(
+                                context = appContext,
+                                enabled = true
+                            )
+                        },
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        fontWeight = FontWeight.SemiBold
+                    )
+                )
+            },
+            dismissButton = {
+                Text(
+                    text = stringResource(R.string.action_cancel),
+                    modifier = Modifier
+                        .padding(PaddingValues(12.dp))
+                        .clickable {
+                            batterySaverOverrideDialogOpen.value = false
+                        },
+                    style = MaterialTheme.typography.labelLarge
+                )
+            },
+            title = {
+                Text(
+                    text = stringResource(
+                        R.string.settings_dialog_battery_saver_override_title
+                    )
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(
+                        R.string.settings_dialog_battery_saver_override_body
+                    ),
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
         )
     }
@@ -913,14 +988,15 @@ private sealed class LegalDialog(
  * Opens a URL in the default browser.
  */
 private fun openUrl(context: Context, url: String) {
+    val appContext = context.applicationContext
     val intent = Intent(Intent.ACTION_VIEW, url.toUri()).apply {
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
 
     try {
-        context.startActivity(intent)
+        appContext.startActivity(intent)
     } catch (_: ActivityNotFoundException) {
-        Toast.makeText(context, R.string.error, Toast.LENGTH_SHORT).show()
+        Toast.makeText(appContext, R.string.error, Toast.LENGTH_SHORT).show()
     }
 }
 
@@ -928,6 +1004,7 @@ private fun openUrl(context: Context, url: String) {
  * Launches an email client with a prefilled recipient and subject.
  */
 private fun composeEmail(context: Context, email: String, subject: String) {
+    val appContext = context.applicationContext
     val intent = Intent(Intent.ACTION_SENDTO).apply {
         data = "mailto:$email".toUri()
         putExtra(Intent.EXTRA_SUBJECT, subject)
@@ -935,9 +1012,9 @@ private fun composeEmail(context: Context, email: String, subject: String) {
     }
 
     try {
-        context.startActivity(intent)
+        appContext.startActivity(intent)
     } catch (_: ActivityNotFoundException) {
-        Toast.makeText(context, R.string.error, Toast.LENGTH_SHORT).show()
+        Toast.makeText(appContext, R.string.error, Toast.LENGTH_SHORT).show()
     }
 }
 
@@ -945,6 +1022,7 @@ private fun composeEmail(context: Context, email: String, subject: String) {
  * Opens the Android share sheet with plain text content.
  */
 private fun shareText(context: Context, title: String, text: String) {
+    val appContext = context.applicationContext
     val sendIntent = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"
         putExtra(Intent.EXTRA_TEXT, text)
@@ -954,8 +1032,8 @@ private fun shareText(context: Context, title: String, text: String) {
     }
 
     try {
-        context.startActivity(chooser)
+        appContext.startActivity(chooser)
     } catch (_: ActivityNotFoundException) {
-        Toast.makeText(context, R.string.error, Toast.LENGTH_SHORT).show()
+        Toast.makeText(appContext, R.string.error, Toast.LENGTH_SHORT).show()
     }
 }

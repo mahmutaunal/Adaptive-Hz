@@ -7,7 +7,6 @@ import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -17,10 +16,8 @@ import com.mahmutalperenunal.adaptivehz.ui.theme.AdaptiveHzTheme
 import android.annotation.SuppressLint
 import android.os.PowerManager
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.runtime.SideEffect
-import androidx.compose.ui.graphics.Color
+import android.graphics.Color
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import androidx.core.net.toUri
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -33,7 +30,9 @@ import com.mahmutalperenunal.adaptivehz.core.service.StabilityForegroundService
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.DisposableEffect
@@ -44,6 +43,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs
 import com.mahmutalperenunal.adaptivehz.core.apps.RecentAppsProvider
+import com.mahmutalperenunal.adaptivehz.core.health.AccessibilityHealthMonitor
 import com.mahmutalperenunal.adaptivehz.core.locale.AppLocaleController
 import com.mahmutalperenunal.adaptivehz.core.prefs.AppThemeMode
 import com.mahmutalperenunal.adaptivehz.core.system.RootManager
@@ -104,12 +104,13 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
+            val appContext = this@MainActivity.applicationContext
             var themeMode by remember {
-                mutableStateOf(AdaptiveHzPrefs.getThemeMode(this@MainActivity))
+                mutableStateOf(AdaptiveHzPrefs.getThemeMode(appContext))
             }
 
             var appLanguage by remember {
-                mutableStateOf(AdaptiveHzPrefs.getAppLanguage(this@MainActivity))
+                mutableStateOf(AdaptiveHzPrefs.getAppLanguage(appContext))
             }
 
             val darkTheme = when (themeMode) {
@@ -122,7 +123,7 @@ class MainActivity : AppCompatActivity() {
                 val navController = rememberNavController()
 
                 val prefs = remember {
-                    getSharedPreferences("adaptive_hz_prefs", MODE_PRIVATE)
+                    appContext.getSharedPreferences("adaptive_hz_prefs", MODE_PRIVATE)
                 }
                 var keepAliveEnabled by remember {
                     mutableStateOf(prefs.getBoolean("keep_alive_enabled", false))
@@ -132,15 +133,15 @@ class MainActivity : AppCompatActivity() {
                 var notificationsGranted by remember { mutableStateOf(true) }
 
                 var accessibilityState by remember {
-                    mutableStateOf(AdaptiveHzRuntimeState.getAccessibilityState(this@MainActivity))
+                    mutableStateOf(AdaptiveHzRuntimeState.getAccessibilityState(appContext))
                 }
 
                 var adbGranted by remember {
-                    mutableStateOf(AdaptiveHzPrefs.isAdbGranted(this@MainActivity))
+                    mutableStateOf(AdaptiveHzPrefs.isAdbGranted(appContext))
                 }
 
                 var usageAccessGranted by remember {
-                    mutableStateOf(RecentAppsProvider(this@MainActivity).hasPermission())
+                    mutableStateOf(RecentAppsProvider(appContext).hasPermission())
                 }
 
                 var rootAvailable by remember {
@@ -149,8 +150,8 @@ class MainActivity : AppCompatActivity() {
 
                 val refreshBatteryState: () -> Unit = {
                     batteryOptimizationsIgnored = try {
-                        val pm = getSystemService(PowerManager::class.java)
-                        pm?.isIgnoringBatteryOptimizations(packageName) == true
+                        val pm = appContext.getSystemService(PowerManager::class.java)
+                        pm?.isIgnoringBatteryOptimizations(appContext.packageName) == true
                     } catch (_: Exception) {
                         false
                     }
@@ -159,7 +160,7 @@ class MainActivity : AppCompatActivity() {
                 val refreshNotificationState: () -> Unit = {
                     notificationsGranted = if (Build.VERSION.SDK_INT >= 33) {
                         ContextCompat.checkSelfPermission(
-                            this@MainActivity,
+                            appContext,
                             Manifest.permission.POST_NOTIFICATIONS
                         ) == PackageManager.PERMISSION_GRANTED
                     } else {
@@ -169,9 +170,9 @@ class MainActivity : AppCompatActivity() {
 
                 // Refreshes permission and runtime states after returning from system screens.
                 val refreshSetupStates: () -> Unit = {
-                    accessibilityState = AdaptiveHzRuntimeState.getAccessibilityState(this@MainActivity)
-                    adbGranted = AdaptiveHzPrefs.isAdbGranted(this@MainActivity)
-                    usageAccessGranted = RecentAppsProvider(this@MainActivity).hasPermission()
+                    accessibilityState = AdaptiveHzRuntimeState.getAccessibilityState(appContext)
+                    adbGranted = AdaptiveHzPrefs.isAdbGranted(appContext)
+                    usageAccessGranted = RecentAppsProvider(appContext).hasPermission()
 
                     rootAvailable = when (RootManager.getRootState()) {
                         is RootManager.RootState.Available -> true
@@ -180,6 +181,11 @@ class MainActivity : AppCompatActivity() {
 
                     refreshBatteryState()
                     refreshNotificationState()
+
+                    AccessibilityHealthMonitor.check(
+                        context = appContext,
+                        reason = "main_activity_refresh_setup_states"
+                    )
                 }
 
                 val notificationPermissionLauncher = rememberLauncherForActivityResult(
@@ -214,11 +220,11 @@ class MainActivity : AppCompatActivity() {
 
                     val verified = try {
                         val pmGranted = ContextCompat.checkSelfPermission(
-                            this@MainActivity,
+                            appContext,
                             permission
                         ) == PackageManager.PERMISSION_GRANTED
 
-                        val cr = contentResolver
+                        val cr = appContext.contentResolver
                         val key = Settings.Global.ANIMATOR_DURATION_SCALE
                         val current = Settings.Global.getFloat(cr, key, 1f)
                         val wrote = Settings.Global.putFloat(cr, key, current)
@@ -229,16 +235,16 @@ class MainActivity : AppCompatActivity() {
                         false
                     } catch (_: Exception) {
                         ContextCompat.checkSelfPermission(
-                            this@MainActivity,
+                            appContext,
                             permission
                         ) == PackageManager.PERMISSION_GRANTED
                     }
 
-                    AdaptiveHzPrefs.setAdbGranted(this@MainActivity, verified)
+                    AdaptiveHzPrefs.setAdbGranted(appContext, verified)
                     adbGranted = verified
 
                     Toast.makeText(
-                        this@MainActivity,
+                        appContext,
                         if (verified) R.string.toast_adb_verified else R.string.toast_adb_permission_missing,
                         if (verified) Toast.LENGTH_SHORT else Toast.LENGTH_LONG
                     ).show()
@@ -246,24 +252,24 @@ class MainActivity : AppCompatActivity() {
 
                 // Optional root path for granting the required secure settings permission.
                 val grantAdbWithRoot: () -> Unit = {
-                    when (val result = RootManager.grantWriteSecureSettings(this@MainActivity)) {
+                    when (val result = RootManager.grantWriteSecureSettings(appContext)) {
                         is RootManager.RootState.Available -> {
-                            AdaptiveHzPrefs.setAdbGranted(this@MainActivity, true)
+                            AdaptiveHzPrefs.setAdbGranted(appContext, true)
                             adbGranted = true
-                            Toast.makeText(this@MainActivity, R.string.root_grant_success, Toast.LENGTH_LONG).show()
+                            Toast.makeText(appContext, R.string.root_grant_success, Toast.LENGTH_LONG).show()
                         }
 
                         is RootManager.RootState.Denied -> {
-                            Toast.makeText(this@MainActivity, R.string.root_grant_denied, Toast.LENGTH_LONG).show()
+                            Toast.makeText(appContext, R.string.root_grant_denied, Toast.LENGTH_LONG).show()
                         }
 
                         is RootManager.RootState.Unavailable -> {
-                            Toast.makeText(this@MainActivity, R.string.root_not_available, Toast.LENGTH_LONG).show()
+                            Toast.makeText(appContext, R.string.root_not_available, Toast.LENGTH_LONG).show()
                         }
 
                         is RootManager.RootState.Failed -> {
                             Toast.makeText(
-                                this@MainActivity,
+                                appContext,
                                 result.reason ?: getString(R.string.root_grant_failed),
                                 Toast.LENGTH_LONG
                             ).show()
@@ -291,7 +297,21 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-                SetupSystemBars(darkTheme = darkTheme)
+                LaunchedEffect(darkTheme) {
+                    val systemBarStyle = if (darkTheme) {
+                        SystemBarStyle.dark(Color.TRANSPARENT)
+                    } else {
+                        SystemBarStyle.light(
+                            Color.TRANSPARENT,
+                            Color.TRANSPARENT
+                        )
+                    }
+
+                    enableEdgeToEdge(
+                        statusBarStyle = systemBarStyle,
+                        navigationBarStyle = systemBarStyle
+                    )
+                }
 
                 Surface(
                     modifier = Modifier.fillMaxSize()
@@ -303,7 +323,7 @@ class MainActivity : AppCompatActivity() {
                     ) {
                         composable("home") {
                             HomeScreen(
-                                getAccessibilityState = { AdaptiveHzRuntimeState.getAccessibilityState(this@MainActivity) },
+                                getAccessibilityState = { AdaptiveHzRuntimeState.getAccessibilityState(appContext) },
                                 openAccessibilitySettings = { openAccessibilitySettings() },
                                 requestIgnoreBatteryOptimizations = { requestIgnoreBatteryOptimizations() },
                                 batteryOptimizationsIgnored = batteryOptimizationsIgnored,
@@ -317,9 +337,9 @@ class MainActivity : AppCompatActivity() {
                                     keepAliveEnabled = next
 
                                     if (next) {
-                                        StabilityForegroundService.start(this@MainActivity)
+                                        StabilityForegroundService.start(appContext)
                                     } else {
-                                        StabilityForegroundService.stop(this@MainActivity)
+                                        StabilityForegroundService.stop(appContext)
                                     }
                                 }
                             )
@@ -348,22 +368,22 @@ class MainActivity : AppCompatActivity() {
                                     keepAliveEnabled = next
 
                                     if (next) {
-                                        StabilityForegroundService.start(this@MainActivity)
+                                        StabilityForegroundService.start(appContext)
                                     } else {
-                                        StabilityForegroundService.stop(this@MainActivity)
+                                        StabilityForegroundService.stop(appContext)
                                     }
                                 },
                                 themeMode = themeMode,
                                 onThemeModeChanged = { next ->
                                     themeMode = next
-                                    AdaptiveHzPrefs.setThemeMode(this@MainActivity, next)
+                                    AdaptiveHzPrefs.setThemeMode(appContext, next)
                                 },
                                 appLanguage = appLanguage,
                                 onAppLanguageChanged = { next ->
                                     if (next == appLanguage) return@SettingsScreen
 
                                     appLanguage = next
-                                    AdaptiveHzPrefs.setAppLanguage(this@MainActivity, next)
+                                    AdaptiveHzPrefs.setAppLanguage(appContext, next)
                                     AppLocaleController.apply(next)
                                 }
                             )
@@ -390,25 +410,5 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-    }
-}
-
-/**
- * Applies transparent system bars for the Material 3 edge-to-edge layout.
- */
-@Composable
-fun SetupSystemBars(darkTheme: Boolean) {
-    val systemUiController = rememberSystemUiController()
-    val useDarkIcons = !darkTheme
-
-    SideEffect {
-        systemUiController.setStatusBarColor(
-            color = Color.Transparent,
-            darkIcons = useDarkIcons
-        )
-        systemUiController.setNavigationBarColor(
-            color = Color.Transparent,
-            darkIcons = useDarkIcons
-        )
     }
 }

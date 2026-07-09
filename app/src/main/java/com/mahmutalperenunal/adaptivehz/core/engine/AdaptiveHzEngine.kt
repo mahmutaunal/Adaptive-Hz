@@ -14,6 +14,7 @@ import com.mahmutalperenunal.adaptivehz.core.debug.DebugAccessibilityEvent
 import com.mahmutalperenunal.adaptivehz.core.debug.DebugEventStore
 import com.mahmutalperenunal.adaptivehz.core.engine.model.AdaptiveHzMode
 import com.mahmutalperenunal.adaptivehz.core.engine.model.AppRefreshProfileMode
+import com.mahmutalperenunal.adaptivehz.core.engine.model.SettingWrite
 import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateController
 import com.mahmutalperenunal.adaptivehz.core.engine.model.VendorStrategy
 import com.mahmutalperenunal.adaptivehz.core.engine.model.VendorTuning
@@ -24,16 +25,19 @@ import com.mahmutalperenunal.adaptivehz.core.input.InteractionSignalProvider
  * based on user interaction signals coming from Accessibility events.
  */
 class AdaptiveHzEngine(
-    private val context: Context,
+    context: Context,
     private val strategy: VendorStrategy,
     private val getGlobalMode: () -> AdaptiveHzMode,
     private val shouldIgnorePackage: (String?) -> Boolean,
     private val getAppProfileMode: (String?) -> AppRefreshProfileMode = { AppRefreshProfileMode.DEFAULT },
     private val interactionSignalProvider: InteractionSignalProvider? = null,
-    private val getInteractionDropDelayMs: () -> Long = { AdaptiveHzPrefs.getInteractionDropDelayMs(context) },
+    private val getInteractionDropDelayMs: () -> Long = {
+        AdaptiveHzPrefs.getInteractionDropDelayMs(context.applicationContext)
+    },
     private val tag: String = "AdaptiveHzEngine",
     private val tuning: VendorTuning = strategy.tuning()
-) {
+    ) {
+    private val appContext = context.applicationContext
     private val handler = Handler(Looper.getMainLooper())
 
     // Engine lifecycle flag to prevent processing events before start() is called
@@ -99,6 +103,39 @@ class AdaptiveHzEngine(
     }
 
     /**
+     * Re-applies the currently selected Adaptive Hz mode.
+     *
+     * Useful when system-level conditions change, such as Battery Saver being toggled.
+     */
+    fun reapplyCurrentMode(reason: String) {
+        if (!started) return
+
+        Log.d(tag, "Re-applying current mode. reason=$reason")
+
+        handler.removeCallbacks(dropRunnable)
+        handler.removeCallbacks(safetyRunnable)
+
+        when (getGlobalMode()) {
+            AdaptiveHzMode.OFF -> {
+                applySystemControlled(force = true)
+            }
+
+            AdaptiveHzMode.ADAPTIVE -> {
+                applyLow(force = true)
+                scheduleSafety()
+            }
+
+            AdaptiveHzMode.FORCE_MIN -> {
+                applyLow(force = true)
+            }
+
+            AdaptiveHzMode.FORCE_MAX -> {
+                applyHigh(force = true)
+            }
+        }
+    }
+
+    /**
      * Feed Accessibility events into the engine.
      * The service should pre-filter noisy event types and packages.
      */
@@ -126,9 +163,9 @@ class AdaptiveHzEngine(
             )
         )
 
-        AdaptiveHzPrefs.updateDebugForegroundPackage(context, pkg)
+        AdaptiveHzPrefs.updateDebugForegroundPackage(appContext, pkg)
         AdaptiveHzPrefs.updateDebugLastEvent(
-            context = context,
+            context = appContext,
             eventName = eventTypeName(event.eventType),
             packageName = pkg
         )
@@ -257,12 +294,12 @@ class AdaptiveHzEngine(
         handler.removeCallbacks(dropRunnable)
         handler.removeCallbacks(safetyRunnable)
 
-        val w = strategy.desiredSystemControlled(context)
+        val w = strategy.desiredSystemControlled(appContext)
 
         if (w == null) {
             isHigh = false
             AdaptiveHzPrefs.updateDebugLastWrite(
-                context = context,
+                context = appContext,
                 label = "SYSTEM_CONTROLLED no-op",
                 success = true
             )
@@ -270,10 +307,10 @@ class AdaptiveHzEngine(
             return
         }
 
-        val ok = RefreshRateController.writeSetting(context, w.key, w.intValue)
+        val ok = RefreshRateController.writeSetting(appContext, w.key, w.intValue)
 
         AdaptiveHzPrefs.updateDebugLastWrite(
-            context = context,
+            context = appContext,
             label = "SYSTEM ${w.label}",
             success = ok
         )
@@ -342,8 +379,8 @@ class AdaptiveHzEngine(
      * This prevents false boosts from AOD / lock screen clock, notification, and location updates.
      */
     private fun canProcessForegroundInteraction(pkg: String?): Boolean {
-        val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
-        val keyguardManager = context.getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
+        val powerManager = appContext.getSystemService(Context.POWER_SERVICE) as? PowerManager
+        val keyguardManager = appContext.getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
 
         val isInteractive = powerManager?.isInteractive ?: true
         val isKeyguardLocked = keyguardManager?.isKeyguardLocked ?: false
@@ -384,17 +421,17 @@ class AdaptiveHzEngine(
      * Applies HIGH immediately for adaptive interaction boosts.
      */
     private fun boostNow() {
-        if (RefreshRateController.isBatterySaverOn(context)) {
-            Log.d(tag, "Battery saver active, forcing LOW")
+        if (shouldRespectBatterySaverRefreshLimit()) {
+            Log.d(tag, "Battery saver active and override disabled, forcing LOW")
             applyLow(force = true)
             return
         }
 
-        val w = strategy.desiredHigh(context)
-        val ok = RefreshRateController.writeSetting(context, w.key, w.intValue)
+        val w = strategy.desiredHigh(appContext)
+        val ok = writeHighRefreshSetting(w)
 
         AdaptiveHzPrefs.updateDebugLastWrite(
-            context = context,
+            context = appContext,
             label = "HIGH ${w.label}",
             success = ok
         )
@@ -417,17 +454,17 @@ class AdaptiveHzEngine(
     private fun applyHigh(force: Boolean) {
         if (isHigh && !force) return
 
-        if (RefreshRateController.isBatterySaverOn(context)) {
-            Log.d(tag, "Battery saver active, forcing LOW")
+        if (shouldRespectBatterySaverRefreshLimit()) {
+            Log.d(tag, "Battery saver active and override disabled, forcing LOW")
             applyLow(force = true)
             return
         }
 
-        val w = strategy.desiredHigh(context)
-        val ok = RefreshRateController.writeSetting(context, w.key, w.intValue)
+        val w = strategy.desiredHigh(appContext)
+        val ok = writeHighRefreshSetting(w)
 
         AdaptiveHzPrefs.updateDebugLastWrite(
-            context = context,
+            context = appContext,
             label = "HIGH ${w.label}",
             success = ok
         )
@@ -454,11 +491,11 @@ class AdaptiveHzEngine(
     private fun applyLow(force: Boolean) {
         if (!isHigh && !force) return
 
-        val w = strategy.desiredLow(context)
-        val ok = RefreshRateController.writeSetting(context, w.key, w.intValue)
+        val w = strategy.desiredLow(appContext)
+        val ok = writeLowRefreshSetting(w)
 
         AdaptiveHzPrefs.updateDebugLastWrite(
-            context = context,
+            context = appContext,
             label = "LOW ${w.label}",
             success = ok
         )
@@ -469,6 +506,46 @@ class AdaptiveHzEngine(
         } else {
             Log.w(tag, "LOW (${w.label}) failed")
         }
+    }
+
+    private fun writeHighRefreshSetting(w: SettingWrite): Boolean {
+        val policy = if (shouldUseBatterySaverOverrideWrites()) {
+            RefreshRateController.RefreshWritePolicy.BATTERY_SAVER_OVERRIDE_HIGH
+        } else {
+            RefreshRateController.RefreshWritePolicy.NORMAL
+        }
+
+        val (_, maxHz) = RefreshRateController.resolveDisplayMinMax(appContext)
+
+        return RefreshRateController.writeSetting(
+            context = appContext,
+            key = w.key,
+            value = w.intValue,
+            policy = policy,
+            genericRefreshRateHz = maxHz
+        )
+    }
+
+    private fun writeLowRefreshSetting(
+        w: SettingWrite
+    ): Boolean {
+        val policy = if (shouldUseBatterySaverOverrideWrites()) {
+            RefreshRateController.RefreshWritePolicy.BATTERY_SAVER_OVERRIDE_LOW
+        } else {
+            RefreshRateController.RefreshWritePolicy.NORMAL
+        }
+
+        return RefreshRateController.writeSetting(
+            context = appContext,
+            key = w.key,
+            value = w.intValue,
+            policy = policy
+        )
+    }
+
+    private fun shouldUseBatterySaverOverrideWrites(): Boolean {
+        return RefreshRateController.isBatterySaverOn(appContext) &&
+                AdaptiveHzPrefs.shouldKeepActiveDuringBatterySaver(appContext)
     }
 
     /** Schedules the safety check that prevents staying on HIGH indefinitely. */
@@ -500,6 +577,17 @@ class AdaptiveHzEngine(
 
     private fun effectiveDropDelayMs(): Long {
         return getInteractionDropDelayMs()
+    }
+
+    private fun shouldRespectBatterySaverRefreshLimit(): Boolean {
+        val batterySaverOn = RefreshRateController.isBatterySaverOn(appContext)
+
+        if (!batterySaverOn) return false
+
+        val keepActiveDuringBatterySaver =
+            AdaptiveHzPrefs.shouldKeepActiveDuringBatterySaver(appContext)
+
+        return !keepActiveDuringBatterySaver
     }
 
     /**

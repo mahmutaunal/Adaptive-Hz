@@ -174,8 +174,12 @@
     <string name="settings_value_notification_permission_ok">El permiso de notificaciones está concedido.</string>
     <string name="settings_value_notification_permission_required">Es necesario para activar el modo de estabilidad en Android 13 o superior.</string>
     <string name="settings_toast_notification_required_for_stability">Se requiere el permiso de notificaciones para activar el modo de estabilidad.</string>
+    <string name="settings_item_keep_active_during_battery_saver">Mantener Adaptive Hz activo durante el ahorro de batería</string>
+    <string name="settings_value_keep_active_during_battery_saver_summary">Cuando está activado, Adaptive Hz seguirá aplicando el comportamiento de frecuencia seleccionado mientras el ahorro de batería esté activo. Algunos dispositivos aún pueden forzar 60Hz a nivel del sistema.</string>
     <string name="settings_item_drop_delay">Retraso de reducción después del toque</string>
     <string name="settings_value_drop_delay_summary">Vuelve a la frecuencia de actualización mínima después de %1$s cuando finaliza la interacción táctil. (Predeterminado: 2s)</string>
+    <string name="settings_dialog_battery_saver_override_title">Compatibilidad con el ahorro de batería</string>
+    <string name="settings_dialog_battery_saver_override_body">Adaptive Hz intentará seguir aplicando el comportamiento de frecuencia de actualización seleccionado mientras el ahorro de batería esté activado. Sin embargo, algunos dispositivos bloquean las frecuencias de actualización altas a nivel del sistema durante el ahorro de batería, por lo que esta opción puede no funcionar en todos los teléfonos. Si tu dispositivo sigue quedándose en 60Hz, significa que el sistema está aplicando ese límite.</string>
 
     <string name="settings_item_theme">Tema</string>
     <string name="settings_item_language">Idioma</string>
@@ -315,6 +319,8 @@
     <string name="stability_notification_recovery_title">Adaptive Hz requiere atención</string>
     <string name="stability_notification_recovery_text">Es posible que el servicio de accesibilidad se haya detenido. Toca para recuperarlo.</string>
     <string name="stability_notification_recovery_action">Recuperar</string>
+    <string name="action_enable">Activar</string>
+    <string name="action_cancel">Cancelar</string>
 
     <string name="event_scroll_delta_x">ΔX</string>
     <string name="event_scroll_delta_y">ΔY</string>
@@ -381,4 +387,10 @@
     <string name="profile_mode_maximum">Máximo</string>
     <string name="profile_mode_respect">Respetar</string>
     <string name="profile_mode_disabled">Deshabilitado</string>
+
+    <string name="accessibility_health_notification_channel_name">Estado de Adaptive Hz</string>
+    <string name="accessibility_health_notification_title">Adaptive Hz requiere atención</string>
+    <string name="accessibility_health_notification_broken_text">El servicio de accesibilidad no responde. Adaptive Hz puede dejar de cambiar la frecuencia de actualización. Toca para abrir los ajustes de accesibilidad.</string>
+    <string name="accessibility_health_notification_disabled_text">El servicio de accesibilidad está desactivado. Adaptive Hz lo necesita para detectar interacciones y cambiar la frecuencia de actualización. Toca para activarlo de nuevo.</string>
+    <string name="accessibility_health_notification_action">Abrir ajustes de accesibilidad</string>
 </resources>

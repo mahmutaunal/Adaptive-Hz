@@ -61,6 +61,7 @@ fun DiagnosticsScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
+    val appContext = context.applicationContext
 
     val clipboardLabel = stringResource(id = R.string.adaptive_hz_diagnostics_clip_label)
     val diagnosticsCopiedMessage = stringResource(id = R.string.diagnostics_copied)
@@ -69,22 +70,22 @@ fun DiagnosticsScreen(
 
     // Refreshes controller state only when the user explicitly requests it.
     val status = remember(refreshTick) {
-        RefreshRateController.readStatus(context)
+        RefreshRateController.readStatus(appContext)
     }
 
     val accessibilityState = remember(refreshTick) {
-        AdaptiveHzRuntimeState.getAccessibilityState(context)
+        AdaptiveHzRuntimeState.getAccessibilityState(appContext)
     }
 
     val powerSaveMode = remember(refreshTick) {
         runCatching {
-            val pm = context.getSystemService(PowerManager::class.java)
+            val pm = appContext.getSystemService(PowerManager::class.java)
             pm?.isPowerSaveMode == true
         }.getOrDefault(false)
     }
 
-    val lastHeartbeat = AdaptiveHzPrefs.getAccessibilityLastHeartbeat(context)
-    val debugUpdatedAt = AdaptiveHzPrefs.getDebugLastUpdatedAt(context)
+    val lastHeartbeat = AdaptiveHzPrefs.getAccessibilityLastHeartbeat(appContext)
+    val debugUpdatedAt = AdaptiveHzPrefs.getDebugLastUpdatedAt(appContext)
 
     Scaffold(
         topBar = {
@@ -162,7 +163,7 @@ fun DiagnosticsScreen(
                         TextButton(
                             onClick = {
                                 val report = buildDiagnosticsReport(
-                                    context = context,
+                                    context = appContext,
                                     status = status,
                                     accessibilityState = accessibilityState.name,
                                     powerSaveMode = powerSaveMode,
@@ -170,7 +171,7 @@ fun DiagnosticsScreen(
                                     debugUpdatedAt = debugUpdatedAt
                                 )
 
-                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                val clipboard = appContext.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                 clipboard.setPrimaryClip(
                                     ClipData.newPlainText(
                                         clipboardLabel,
@@ -179,7 +180,7 @@ fun DiagnosticsScreen(
                                 )
 
                                 Toast.makeText(
-                                    context,
+                                    appContext,
                                     diagnosticsCopiedMessage,
                                     Toast.LENGTH_SHORT
                                 ).show()
@@ -278,11 +279,11 @@ fun DiagnosticsScreen(
                         )
                     }
 
-                    DebugRow(stringResource(id = R.string.diagnostics_current_mode), AdaptiveHzPrefs.getCurrentMode(context).name)
-                    DebugRow(stringResource(id = R.string.diagnostics_adb_granted), AdaptiveHzPrefs.isAdbGranted(context).toString())
-                    DebugRow(stringResource(id = R.string.diagnostics_keep_alive), AdaptiveHzPrefs.isKeepAliveEnabled(context).toString())
+                    DebugRow(stringResource(id = R.string.diagnostics_current_mode), AdaptiveHzPrefs.getCurrentMode(appContext).name)
+                    DebugRow(stringResource(id = R.string.diagnostics_adb_granted), AdaptiveHzPrefs.isAdbGranted(appContext).toString())
+                    DebugRow(stringResource(id = R.string.diagnostics_keep_alive), AdaptiveHzPrefs.isKeepAliveEnabled(appContext).toString())
                     DebugRow(stringResource(id = R.string.diagnostics_accessibility), accessibilityState.name)
-                    DebugRow(stringResource(id = R.string.diagnostics_last_heartbeat), formatTime(context, lastHeartbeat))
+                    DebugRow(stringResource(id = R.string.diagnostics_last_heartbeat), formatTime(appContext, lastHeartbeat))
                 }
             }
 
@@ -314,24 +315,24 @@ fun DiagnosticsScreen(
 
                     DebugRow(
                         stringResource(id = R.string.diagnostics_foreground_package),
-                        AdaptiveHzPrefs.getDebugForegroundPackage(context).ifBlank {
+                        AdaptiveHzPrefs.getDebugForegroundPackage(appContext).ifBlank {
                             stringResource(id = R.string.empty_value_dash)
                         }
                     )
                     DebugRow(
                         stringResource(id = R.string.diagnostics_last_event),
-                        AdaptiveHzPrefs.getDebugLastEvent(context).ifBlank {
+                        AdaptiveHzPrefs.getDebugLastEvent(appContext).ifBlank {
                             stringResource(id = R.string.empty_value_dash)
                         }
                     )
                     DebugRow(
                         stringResource(id = R.string.diagnostics_last_write),
-                        AdaptiveHzPrefs.getDebugLastWrite(context).ifBlank {
+                        AdaptiveHzPrefs.getDebugLastWrite(appContext).ifBlank {
                             stringResource(id = R.string.empty_value_dash)
                         }
                     )
-                    DebugRow(stringResource(id = R.string.diagnostics_last_write_success), AdaptiveHzPrefs.wasDebugLastWriteSuccess(context).toString())
-                    DebugRow(stringResource(id = R.string.diagnostics_updated_at), formatTime(context, debugUpdatedAt))
+                    DebugRow(stringResource(id = R.string.diagnostics_last_write_success), AdaptiveHzPrefs.wasDebugLastWriteSuccess(appContext).toString())
+                    DebugRow(stringResource(id = R.string.diagnostics_updated_at), formatTime(appContext, debugUpdatedAt))
                 }
             }
         }
@@ -385,7 +386,8 @@ private fun DebugRow(
  * Formats timestamps for human-readable diagnostics output.
  */
 private fun formatTime(context: Context, value: Long): String {
-    if (value <= 0L) return context.getString(R.string.empty_value_dash)
+    val appContext = context.applicationContext
+    if (value <= 0L) return appContext.getString(R.string.empty_value_dash)
     return SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(value))
 }
 
@@ -400,58 +402,59 @@ private fun buildDiagnosticsReport(
     lastHeartbeat: Long,
     debugUpdatedAt: Long
 ): String {
+    val appContext = context.applicationContext
     return buildString {
-        appendLine(context.getString(R.string.diagnostics_report_title))
-        appendLine(context.getString(R.string.diagnostics_report_separator))
+        appendLine(appContext.getString(R.string.diagnostics_report_title))
+        appendLine(appContext.getString(R.string.diagnostics_report_separator))
         appendLine(
-            context.getString(
+            appContext.getString(
                 R.string.diagnostics_report_app_version,
                 BuildConfig.VERSION_NAME,
                 BuildConfig.VERSION_CODE
             )
         )
-        appendLine(context.getString(R.string.diagnostics_report_vendor, status.vendor.toString()))
+        appendLine(appContext.getString(R.string.diagnostics_report_vendor, status.vendor.toString()))
         appendLine(
-            context.getString(
+            appContext.getString(
                 R.string.diagnostics_report_current_display,
                 status.displayHz.toInt()
             )
         )
-        appendLine(context.getString(R.string.diagnostics_report_setting_key, status.settingKey))
-        appendLine(context.getString(R.string.diagnostics_report_setting_value, status.settingValue))
-        appendLine(context.getString(R.string.diagnostics_report_battery_saver, powerSaveMode.toString()))
+        appendLine(appContext.getString(R.string.diagnostics_report_setting_key, status.settingKey))
+        appendLine(appContext.getString(R.string.diagnostics_report_setting_value, status.settingValue))
+        appendLine(appContext.getString(R.string.diagnostics_report_battery_saver, powerSaveMode.toString()))
         appendLine()
-        appendLine(context.getString(R.string.diagnostics_report_current_mode, AdaptiveHzPrefs.getCurrentMode(context).name))
-        appendLine(context.getString(R.string.diagnostics_report_adb_granted, AdaptiveHzPrefs.isAdbGranted(context).toString()))
-        appendLine(context.getString(R.string.diagnostics_report_keep_alive, AdaptiveHzPrefs.isKeepAliveEnabled(context).toString()))
-        appendLine(context.getString(R.string.diagnostics_report_accessibility, accessibilityState))
-        appendLine(context.getString(R.string.diagnostics_report_last_heartbeat, formatTime(context, lastHeartbeat)))
+        appendLine(appContext.getString(R.string.diagnostics_report_current_mode, AdaptiveHzPrefs.getCurrentMode(appContext).name))
+        appendLine(appContext.getString(R.string.diagnostics_report_adb_granted, AdaptiveHzPrefs.isAdbGranted(appContext).toString()))
+        appendLine(appContext.getString(R.string.diagnostics_report_keep_alive, AdaptiveHzPrefs.isKeepAliveEnabled(appContext).toString()))
+        appendLine(appContext.getString(R.string.diagnostics_report_accessibility, accessibilityState))
+        appendLine(appContext.getString(R.string.diagnostics_report_last_heartbeat, formatTime(appContext, lastHeartbeat)))
         appendLine()
         appendLine(
-            context.getString(
+            appContext.getString(
                 R.string.diagnostics_report_foreground_package,
-                AdaptiveHzPrefs.getDebugForegroundPackage(context).ifBlank {
-                    context.getString(R.string.empty_value_dash)
+                AdaptiveHzPrefs.getDebugForegroundPackage(appContext).ifBlank {
+                    appContext.getString(R.string.empty_value_dash)
                 }
             )
         )
         appendLine(
-            context.getString(
+            appContext.getString(
                 R.string.diagnostics_report_last_event,
-                AdaptiveHzPrefs.getDebugLastEvent(context).ifBlank {
-                    context.getString(R.string.empty_value_dash)
+                AdaptiveHzPrefs.getDebugLastEvent(appContext).ifBlank {
+                    appContext.getString(R.string.empty_value_dash)
                 }
             )
         )
         appendLine(
-            context.getString(
+            appContext.getString(
                 R.string.diagnostics_report_last_write,
-                AdaptiveHzPrefs.getDebugLastWrite(context).ifBlank {
-                    context.getString(R.string.empty_value_dash)
+                AdaptiveHzPrefs.getDebugLastWrite(appContext).ifBlank {
+                    appContext.getString(R.string.empty_value_dash)
                 }
             )
         )
-        appendLine(context.getString(R.string.diagnostics_report_last_write_success, AdaptiveHzPrefs.wasDebugLastWriteSuccess(context).toString()))
-        appendLine(context.getString(R.string.diagnostics_report_debug_updated_at, formatTime(context, debugUpdatedAt)))
+        appendLine(appContext.getString(R.string.diagnostics_report_last_write_success, AdaptiveHzPrefs.wasDebugLastWriteSuccess(appContext).toString()))
+        appendLine(appContext.getString(R.string.diagnostics_report_debug_updated_at, formatTime(appContext, debugUpdatedAt)))
     }
 }

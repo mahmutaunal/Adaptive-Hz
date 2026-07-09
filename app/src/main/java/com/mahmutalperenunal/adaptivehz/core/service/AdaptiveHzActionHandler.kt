@@ -2,6 +2,7 @@ package com.mahmutalperenunal.adaptivehz.core.service
 
 import android.content.Context
 import com.mahmutalperenunal.adaptivehz.core.engine.model.AdaptiveHzMode
+import com.mahmutalperenunal.adaptivehz.core.health.AccessibilityHealthMonitor
 import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs
 import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateController
 import com.mahmutalperenunal.adaptivehz.widget.AdaptiveHzWidgetUpdater
@@ -15,21 +16,23 @@ import com.mahmutalperenunal.adaptivehz.widget.AdaptiveHzWidgetUpdater
 object AdaptiveHzActionHandler {
 
     private fun refreshSurfaces(context: Context) {
+        val appContext = context.applicationContext
+
         try {
-            AdaptiveHzWidgetUpdater.refreshAll(context)
+            AdaptiveHzWidgetUpdater.refreshAll(appContext)
         } catch (_: Throwable) { }
 
         try {
-            StabilityForegroundService.refreshNotification(context)
+            StabilityForegroundService.refreshNotification(appContext)
         } catch (_: Throwable) { }
     }
 
     fun getCurrentMode(context: Context): AdaptiveHzMode {
-        return AdaptiveHzPrefs.getCurrentMode(context)
+        return AdaptiveHzPrefs.getCurrentMode(context.applicationContext)
     }
 
     fun isAppEnabled(context: Context): Boolean {
-        return AdaptiveHzPrefs.isAppEnabled(context)
+        return AdaptiveHzPrefs.isAppEnabled(context.applicationContext)
     }
 
     /**
@@ -40,19 +43,21 @@ object AdaptiveHzActionHandler {
      * - keep-alive service starts only if the user enabled it
      */
     fun turnOn(context: Context) {
-        AdaptiveHzPrefs.syncLegacyStateFromMode(context, AdaptiveHzMode.ADAPTIVE)
+        val appContext = context.applicationContext
+
+        AdaptiveHzPrefs.syncLegacyStateFromMode(appContext, AdaptiveHzMode.ADAPTIVE)
 
         try {
-            RefreshRateController.applyForceMinimum(context)
+            RefreshRateController.applyForceMinimum(appContext)
         } catch (_: Throwable) { }
 
-        if (AdaptiveHzPrefs.isKeepAliveEnabled(context)) {
+        if (AdaptiveHzPrefs.isKeepAliveEnabled(appContext)) {
             try {
-                StabilityForegroundService.start(context)
+                StabilityForegroundService.start(appContext)
             } catch (_: Throwable) { }
         }
 
-        refreshSurfaces(context)
+        refreshSurfaces(appContext)
     }
 
     /**
@@ -62,17 +67,23 @@ object AdaptiveHzActionHandler {
      * - keep-alive notification service stopped
      */
     fun turnOff(context: Context) {
-        AdaptiveHzPrefs.syncLegacyStateFromMode(context, AdaptiveHzMode.OFF)
+        val appContext = context.applicationContext
+
+        AdaptiveHzPrefs.syncLegacyStateFromMode(appContext, AdaptiveHzMode.OFF)
 
         try {
-            RefreshRateController.resetToSystemDefault(context)
+            RefreshRateController.resetToSystemDefault(appContext)
         } catch (_: Throwable) { }
 
         try {
-            StabilityForegroundService.stop(context)
+            AccessibilityHealthMonitor.cancelRecoveryNotification(appContext)
         } catch (_: Throwable) { }
 
-        refreshSurfaces(context)
+        try {
+            StabilityForegroundService.stop(appContext)
+        } catch (_: Throwable) { }
+
+        refreshSurfaces(appContext)
     }
 
     /**
@@ -82,70 +93,82 @@ object AdaptiveHzActionHandler {
      * immediately. The notification can remain visible for a short grace period.
      */
     fun turnOffForNotification(context: Context) {
-        AdaptiveHzPrefs.syncLegacyStateFromMode(context, AdaptiveHzMode.OFF)
+        val appContext = context.applicationContext
+
+        AdaptiveHzPrefs.syncLegacyStateFromMode(appContext, AdaptiveHzMode.OFF)
 
         try {
-            RefreshRateController.resetToSystemDefault(context)
+            RefreshRateController.resetToSystemDefault(appContext)
         } catch (_: Throwable) { }
 
-        refreshSurfaces(context)
+        try {
+            AccessibilityHealthMonitor.cancelRecoveryNotification(appContext)
+        } catch (_: Throwable) { }
+
+        refreshSurfaces(appContext)
     }
 
     /**
      * Enables adaptive mode while keeping the app enabled.
      */
     fun setAdaptive(context: Context) {
-        AdaptiveHzPrefs.syncLegacyStateFromMode(context, AdaptiveHzMode.ADAPTIVE)
+        val appContext = context.applicationContext
+
+        AdaptiveHzPrefs.syncLegacyStateFromMode(appContext, AdaptiveHzMode.ADAPTIVE)
 
         try {
-            RefreshRateController.applyForceMinimum(context)
+            RefreshRateController.applyForceMinimum(appContext)
         } catch (_: Throwable) { }
 
-        if (AdaptiveHzPrefs.isKeepAliveEnabled(context)) {
+        if (AdaptiveHzPrefs.isKeepAliveEnabled(appContext)) {
             try {
-                StabilityForegroundService.start(context)
+                StabilityForegroundService.start(appContext)
             } catch (_: Throwable) { }
         }
 
-        refreshSurfaces(context)
+        refreshSurfaces(appContext)
     }
 
     /**
      * Locks refresh rate to minimum while keeping the app enabled.
      */
     fun setMinimum(context: Context) {
-        AdaptiveHzPrefs.syncLegacyStateFromMode(context, AdaptiveHzMode.FORCE_MIN)
+        val appContext = context.applicationContext
+
+        AdaptiveHzPrefs.syncLegacyStateFromMode(appContext, AdaptiveHzMode.FORCE_MIN)
 
         try {
-            RefreshRateController.applyForceMinimum(context)
+            RefreshRateController.applyForceMinimum(appContext)
         } catch (_: Throwable) { }
 
-        if (AdaptiveHzPrefs.isKeepAliveEnabled(context)) {
+        if (AdaptiveHzPrefs.isKeepAliveEnabled(appContext)) {
             try {
-                StabilityForegroundService.start(context)
+                StabilityForegroundService.start(appContext)
             } catch (_: Throwable) { }
         }
 
-        refreshSurfaces(context)
+        refreshSurfaces(appContext)
     }
 
     /**
      * Locks refresh rate to maximum while keeping the app enabled.
      */
     fun setMaximum(context: Context) {
-        AdaptiveHzPrefs.syncLegacyStateFromMode(context, AdaptiveHzMode.FORCE_MAX)
+        val appContext = context.applicationContext
+
+        AdaptiveHzPrefs.syncLegacyStateFromMode(appContext, AdaptiveHzMode.FORCE_MAX)
 
         try {
-            RefreshRateController.applyForceMaximum(context)
+            RefreshRateController.applyForceMaximum(appContext)
         } catch (_: Throwable) { }
 
-        if (AdaptiveHzPrefs.isKeepAliveEnabled(context)) {
+        if (AdaptiveHzPrefs.isKeepAliveEnabled(appContext)) {
             try {
-                StabilityForegroundService.start(context)
+                StabilityForegroundService.start(appContext)
             } catch (_: Throwable) { }
         }
 
-        refreshSurfaces(context)
+        refreshSurfaces(appContext)
     }
 
     /**
@@ -153,7 +176,8 @@ object AdaptiveHzActionHandler {
      * should be shown together with the Off action while the app is enabled.
      */
     fun getAlternativeModesForNotification(context: Context): List<AdaptiveHzMode> {
-        return when (getCurrentMode(context)) {
+        val appContext = context.applicationContext
+        return when (getCurrentMode(appContext)) {
             AdaptiveHzMode.OFF -> emptyList()
             AdaptiveHzMode.ADAPTIVE -> listOf(
                 AdaptiveHzMode.FORCE_MIN,
@@ -174,19 +198,21 @@ object AdaptiveHzActionHandler {
      * Small helper so callers can route a mode selection without duplicating logic.
      */
     fun applyMode(context: Context, mode: AdaptiveHzMode) {
+        val appContext = context.applicationContext
         when (mode) {
-            AdaptiveHzMode.OFF -> turnOff(context)
-            AdaptiveHzMode.ADAPTIVE -> setAdaptive(context)
-            AdaptiveHzMode.FORCE_MIN -> setMinimum(context)
-            AdaptiveHzMode.FORCE_MAX -> setMaximum(context)
+            AdaptiveHzMode.OFF -> turnOff(appContext)
+            AdaptiveHzMode.ADAPTIVE -> setAdaptive(appContext)
+            AdaptiveHzMode.FORCE_MIN -> setMinimum(appContext)
+            AdaptiveHzMode.FORCE_MAX -> setMaximum(appContext)
         }
     }
 
     fun toggle(context: Context) {
-        if (isAppEnabled(context)) {
-            turnOff(context)
+        val appContext = context.applicationContext
+        if (isAppEnabled(appContext)) {
+            turnOff(appContext)
         } else {
-            turnOn(context)
+            turnOn(appContext)
         }
     }
 }
