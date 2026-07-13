@@ -6,6 +6,8 @@
   <img src="https://img.shields.io/github/v/release/mahmutaunal/Adaptive-Hz?label=latest%20release" />
   <img src="https://img.shields.io/github/stars/mahmutaunal/Adaptive-Hz?style=social" />
   <img src="https://img.shields.io/badge/platform-Android-green" />
+  <img src="https://img.shields.io/badge/Tested%20by-Community-brightgreen" />
+  <img src="https://img.shields.io/badge/Optimized-OneUI%20%7C%20HyperOS-blue" />
   <img src="https://img.shields.io/badge/license-MIT-lightgrey" />
 </p>
 
@@ -74,6 +76,21 @@ For the most accurate adaptive refresh-rate behavior:
 - Grant Shizuku permission
 
 > 💡 Adaptive Hz works without Shizuku. Shizuku only improves interaction accuracy on some devices/apps.
+
+---
+
+## Why Adaptive Hz?
+
+Unlike many refresh-rate utilities, Adaptive Hz is built around real user interaction instead of fixed timers.
+
+The engine:
+
+- Detects actual interaction using Accessibility events
+- Optionally verifies real touch input with Shizuku
+- Uses vendor-specific refresh-rate strategies
+- Automatically adapts to different OEM implementations
+- Requires no root
+- Runs fully offline
 
 ---
 
@@ -194,13 +211,22 @@ refresh_rate_mode
 ```
 
 ### Xiaomi / HyperOS
-Uses:
 
-```
-miui_refresh_rate
+Adaptive Hz automatically selects the correct refresh-rate implementation depending on the detected HyperOS version.
+
+| HyperOS Version | Setting |
+|-----------------|---------|
+| HyperOS 1 | `user_refresh_rate` |
+| HyperOS 2 | `miui_refresh_rate` |
+| HyperOS 3 | `miui_refresh_rate` |
+
+For HyperOS 1, persistent **Maximum** mode uses the vendor-specific value:
+
+```text
+user_refresh_rate = 1
 ```
 
-Vendor detection is automatic.
+Adaptive mode continues to use the device's actual supported minimum and maximum refresh-rate values.
 
 ---
 
@@ -510,7 +536,7 @@ Adaptive Hz
 
 - Event-driven architecture (no polling)
 - Minimal CPU overhead
-- OEM-aware system setting control
+- OEM and ROM version-aware refresh-rate control
 - Accessibility-based interaction detection
 - Optional Shizuku-based low-level input monitoring
 - Real touch validation against noisy Accessibility events
@@ -539,6 +565,7 @@ Note: Results may vary depending on usage patterns and device behavior.
 
 - Depends on OEM allowing secure setting writes
 - Some ROMs may override refresh policies
+- HyperOS behavior may differ between major versions and regional ROMs.
 - User force-stop disables background switching until reopened
 - Accessibility service must remain enabled
 - Recent apps shortcuts require optional Usage Access permission
@@ -548,7 +575,8 @@ Note: Results may vary depending on usage patterns and device behavior.
 ## Tested Devices
 
 - Samsung Galaxy A52 (Android 14 / OneUI 6)
-- Redmi Note 14 Pro 5G (HyperOS 3.x – community tested)
+- Redmi Note 14 Pro 5G (HyperOS 3.x – Community-tested)
+- Poco F3 (HyperOS 1.x – Community-tested)
 
 More devices welcome.
 
@@ -556,12 +584,17 @@ More devices welcome.
 
 ## 📱 Compatibility
 
-| Brand   | Device                  | Android | ROM        | Status |
-|---------|------------------------|--------|-----------|--------|
-| Samsung | Galaxy A52             | 14     | OneUI 6    | ✅ Stable |
-| Xiaomi  | Redmi Note 14 Pro 5G   | -      | HyperOS 3.x| ⚠️ Community tested |
+Adaptive Hz uses vendor- and ROM-aware refresh-rate handling. Compatibility can vary depending on the device model, Android version, regional ROM, and OEM display policy.
 
-More devices are welcome via issues or PRs.
+| Brand / Platform | Device / ROM | Refresh-rate setting | Status | Notes |
+|---|---|---|---|---|
+| Samsung One UI | Galaxy A52 / One UI 6 | `refresh_rate_mode` | ✅ Stable | Existing Samsung behavior remains unchanged. |
+| Samsung One UI | Other supported Galaxy devices | `refresh_rate_mode` | ⚠️ Device-dependent | Support depends on the refresh-rate modes exposed by the device and One UI version. |
+| Xiaomi / HyperOS 1 | Poco F3 / HyperOS 1 | `user_refresh_rate` | ✅ Community tested | Adaptive mode uses the physical minimum and maximum Hz values. Persistent Maximum mode uses `user_refresh_rate = 1`. |
+| Xiaomi / HyperOS 2 | HyperOS 2 devices | `miui_refresh_rate` | ⚠️ Experimental | Some HyperOS 2 builds may override refresh-rate values or apply separate launcher and System UI policies. More device reports are needed. |
+| Xiaomi / HyperOS 3 | Redmi Note 14 Pro 5G / HyperOS 3 | `miui_refresh_rate` | ✅ Community tested | Uses explicit minimum and maximum refresh-rate values. |
+| Xiaomi / MIUI or unknown HyperOS builds | Xiaomi, Redmi, and Poco devices | `miui_refresh_rate` fallback | ⚠️ Best effort | Regional and custom ROM variants may behave differently. |
+| Other Android vendors | Pixel, OnePlus, Nothing, and others | Vendor-specific / unsupported | 🧪 Planned | Additional vendor support is planned and community testing is welcome. |
 
 ---
 
