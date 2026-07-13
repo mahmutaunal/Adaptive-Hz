@@ -130,7 +130,7 @@ class AdaptiveHzEngine(
             }
 
             AdaptiveHzMode.FORCE_MAX -> {
-                applyHigh(force = true)
+                applyForceMaximum(force = true)
             }
         }
     }
@@ -259,7 +259,7 @@ class AdaptiveHzEngine(
                     AdaptiveHzMode.FORCE_MAX -> {
                         handler.removeCallbacks(dropRunnable)
                         handler.removeCallbacks(safetyRunnable)
-                        applyHigh(force = true)
+                        applyForceMaximum(force = true)
                         false
                     }
                 }
@@ -282,7 +282,7 @@ class AdaptiveHzEngine(
             AppRefreshProfileMode.FORCE_MAX -> {
                 handler.removeCallbacks(dropRunnable)
                 handler.removeCallbacks(safetyRunnable)
-                applyHigh(force = true)
+                applyForceMaximum(force = true)
                 false
             }
         }
@@ -449,9 +449,16 @@ class AdaptiveHzEngine(
     }
 
     /**
-     * Applies HIGH for explicit mode overrides.
+     * Applies a persistent vendor-specific maximum refresh-rate mode.
+     *
+     * This is intentionally separate from adaptive HIGH:
+     *
+     * - Adaptive HIGH uses the physical maximum Hz.
+     * - Some vendors use a special policy value for persistent maximum.
+     *
+     * HyperOS 1 is one such case and uses user_refresh_rate=1.
      */
-    private fun applyHigh(force: Boolean) {
+    private fun applyForceMaximum(force: Boolean) {
         if (isHigh && !force) return
 
         if (shouldRespectBatterySaverRefreshLimit()) {
@@ -460,22 +467,26 @@ class AdaptiveHzEngine(
             return
         }
 
-        val w = strategy.desiredHigh(appContext)
+        val w = strategy.desiredForceMaximum(appContext)
         val ok = writeHighRefreshSetting(w)
 
         AdaptiveHzPrefs.updateDebugLastWrite(
             context = appContext,
-            label = "HIGH ${w.label}",
+            label = "FORCE_MAX ${w.label}",
             success = ok
         )
 
         if (ok) {
             isHigh = true
             lastHighUptimeMs = SystemClock.uptimeMillis()
-            Log.d(tag, "HIGH (${w.label}) success")
-            scheduleSafety()
+
+            // Persistent maximum mode must not be followed by an adaptive drop.
+            handler.removeCallbacks(dropRunnable)
+            handler.removeCallbacks(safetyRunnable)
+
+            Log.d(tag, "FORCE_MAX (${w.label}) success")
         } else {
-            Log.w(tag, "HIGH (${w.label}) failed")
+            Log.w(tag, "FORCE_MAX (${w.label}) failed")
         }
     }
 

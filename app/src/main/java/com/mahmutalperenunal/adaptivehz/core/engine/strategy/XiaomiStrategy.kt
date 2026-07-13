@@ -7,53 +7,88 @@ import com.mahmutalperenunal.adaptivehz.core.engine.model.VendorTuning
 import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateController
 
 /**
- * Xiaomi / MIUI / HyperOS implementation.
+ * Xiaomi / MIUI / HyperOS refresh-rate strategy.
  *
- * Xiaomi refresh-rate behavior differs between MIUI and HyperOS builds:
+ * Confirmed compatibility behavior:
  *
- * - MIUI / some older HyperOS builds may use "miui_refresh_rate".
- * - HyperOS 1 may require "user_refresh_rate" under the secure table.
+ * HyperOS 1:
+ * - Uses secure/user_refresh_rate
+ * - Adaptive LOW/HIGH uses explicit Hz values
+ * - Persistent FORCE_MAX uses the special value 1
  *
- * The strategy still returns a single SettingWrite to keep the current engine model stable.
- * RefreshRateController handles Xiaomi writes by applying both supported keys.
+ * HyperOS 2/3:
+ * - Uses secure/miui_refresh_rate
+ * - Uses explicit Hz values for LOW/HIGH/FORCE_MAX
  */
 class XiaomiStrategy : VendorStrategy {
-    override val name = "Xiaomi"
 
-    // Resolve device-supported minimum Hz and write it explicitly.
+    override val name: String = "Xiaomi"
+
+    /**
+     * Adaptive LOW and FORCE_MIN both use the physical minimum Hz.
+     */
     override fun desiredLow(context: Context): SettingWrite {
         val appContext = context.applicationContext
         val (minHz, _) = RefreshRateController.resolveDisplayMinMax(appContext)
+        val profile = RefreshRateController.resolveXiaomiProfile()
 
         return SettingWrite(
-            key = RefreshRateController.KEY_XIAOMI_USER_REFRESH_RATE,
+            key = profile.settingKey,
             intValue = minHz,
-            label = "user_refresh_rate/miui_refresh_rate=$minHz (Min)"
+            label = "${profile.settingKey}=$minHz (Min, ${profile.label})"
         )
     }
 
-    // Resolve device-supported maximum Hz and write it explicitly.
+    /**
+     * Temporary HIGH used by Adaptive mode.
+     *
+     * Important: HyperOS 1 still receives the actual maximum Hz here.
+     * The special value 1 is used only for persistent FORCE_MAX.
+     */
     override fun desiredHigh(context: Context): SettingWrite {
         val appContext = context.applicationContext
         val (_, maxHz) = RefreshRateController.resolveDisplayMinMax(appContext)
+        val profile = RefreshRateController.resolveXiaomiProfile()
 
         return SettingWrite(
-            key = RefreshRateController.KEY_XIAOMI_USER_REFRESH_RATE,
+            key = profile.settingKey,
             intValue = maxHz,
-            label = "user_refresh_rate/miui_refresh_rate=$maxHz (Max)"
+            label = "${profile.settingKey}=$maxHz (Adaptive High, ${profile.label})"
         )
     }
 
-    // Restores Xiaomi/HyperOS native refresh-rate handling.
-    override fun desiredSystemControlled(context: Context): SettingWrite {
+    /**
+     * Persistent maximum mode.
+     *
+     * HyperOS 1 requires user_refresh_rate=1 to force maximum
+     * refresh rate across all apps.
+     *
+     * HyperOS 2/3 continue to use the explicit physical maximum Hz.
+     */
+    override fun desiredForceMaximum(context: Context): SettingWrite {
+        val appContext = context.applicationContext
+        val (_, maxHz) = RefreshRateController.resolveDisplayMinMax(appContext)
+        val profile = RefreshRateController.resolveXiaomiProfile()
+
+        val value = profile.resolveForceMaximumValue(maxHz)
+
         return SettingWrite(
-            key = RefreshRateController.KEY_XIAOMI_USER_REFRESH_RATE,
-            intValue = 0,
-            label = "user_refresh_rate/miui_refresh_rate=0 (System)"
+            key = profile.settingKey,
+            intValue = value,
+            label = "${profile.settingKey}=$value (Force Max, ${profile.label})"
         )
     }
 
-    // Uses conservative interaction timings for broader compatibility.
+    override fun desiredSystemControlled(context: Context): SettingWrite {
+        val profile = RefreshRateController.resolveXiaomiProfile()
+
+        return SettingWrite(
+            key = profile.settingKey,
+            intValue = 0,
+            label = "${profile.settingKey}=0 (System, ${profile.label})"
+        )
+    }
+
     override fun tuning(): VendorTuning {
         return VendorTuning(
             interactionIdleTimeoutMs = 2000L,

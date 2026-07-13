@@ -1,11 +1,14 @@
 package com.mahmutalperenunal.adaptivehz.core.system
 
+import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
+import android.os.Build
 import android.provider.Settings
 import android.util.Log
 import com.mahmutalperenunal.adaptivehz.core.engine.model.DeviceVendor
 import com.mahmutalperenunal.adaptivehz.core.engine.model.DeviceVendorDetector
+import java.util.Locale
 import kotlin.math.roundToInt
 
 /**
@@ -41,6 +44,20 @@ object RefreshRateController {
         BATTERY_SAVER_OVERRIDE_LOW
     }
 
+    /**
+     * Xiaomi/HyperOS refresh-rate compatibility profile.
+     */
+    data class XiaomiRefreshProfile(
+        val hyperOsMajor: Int?,
+        val settingKey: String,
+        val forceMaximumUsesSpecialValue: Boolean,
+        val label: String
+    ) {
+        fun resolveForceMaximumValue(maxHz: Int): Int {
+            return if (forceMaximumUsesSpecialValue) 1 else maxHz
+        }
+    }
+
     /** Forces the device into its lowest supported refresh rate (vendor-specific). */
     fun applyForceMinimum(context: Context) {
         val appContext = context.applicationContext
@@ -48,7 +65,13 @@ object RefreshRateController {
         when (DeviceVendorDetector.detect()) {
             DeviceVendor.XIAOMI -> {
                 val (minHz, _) = resolveDisplayMinMax(appContext)
-                writeXiaomiRefreshRate(appContext, minHz)
+                val profile = resolveXiaomiProfile()
+
+                writeXiaomiRefreshRate(
+                    context = appContext,
+                    profile = profile,
+                    value = minHz
+                )
             }
 
             DeviceVendor.SAMSUNG -> {
@@ -68,7 +91,14 @@ object RefreshRateController {
         when (DeviceVendorDetector.detect()) {
             DeviceVendor.XIAOMI -> {
                 val (_, maxHz) = resolveDisplayMinMax(appContext)
-                writeXiaomiRefreshRate(appContext, maxHz)
+                val profile = resolveXiaomiProfile()
+                val value = profile.resolveForceMaximumValue(maxHz)
+
+                writeXiaomiRefreshRate(
+                    context = appContext,
+                    profile = profile,
+                    value = value
+                )
             }
 
             DeviceVendor.SAMSUNG -> {
@@ -90,9 +120,13 @@ object RefreshRateController {
 
         when (DeviceVendorDetector.detect()) {
             DeviceVendor.XIAOMI -> {
-                // Xiaomi/HyperOS behavior differs by build.
-                // Writing 0 attempts to restore vendor/system-controlled behavior.
-                writeXiaomiRefreshRate(appContext, 0)
+                val profile = resolveXiaomiProfile()
+
+                writeXiaomiRefreshRate(
+                    context = appContext,
+                    profile = profile,
+                    value = 0
+                )
             }
 
             DeviceVendor.SAMSUNG -> {
@@ -107,35 +141,159 @@ object RefreshRateController {
     }
 
     /**
-     * Writes Xiaomi / MIUI / HyperOS refresh-rate settings without breaking existing behavior.
+     * Resolves the Xiaomi refresh-rate implementation used by the current ROM.
      *
-     * Important:
-     * - HyperOS 1 may require secure/user_refresh_rate.
-     * - MIUI / older HyperOS builds may still require miui_refresh_rate.
-     * - We keep the existing miui_refresh_rate fallback path for backward compatibility.
+     * Current compatibility policy:
      *
-     * At least one successful write is treated as success.
+     * HyperOS 1 -> secure/user_refresh_rate
+     * HyperOS 2 -> secure/miui_refresh_rate
+     * HyperOS 3 -> secure/miui_refresh_rate
+     *
+     * Unknown Xiaomi/MIUI builds fall back to miui_refresh_rate
+     * because this was the project's original stable behavior.
      */
-    private fun writeXiaomiRefreshRate(context: Context, value: Int): Boolean {
-        val userRefreshRateResult = writeSecure(
-            context = context,
-            key = KEY_XIAOMI_USER_REFRESH_RATE,
-            value = value
+    fun resolveXiaomiProfile(): XiaomiRefreshProfile {
+        val hyperOsMajor = detectHyperOsMajorVersion()
+
+        return when (hyperOsMajor) {
+            1 -> XiaomiRefreshProfile(
+                hyperOsMajor = 1,
+                settingKey = KEY_XIAOMI_USER_REFRESH_RATE,
+                forceMaximumUsesSpecialValue = true,
+                label = "HyperOS 1"
+            )
+
+            2 -> XiaomiRefreshProfile(
+                hyperOsMajor = 2,
+                settingKey = KEY_XIAOMI_REFRESH_RATE,
+                forceMaximumUsesSpecialValue = false,
+                label = "HyperOS 2"
+            )
+
+            3 -> XiaomiRefreshProfile(
+                hyperOsMajor = 3,
+                settingKey = KEY_XIAOMI_REFRESH_RATE,
+                forceMaximumUsesSpecialValue = false,
+                label = "HyperOS 3"
+            )
+
+            else -> XiaomiRefreshProfile(
+                hyperOsMajor = hyperOsMajor,
+                settingKey = KEY_XIAOMI_REFRESH_RATE,
+                forceMaximumUsesSpecialValue = false,
+                label = if (hyperOsMajor != null) {
+                    "HyperOS $hyperOsMajor fallback"
+                } else {
+                    "MIUI/Unknown Xiaomi fallback"
+                }
+            )
+        }
+    }
+
+    /**
+     * Best-effort HyperOS major-version detection.
+     *
+     * Xiaomi commonly exposes values such as:
+     * - OS1.0
+     * - OS2.0
+     * - OS3.0
+     *
+     * Reflection may fail on some Android builds, so Build fields
+     * are used as a fallback.
+     */
+    private fun detectHyperOsMajorVersion(): Int? {
+        val candidates = buildList {
+            readSystemProperty("ro.mi.os.version.name")
+                ?.takeIf { it.isNotBlank() }
+                ?.let(::add)
+
+            readSystemProperty("ro.mi.os.version.incremental")
+                ?.takeIf { it.isNotBlank() }
+                ?.let(::add)
+
+            readSystemProperty("ro.build.version.incremental")
+                ?.takeIf { it.isNotBlank() }
+                ?.let(::add)
+
+            Build.VERSION.INCREMENTAL
+                ?.takeIf { it.isNotBlank() }
+                ?.let(::add)
+
+            Build.DISPLAY
+                ?.takeIf { it.isNotBlank() }
+                ?.let(::add)
+        }
+
+        for (candidate in candidates) {
+            parseHyperOsMajor(candidate)?.let { return it }
+        }
+
+        return null
+    }
+
+    private fun parseHyperOsMajor(rawValue: String): Int? {
+        val normalized = rawValue
+            .trim()
+            .uppercase(Locale.ROOT)
+
+        val patterns = listOf(
+            Regex("""(?:HYPER\s*OS|HYPEROS)\s*[_\- ]?(\d+)"""),
+            Regex("""(?:^|[^A-Z])OS\s*[_\- ]?(\d+)(?:\.|[^0-9]|$)""")
         )
 
-        val miuiRefreshRateResult = writeAny(
+        for (pattern in patterns) {
+            val result = pattern.find(normalized) ?: continue
+            val major = result.groupValues.getOrNull(1)?.toIntOrNull()
+
+            if (major != null) {
+                return major
+            }
+        }
+
+        return null
+    }
+
+    @SuppressLint("PrivateApi")
+    private fun readSystemProperty(key: String): String? {
+        return try {
+            val systemPropertiesClass = Class.forName("android.os.SystemProperties")
+            val getMethod = systemPropertiesClass.getMethod(
+                "get",
+                String::class.java,
+                String::class.java
+            )
+
+            getMethod.invoke(null, key, "") as? String
+        } catch (t: Throwable) {
+            Log.d(TAG, "Unable to read system property: $key", t)
+            null
+        }
+    }
+
+    /**
+     * Writes only the refresh-rate key selected for the detected HyperOS version.
+     *
+     * Dual-writing user_refresh_rate and miui_refresh_rate is intentionally avoided,
+     * because Xiaomi ROM versions may assign different policy semantics to them.
+     */
+    private fun writeXiaomiRefreshRate(
+        context: Context,
+        profile: XiaomiRefreshProfile,
+        value: Int
+    ): Boolean {
+        val success = writeSecure(
             context = context,
-            key = KEY_XIAOMI_REFRESH_RATE,
+            key = profile.settingKey,
             value = value
         )
-
-        val success = userRefreshRateResult || miuiRefreshRateResult
 
         Log.d(
             TAG,
-            "Xiaomi refresh write value=$value, " +
-                    "user_refresh_rate=$userRefreshRateResult, " +
-                    "miui_refresh_rate=$miuiRefreshRateResult, " +
+            "Xiaomi refresh write " +
+                    "profile=${profile.label}, " +
+                    "hyperOsMajor=${profile.hyperOsMajor}, " +
+                    "key=${profile.settingKey}, " +
+                    "value=$value, " +
                     "success=$success"
         )
 
@@ -262,7 +420,19 @@ object RefreshRateController {
         val vendorResult = when (DeviceVendorDetector.detect()) {
             DeviceVendor.XIAOMI -> {
                 when (key) {
-                    KEY_XIAOMI_REFRESH_RATE, KEY_XIAOMI_USER_REFRESH_RATE -> writeXiaomiRefreshRate(appContext, value)
+                    KEY_XIAOMI_REFRESH_RATE,
+                    KEY_XIAOMI_USER_REFRESH_RATE -> {
+                        val profile = resolveXiaomiProfile()
+
+                        // Use the strategy-selected value, but always write only
+                        // the key belonging to the detected HyperOS profile.
+                        writeXiaomiRefreshRate(
+                            context = appContext,
+                            profile = profile,
+                            value = value
+                        )
+                    }
+
                     else -> writeAny(appContext, key, value)
                 }
             }
@@ -337,29 +507,20 @@ object RefreshRateController {
         val (key, valueStr) = try {
             when (vendor) {
                 DeviceVendor.XIAOMI -> {
-                    val userRefreshRate = runCatching {
-                        Settings.Secure.getInt(cr, KEY_XIAOMI_USER_REFRESH_RATE)
-                    }.getOrNull()
+                    val profile = resolveXiaomiProfile()
 
-                    val miuiRefreshRate = runCatching {
-                        Settings.Secure.getInt(cr, KEY_XIAOMI_REFRESH_RATE)
+                    val activeValue = runCatching {
+                        Settings.Secure.getInt(cr, profile.settingKey)
                     }.getOrNull()
-                        ?: runCatching {
-                            Settings.System.getInt(cr, KEY_XIAOMI_REFRESH_RATE)
-                        }.getOrNull()
-                        ?: runCatching {
-                            Settings.Global.getInt(cr, KEY_XIAOMI_REFRESH_RATE)
-                        }.getOrNull()
 
                     val label = buildString {
-                        append("$KEY_XIAOMI_USER_REFRESH_RATE=")
-                        append(userRefreshRate?.toString() ?: "(unavailable)")
-                        append(", ")
-                        append("$KEY_XIAOMI_REFRESH_RATE=")
-                        append(miuiRefreshRate?.toString() ?: "(unavailable)")
+                        append("profile=").append(profile.label)
+                        append(", key=").append(profile.settingKey)
+                        append(", value=")
+                        append(activeValue?.toString() ?: "(unavailable)")
                     }
 
-                    "Xiaomi/HyperOS" to label
+                    profile.settingKey to label
                 }
 
                 DeviceVendor.SAMSUNG -> {
