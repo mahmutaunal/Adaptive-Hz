@@ -247,8 +247,8 @@ fun DiagnosticsScreen(
                         stringResource(id = R.string.diagnostics_current_display),
                         stringResource(id = R.string.refresh_rate_hz, status.displayHz.toInt())
                     )
-                    DebugRow(stringResource(id = R.string.diagnostics_setting_key), status.settingKey)
-                    DebugRow(stringResource(id = R.string.diagnostics_setting_value), status.settingValue)
+                    DebugRow(stringResource(id = R.string.diagnostics_setting_key), status.selectedWritePath)
+                    DebugRow(stringResource(id = R.string.diagnostics_setting_value), status.selectedValue)
                     DebugRow(stringResource(id = R.string.diagnostics_battery_saver), powerSaveMode.toString())
                 }
             }
@@ -420,8 +420,8 @@ private fun buildDiagnosticsReport(
                 status.displayHz.toInt()
             )
         )
-        appendLine(appContext.getString(R.string.diagnostics_report_setting_key, status.settingKey))
-        appendLine(appContext.getString(R.string.diagnostics_report_setting_value, status.settingValue))
+        appendLine(appContext.getString(R.string.diagnostics_report_setting_key, status.selectedWritePath))
+        appendLine(appContext.getString(R.string.diagnostics_report_setting_value, status.selectedValue))
         appendLine(appContext.getString(R.string.diagnostics_report_battery_saver, powerSaveMode.toString()))
         appendLine()
         appendLine(appContext.getString(R.string.diagnostics_report_current_mode, AdaptiveHzPrefs.getCurrentMode(appContext).name))

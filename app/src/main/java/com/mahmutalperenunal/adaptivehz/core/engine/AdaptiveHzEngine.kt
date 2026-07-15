@@ -14,10 +14,12 @@ import com.mahmutalperenunal.adaptivehz.core.debug.DebugAccessibilityEvent
 import com.mahmutalperenunal.adaptivehz.core.debug.DebugEventStore
 import com.mahmutalperenunal.adaptivehz.core.engine.model.AdaptiveHzMode
 import com.mahmutalperenunal.adaptivehz.core.engine.model.AppRefreshProfileMode
+import com.mahmutalperenunal.adaptivehz.core.engine.model.RefreshRateApplyResult
 import com.mahmutalperenunal.adaptivehz.core.engine.model.SettingWrite
 import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateController
 import com.mahmutalperenunal.adaptivehz.core.engine.model.VendorStrategy
 import com.mahmutalperenunal.adaptivehz.core.engine.model.VendorTuning
+import com.mahmutalperenunal.adaptivehz.core.engine.model.isOperationalSuccess
 import com.mahmutalperenunal.adaptivehz.core.input.InteractionSignalProvider
 
 /**
@@ -94,12 +96,33 @@ class AdaptiveHzEngine(
     }
 
     /** Stops the engine and cancels all scheduled work. */
-    fun stop() {
-        applySystemControlled(force = true)
+    fun stop(restoreSystemControlled: Boolean = false) {
         started = false
         isTouchInteracting = false
         handler.removeCallbacksAndMessages(null)
-        Log.d(tag, "Stopped")
+
+        if (restoreSystemControlled) {
+            applySystemControlled(force = true)
+        }
+
+        Log.d(
+            tag,
+            "Stopped. restoreSystemControlled=$restoreSystemControlled"
+        )
+    }
+
+    private fun applyWrite(
+        write: SettingWrite,
+        policy: RefreshRateController.RefreshWritePolicy =
+            RefreshRateController.RefreshWritePolicy.NORMAL,
+        genericRefreshRateHz: Int = write.intValue
+    ): RefreshRateApplyResult {
+        return RefreshRateController.applySetting(
+            context = appContext,
+            write = write,
+            policy = policy,
+            genericRefreshRateHz = genericRefreshRateHz
+        )
     }
 
     /**
@@ -307,11 +330,12 @@ class AdaptiveHzEngine(
             return
         }
 
-        val ok = RefreshRateController.writeSetting(appContext, w.key, w.intValue)
+        val result = applyWrite(w)
+        val ok = result.isOperationalSuccess
 
         AdaptiveHzPrefs.updateDebugLastWrite(
             context = appContext,
-            label = "SYSTEM ${w.label}",
+            label = "SYSTEM ${w.label} / ${result::class.simpleName}",
             success = ok
         )
 
@@ -519,7 +543,9 @@ class AdaptiveHzEngine(
         }
     }
 
-    private fun writeHighRefreshSetting(w: SettingWrite): Boolean {
+    private fun writeHighRefreshSetting(
+        write: SettingWrite
+    ): Boolean {
         val policy = if (shouldUseBatterySaverOverrideWrites()) {
             RefreshRateController.RefreshWritePolicy.BATTERY_SAVER_OVERRIDE_HIGH
         } else {
@@ -528,17 +554,22 @@ class AdaptiveHzEngine(
 
         val (_, maxHz) = RefreshRateController.resolveDisplayMinMax(appContext)
 
-        return RefreshRateController.writeSetting(
-            context = appContext,
-            key = w.key,
-            value = w.intValue,
+        val result = applyWrite(
+            write = write,
             policy = policy,
             genericRefreshRateHz = maxHz
         )
+
+        Log.d(
+            tag,
+            "High write result=${result::class.simpleName} write=${write.label}"
+        )
+
+        return result.isOperationalSuccess
     }
 
     private fun writeLowRefreshSetting(
-        w: SettingWrite
+        write: SettingWrite
     ): Boolean {
         val policy = if (shouldUseBatterySaverOverrideWrites()) {
             RefreshRateController.RefreshWritePolicy.BATTERY_SAVER_OVERRIDE_LOW
@@ -546,12 +577,18 @@ class AdaptiveHzEngine(
             RefreshRateController.RefreshWritePolicy.NORMAL
         }
 
-        return RefreshRateController.writeSetting(
-            context = appContext,
-            key = w.key,
-            value = w.intValue,
-            policy = policy
+        val result = applyWrite(
+            write = write,
+            policy = policy,
+            genericRefreshRateHz = write.intValue
         )
+
+        Log.d(
+            tag,
+            "Low write result=${result::class.simpleName} write=${write.label}"
+        )
+
+        return result.isOperationalSuccess
     }
 
     private fun shouldUseBatterySaverOverrideWrites(): Boolean {

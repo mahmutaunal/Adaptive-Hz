@@ -12,11 +12,7 @@ import android.os.PowerManager
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import com.mahmutalperenunal.adaptivehz.core.engine.AdaptiveHzEngine
-import com.mahmutalperenunal.adaptivehz.core.engine.model.DeviceVendor
-import com.mahmutalperenunal.adaptivehz.core.engine.model.DeviceVendorDetector
-import com.mahmutalperenunal.adaptivehz.core.engine.strategy.OtherStrategy
-import com.mahmutalperenunal.adaptivehz.core.engine.strategy.SamsungStrategy
-import com.mahmutalperenunal.adaptivehz.core.engine.strategy.XiaomiStrategy
+import com.mahmutalperenunal.adaptivehz.core.engine.strategy.VendorStrategyProvider
 import com.mahmutalperenunal.adaptivehz.core.health.AccessibilityHealthMonitor
 import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs
 import com.mahmutalperenunal.adaptivehz.core.shizuku.ShizukuInputManager
@@ -96,11 +92,7 @@ class AdaptiveHzService : AccessibilityService() {
         registerBatterySaverReceiver()
 
         // Selects vendor-specific refresh rate behavior.
-        val strategy = when (DeviceVendorDetector.detect()) {
-            DeviceVendor.SAMSUNG -> SamsungStrategy()
-            DeviceVendor.XIAOMI -> XiaomiStrategy()
-            else -> OtherStrategy()
-        }
+        val strategy = VendorStrategyProvider.provide()
 
         engine = AdaptiveHzEngine(
             context = appContext,
@@ -154,7 +146,7 @@ class AdaptiveHzService : AccessibilityService() {
         unregisterBatterySaverReceiver()
 
         try {
-            if (::engine.isInitialized) engine.stop()
+            if (::engine.isInitialized) engine.stop(restoreSystemControlled = false)
         } catch (t: Throwable) {
             Log.e(TAG, "Failed to stop engine", t)
         }

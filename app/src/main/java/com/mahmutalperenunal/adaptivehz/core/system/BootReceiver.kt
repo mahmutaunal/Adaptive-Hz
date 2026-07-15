@@ -5,9 +5,11 @@ import android.content.Context
 import android.content.Intent
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import com.mahmutalperenunal.adaptivehz.core.engine.model.AdaptiveHzMode
 import com.mahmutalperenunal.adaptivehz.core.health.AccessibilityHealthMonitor
 import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs
+import com.mahmutalperenunal.adaptivehz.core.service.AdaptiveHzActionHandler
 import com.mahmutalperenunal.adaptivehz.core.service.StabilityForegroundService
 
 /**
@@ -19,85 +21,103 @@ import com.mahmutalperenunal.adaptivehz.core.service.StabilityForegroundService
  * - FORCE_MAX: reapplies maximum refresh rate.
  */
 class BootReceiver : BroadcastReceiver() {
+
+    // Routes supported system broadcasts to their corresponding recovery flow.
     override fun onReceive(context: Context, intent: Intent?) {
         val appContext = context.applicationContext
-        val mainHandler = Handler(Looper.getMainLooper())
+        val handler = Handler(Looper.getMainLooper())
 
-        if (intent?.action == Intent.ACTION_MY_PACKAGE_REPLACED) {
-            AdaptiveHzPrefs.markAccessibilityDisconnected(appContext)
-
-            val keepAlive = AdaptiveHzPrefs.isKeepAliveEnabled(appContext)
-            if (keepAlive) {
-                try { StabilityForegroundService.start(appContext) } catch (_: Throwable) {}
+        when (intent?.action) {
+            Intent.ACTION_MY_PACKAGE_REPLACED -> {
+                handlePackageReplaced(appContext, handler)
             }
 
-            try {
-                mainHandler.postDelayed({
-                    AccessibilityHealthMonitor.check(
-                        context = appContext,
-                        reason = "package_replaced"
-                    )
-                }, 5_000L)
-            } catch (_: Throwable) {
+            Intent.ACTION_BOOT_COMPLETED -> {
+                handleBootCompleted(appContext, handler)
+            }
+        }
+    }
+
+    // Restores monitoring components after the app package is updated.
+    private fun handlePackageReplaced(
+        context: Context,
+        handler: Handler
+    ) {
+        // Force the next health check to revalidate the accessibility connection.
+        AdaptiveHzPrefs.markAccessibilityDisconnected(context)
+
+        if (AdaptiveHzPrefs.isKeepAliveEnabled(context)) {
+            runCatching {
+                StabilityForegroundService.start(context)
+            }.onFailure {
+                Log.w(TAG, "Unable to start foreground service after update", it)
+            }
+        }
+
+        handler.postDelayed(
+            {
                 AccessibilityHealthMonitor.check(
-                    context = appContext,
+                    context = context,
                     reason = "package_replaced"
                 )
-            }
+            },
+            PACKAGE_REPLACED_HEALTH_DELAY_MS
+        )
+    }
 
-            return
-        }
+    // Restores the persisted mode and background services after device startup.
+    private fun handleBootCompleted(
+        context: Context,
+        handler: Handler
+    ) {
+        // Reapply the last active mode after Android finishes booting.
+        val currentMode = AdaptiveHzPrefs.getCurrentMode(context)
 
-        if (intent?.action != Intent.ACTION_BOOT_COMPLETED) return
-
-        val currentMode = AdaptiveHzPrefs.getCurrentMode(appContext)
-
-        when (currentMode) {
-            AdaptiveHzMode.OFF -> {
-                // No restore needed when the app was left disabled.
-            }
-
-            AdaptiveHzMode.ADAPTIVE,
-            AdaptiveHzMode.FORCE_MIN -> {
-                try {
-                    mainHandler.postDelayed({
-                        try { RefreshRateController.applyForceMinimum(appContext) } catch (_: Throwable) {}
-                    }, 1500L)
-                } catch (_: Throwable) {
-                    // Fallback: no delay
-                    try { RefreshRateController.applyForceMinimum(appContext) } catch (_: Throwable) {}
-                }
-            }
-
-            AdaptiveHzMode.FORCE_MAX -> {
-                try {
-                    mainHandler.postDelayed({
-                        try { RefreshRateController.applyForceMaximum(appContext) } catch (_: Throwable) {}
-                    }, 1500L)
-                } catch (_: Throwable) {
-                    // Fallback: no delay
-                    try { RefreshRateController.applyForceMaximum(appContext) } catch (_: Throwable) {}
-                }
-            }
-        }
-
-        val keepAlive = AdaptiveHzPrefs.isKeepAliveEnabled(appContext)
-        if (keepAlive) {
-            try { StabilityForegroundService.start(appContext) } catch (_: Throwable) {}
-        }
-
-        try {
-            mainHandler.postDelayed({
-                AccessibilityHealthMonitor.check(
-                    context = appContext,
-                    reason = "boot_completed"
-                )
-            }, 8_000L)
-        } catch (_: Throwable) {
-            AccessibilityHealthMonitor.check(
-                context = appContext,
-                reason = "boot_completed"
+        if (currentMode != AdaptiveHzMode.OFF) {
+            handler.postDelayed(
+                {
+                    runCatching {
+                        AdaptiveHzActionHandler.applyMode(
+                            context = context,
+                            mode = currentMode
+                        )
+                    }.onFailure {
+                        Log.e(
+                            TAG,
+                            "Unable to restore mode after boot: $currentMode",
+                            it
+                        )
+                    }
+                },
+                MODE_RESTORE_DELAY_MS
             )
         }
+
+        if (AdaptiveHzPrefs.isKeepAliveEnabled(context)) {
+            runCatching {
+                StabilityForegroundService.start(context)
+            }.onFailure {
+                Log.w(TAG, "Unable to start keep-alive service after boot", it)
+            }
+        }
+
+        handler.postDelayed(
+            {
+                AccessibilityHealthMonitor.check(
+                    context = context,
+                    reason = "boot_completed"
+                )
+            },
+            BOOT_HEALTH_DELAY_MS
+        )
+    }
+
+    // Delays allow Android services and settings providers to become available.
+    companion object {
+        private const val TAG = "BootReceiver"
+
+        private const val MODE_RESTORE_DELAY_MS = 1_500L
+        private const val PACKAGE_REPLACED_HEALTH_DELAY_MS = 5_000L
+        private const val BOOT_HEALTH_DELAY_MS = 8_000L
     }
 }

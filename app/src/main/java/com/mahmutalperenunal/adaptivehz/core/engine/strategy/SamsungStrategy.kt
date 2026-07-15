@@ -1,42 +1,68 @@
 package com.mahmutalperenunal.adaptivehz.core.engine.strategy
 
 import android.content.Context
-import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateController
 import com.mahmutalperenunal.adaptivehz.core.engine.model.SettingWrite
+import com.mahmutalperenunal.adaptivehz.core.engine.model.SettingsNamespace
 import com.mahmutalperenunal.adaptivehz.core.engine.model.VendorStrategy
 import com.mahmutalperenunal.adaptivehz.core.engine.model.VendorTuning
+import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateController
 
 /**
- * Samsung-specific implementation.
+ * Samsung / One UI refresh-rate implementation.
  *
- * Uses the hidden secure key "refresh_rate_mode":
- * 0 = Normal (min)
- * 2 = High (max)
+ * Known refresh_rate_mode values:
+ * 0 -> Normal / minimum
+ * 1 -> System-controlled / adaptive
+ * 2 -> High / maximum
  */
 class SamsungStrategy : VendorStrategy {
-    override val name = "Samsung"
 
-    // Maps logical LOW to Samsung's "Normal" mode
-    override fun desiredLow(context: Context) =
-        SettingWrite(RefreshRateController.KEY_REFRESH_MODE, 0, "refresh_rate_mode=0 (Min)")
+    override val name: String = "Samsung"
 
-    // Maps logical HIGH to Samsung's "High" mode
-    override fun desiredHigh(context: Context) =
-        SettingWrite(RefreshRateController.KEY_REFRESH_MODE, 2, "refresh_rate_mode=2 (Max)")
-
-    // Restores Samsung/OneUI native refresh-rate handling by delegating
-    override fun desiredSystemControlled(context: Context): SettingWrite {
+    // Returns the configuration that favors the lowest available refresh rate.
+    override fun desiredLow(context: Context): SettingWrite {
         return SettingWrite(
-            RefreshRateController.KEY_REFRESH_MODE,
-            0,
-            "refresh_rate_mode=0 (System)"
+            namespace = SettingsNamespace.SECURE,
+            key = RefreshRateController.KEY_REFRESH_MODE,
+            intValue = 0,
+            label = "secure/refresh_rate_mode=0 (Minimum)"
         )
     }
 
-    // Uses conservative interaction timings for broader compatibility.
+    // Returns the configuration that enables Samsung's adaptive high refresh-rate mode.
+    override fun desiredHigh(context: Context): SettingWrite {
+        return SettingWrite(
+            namespace = SettingsNamespace.SECURE,
+            key = RefreshRateController.KEY_REFRESH_MODE,
+            intValue = 2,
+            label = "secure/refresh_rate_mode=2 (Adaptive High)"
+        )
+    }
+
+    // Returns the configuration that keeps the display at the highest supported refresh rate.
+    override fun desiredForceMaximum(context: Context): SettingWrite {
+        return SettingWrite(
+            namespace = SettingsNamespace.SECURE,
+            key = RefreshRateController.KEY_REFRESH_MODE,
+            intValue = 2,
+            label = "secure/refresh_rate_mode=2 (Force Maximum)"
+        )
+    }
+
+    // Returns the configuration that lets the system manage the refresh rate automatically.
+    override fun desiredSystemControlled(context: Context): SettingWrite {
+        return SettingWrite(
+            namespace = SettingsNamespace.SECURE,
+            key = RefreshRateController.KEY_REFRESH_MODE,
+            intValue = 1,
+            label = "secure/refresh_rate_mode=1 (System/Adaptive)"
+        )
+    }
+
+    // Provides Samsung-specific tuning values for the adaptive refresh-rate engine.
     override fun tuning(): VendorTuning {
         return VendorTuning(
-            interactionIdleTimeoutMs = 2000L,
+            interactionIdleTimeoutMs = 2_000L,
             eventCoalescingWindowMs = 60L,
             allowContentChangeBoost = true,
             allowScrollBoost = true,
