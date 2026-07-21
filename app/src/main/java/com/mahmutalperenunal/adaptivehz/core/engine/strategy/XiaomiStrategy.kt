@@ -14,7 +14,7 @@ import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateController
  * HyperOS 1:
  * - Uses secure/user_refresh_rate.
  * - Adaptive LOW/HIGH modes use physical refresh-rate values.
- * - Persistent FORCE_MAX mode uses the special value 1.
+ * - Persistent FORCE_MIN/FORCE_MAX modes use the special values 0/1.
  *
  * HyperOS 2:
  * - Uses secure/miui_refresh_rate.
@@ -53,6 +53,23 @@ class XiaomiStrategy : VendorStrategy {
             key = profile.settingKey,
             intValue = maxHz,
             label = "${profile.path}=$maxHz (Adaptive High, ${profile.label})"
+        )
+    }
+
+    // Builds the vendor-specific setting write for persistent minimum refresh rate.
+    override fun desiredForceMinimum(context: Context): SettingWrite {
+        val appContext = context.applicationContext
+        val (minHz, _) = RefreshRateController.resolveDisplayMinMax(appContext)
+        val profile = RefreshRateController.resolveXiaomiProfile()
+
+        // HyperOS 1 requires 0 for persistent minimum while adaptive LOW keeps using Hz.
+        val value = profile.resolveForceMinimumValue(minHz)
+
+        return SettingWrite(
+            namespace = profile.namespace,
+            key = profile.settingKey,
+            intValue = value,
+            label = "${profile.path}=$value (Force Minimum, ${profile.label})"
         )
     }
 

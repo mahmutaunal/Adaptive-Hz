@@ -149,7 +149,7 @@ class AdaptiveHzEngine(
             }
 
             AdaptiveHzMode.FORCE_MIN -> {
-                applyLow(force = true)
+                applyForceMinimum(force = true)
             }
 
             AdaptiveHzMode.FORCE_MAX -> {
@@ -276,7 +276,7 @@ class AdaptiveHzEngine(
                     AdaptiveHzMode.FORCE_MIN -> {
                         handler.removeCallbacks(dropRunnable)
                         handler.removeCallbacks(safetyRunnable)
-                        applyLow(force = true)
+                        applyForceMinimum(force = true)
                         false
                     }
                     AdaptiveHzMode.FORCE_MAX -> {
@@ -298,7 +298,7 @@ class AdaptiveHzEngine(
             AppRefreshProfileMode.FORCE_MIN -> {
                 handler.removeCallbacks(dropRunnable)
                 handler.removeCallbacks(safetyRunnable)
-                applyLow(force = true)
+                applyForceMinimum(force = true)
                 false
             }
 
@@ -470,6 +470,35 @@ class AdaptiveHzEngine(
         }
 
         scheduleDrop(getInteractionDropDelayMs())
+    }
+
+    /**
+     * Applies a persistent vendor-specific minimum refresh-rate mode.
+     *
+     * This is intentionally separate from adaptive LOW because some vendors
+     * use a special policy value for persistent minimum. HyperOS 1 uses
+     * user_refresh_rate=0 while adaptive LOW continues to use the physical Hz.
+     */
+    private fun applyForceMinimum(force: Boolean) {
+        if (!isHigh && !force) return
+
+        val w = strategy.desiredForceMinimum(appContext)
+        val ok = writeLowRefreshSetting(w)
+
+        AdaptiveHzPrefs.updateDebugLastWrite(
+            context = appContext,
+            label = "FORCE_MIN ${w.label}",
+            success = ok
+        )
+
+        if (ok) {
+            isHigh = false
+            handler.removeCallbacks(dropRunnable)
+            handler.removeCallbacks(safetyRunnable)
+            Log.d(tag, "FORCE_MIN (${w.label}) success")
+        } else {
+            Log.w(tag, "FORCE_MIN (${w.label}) failed")
+        }
     }
 
     /**

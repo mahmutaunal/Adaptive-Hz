@@ -21,6 +21,16 @@ interface VendorStrategy {
     fun desiredHigh(context: Context): SettingWrite
 
     /**
+     * Persistent minimum mode.
+     *
+     * Defaults to desiredLow() so existing Samsung/Other strategies
+     * keep their current behavior without requiring any changes.
+     */
+    fun desiredForceMinimum(context: Context): SettingWrite {
+        return desiredLow(context)
+    }
+
+    /**
      * Persistent maximum mode.
      *
      * Defaults to desiredHigh() so existing Samsung/Other strategies

@@ -14,8 +14,8 @@ extensions.configure<com.android.build.api.dsl.ApplicationExtension>("android") 
         applicationId = "com.mahmutalperenunal.adaptivehz"
         minSdk = 31
         targetSdk = 37
-        versionCode = 25
-        versionName = "2.2.2"
+        versionCode = 26
+        versionName = "2.2.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

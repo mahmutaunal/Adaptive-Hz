@@ -57,9 +57,12 @@ object AdaptiveHzActionHandler {
                 strategy.desiredSystemControlled(appContext)
             }
 
-            AdaptiveHzMode.ADAPTIVE,
-            AdaptiveHzMode.FORCE_MIN -> {
+            AdaptiveHzMode.ADAPTIVE -> {
                 strategy.desiredLow(appContext)
+            }
+
+            AdaptiveHzMode.FORCE_MIN -> {
+                strategy.desiredForceMinimum(appContext)
             }
 
             AdaptiveHzMode.FORCE_MAX -> {

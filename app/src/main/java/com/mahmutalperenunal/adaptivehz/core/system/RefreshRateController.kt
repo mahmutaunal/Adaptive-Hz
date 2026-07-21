@@ -52,12 +52,18 @@ object RefreshRateController {
         val detection: HyperOsDetection,
         val namespace: SettingsNamespace,
         val settingKey: String,
+        val forceMinimumUsesSpecialValue: Boolean,
         val forceMaximumUsesSpecialValue: Boolean,
         val label: String
     ) {
         // Fully qualified settings path used in logs and diagnostics.
         val path: String
             get() = "${namespace.name.lowercase(Locale.ROOT)}/$settingKey"
+
+        // Resolves the physical or vendor-specific value used for minimum refresh rate.
+        fun resolveForceMinimumValue(minHz: Int): Int {
+            return if (forceMinimumUsesSpecialValue) 0 else minHz
+        }
 
         // Resolves the physical or vendor-specific value used for maximum refresh rate.
         fun resolveForceMaximumValue(maxHz: Int): Int {
@@ -182,6 +188,7 @@ object RefreshRateController {
                 detection = detection,
                 namespace = SettingsNamespace.SECURE,
                 settingKey = KEY_XIAOMI_USER_REFRESH_RATE,
+                forceMinimumUsesSpecialValue = true,
                 forceMaximumUsesSpecialValue = true,
                 label = "HyperOS 1"
             )
@@ -190,6 +197,7 @@ object RefreshRateController {
                 detection = detection,
                 namespace = SettingsNamespace.SECURE,
                 settingKey = KEY_XIAOMI_REFRESH_RATE,
+                forceMinimumUsesSpecialValue = false,
                 forceMaximumUsesSpecialValue = false,
                 label = "HyperOS 2"
             )
@@ -198,6 +206,7 @@ object RefreshRateController {
                 detection = detection,
                 namespace = SettingsNamespace.SECURE,
                 settingKey = KEY_XIAOMI_REFRESH_RATE,
+                forceMinimumUsesSpecialValue = false,
                 forceMaximumUsesSpecialValue = false,
                 label = "HyperOS 3"
             )
@@ -206,6 +215,7 @@ object RefreshRateController {
                 detection = detection,
                 namespace = SettingsNamespace.SECURE,
                 settingKey = KEY_XIAOMI_REFRESH_RATE,
+                forceMinimumUsesSpecialValue = false,
                 forceMaximumUsesSpecialValue = false,
                 label = detection.majorVersion?.let {
                     "HyperOS $it fallback"
