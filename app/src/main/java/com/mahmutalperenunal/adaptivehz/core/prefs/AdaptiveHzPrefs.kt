@@ -22,7 +22,8 @@ enum class AppLanguage {
     SYSTEM,
     EN,
     TR,
-    ES
+    ES,
+    PT_BR
 }
 
 object AdaptiveHzPrefs {

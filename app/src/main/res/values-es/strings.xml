@@ -187,9 +187,10 @@
     <string name="settings_value_theme_light">Claro</string>
     <string name="settings_value_theme_dark">Oscuro</string>
     <string name="settings_value_language_system">Predeterminado del sistema</string>
-    <string name="settings_value_language_english">Inglés</string>
-    <string name="settings_value_language_turkish">Turco</string>
+    <string name="settings_value_language_english">English</string>
+    <string name="settings_value_language_turkish">Türkçe</string>
     <string name="settings_value_language_spanish">Español</string>
+    <string name="settings_value_language_portuguese_brazil">Português (Brasil)</string>
     <string name="settings_dialog_theme_title">Elegir tema</string>
     <string name="settings_dialog_language_title">Elegir idioma</string>
 

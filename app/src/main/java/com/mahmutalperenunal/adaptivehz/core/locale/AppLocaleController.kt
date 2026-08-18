@@ -18,6 +18,7 @@ object AppLocaleController {
             AppLanguage.EN -> LocaleListCompat.forLanguageTags("en")
             AppLanguage.TR -> LocaleListCompat.forLanguageTags("tr")
             AppLanguage.ES -> LocaleListCompat.forLanguageTags("es")
+            AppLanguage.PT_BR -> LocaleListCompat.forLanguageTags("pt-BR")
         }
 
         AppCompatDelegate.setApplicationLocales(locales)

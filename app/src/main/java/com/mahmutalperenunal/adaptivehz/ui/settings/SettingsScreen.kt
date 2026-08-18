@@ -337,6 +337,7 @@ fun SettingsScreen(
                     AppLanguage.EN -> stringResource(R.string.settings_value_language_english)
                     AppLanguage.TR -> stringResource(R.string.settings_value_language_turkish)
                     AppLanguage.ES -> stringResource(R.string.settings_value_language_spanish)
+                    AppLanguage.PT_BR -> stringResource(R.string.settings_value_language_portuguese_brazil)
                 },
                 onClick = { languageDialogOpen.value = true }
             )
@@ -538,6 +539,13 @@ fun SettingsScreen(
                         text = stringResource(R.string.settings_value_language_spanish),
                         onClick = {
                             onAppLanguageChanged(AppLanguage.ES)
+                            languageDialogOpen.value = false
+                        }
+                    )
+                    DialogOptionRow(
+                        text = stringResource(R.string.settings_value_language_portuguese_brazil),
+                        onClick = {
+                            onAppLanguageChanged(AppLanguage.PT_BR)
                             languageDialogOpen.value = false
                         }
                     )

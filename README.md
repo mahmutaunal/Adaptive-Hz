@@ -153,8 +153,26 @@ Adaptive Hz solves this by:
 - Optional Stability Mode (foreground service)
 - Diagnostics and Accessibility Event Inspector tools
 - Boot persistence
-- English & Turkish localization
 - Minimal, Material You UI
+
+---
+
+## 🌐 Languages
+
+Adaptive Hz currently supports the following languages:
+
+| Language | Locale | Status |
+|---|---|---|
+| 🇺🇸 English | `en` | ✅ Supported |
+| 🇹🇷 Türkçe | `tr` | ✅ Supported |
+| 🇪🇸 Español | `es` | ✅ Supported |
+| 🇧🇷 Português (Brasil) | `pt-BR` | 🟡 Community review |
+
+> 💡 Brazilian Portuguese was initially translated with AI assistance and is currently awaiting native-speaker review.
+
+Want to help with translations?
+
+If you'd like to improve an existing translation or add support for a new language, feel free to open an issue or submit a pull request.
 
 ---
 

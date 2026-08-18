@@ -1,0 +1,393 @@
+<resources>
+    <string name="app_name">Adaptive Hz</string>
+
+    <string name="home_title">Adaptive Hz</string>
+    <string name="home_description">Alternância adaptativa da taxa de atualização usando eventos de acessibilidade + configurações seguras (ADB).</string>
+
+    <string name="setup_title">Configuração</string>
+    <string name="setup_description">Para funcionar corretamente, o Adaptive Hz precisa de várias permissões do sistema. Conclua as etapas abaixo para ativar todos os recursos.</string>
+
+    <string name="setup_accessibility_title">Serviço de acessibilidade</string>
+    <string name="setup_accessibility_desc">Obrigatório. Permite detectar eventos de toque/rolagem em todo o sistema.</string>
+    <string name="setup_accessibility_button">Abrir Acessibilidade</string>
+
+    <string name="setup_adb_title">Permissão ADB (WRITE_SECURE_SETTINGS)</string>
+    <string name="setup_adb_desc">Obrigatório. Conceda via ADB e depois verifique aqui.</string>
+    <string name="setup_adb_verify">Verificar permissão</string>
+    <string name="setup_adb_instruction">Execute isto no seu computador:</string>
+
+    <string name="setup_battery_title">Desativar otimizações de bateria</string>
+    <string name="setup_battery_desc">Recomendado. Impede que o sistema encerre o app/serviço em segundo plano.</string>
+    <string name="open_battery_settings">Abrir configurações de bateria</string>
+
+    <string name="setup_stability_title">Modo de estabilidade (serviço em primeiro plano)</string>
+    <string name="setup_stability_desc">Mantém o processo ativo usando uma notificação persistente.</string>
+    <string name="setup_notifications_button">Notificações</string>
+
+    <string name="enable">Ativar</string>
+    <string name="disable">Desativar</string>
+
+    <string name="dashboard_title">Painel</string>
+    <string name="dashboard_status_title">Status</string>
+
+    <string name="status_current_display">Tela atual</string>
+    <string name="status_vendor">Fabricante</string>
+    <string name="status_setting">Configuração</string>
+    <string name="status_accessibility">Acessibilidade</string>
+    <string name="status_mode">Modo</string>
+
+    <string name="mode_adaptive">Adaptativo (Auto)</string>
+    <string name="mode_manual">Manual</string>
+
+    <string name="minimum">Mínimo</string>
+    <string name="maximum">Máximo</string>
+
+    <string name="per_app_title">Taxa de atualização por app</string>
+    <string name="per_app_desc">Defina o comportamento como Adaptativo, Mínimo, Máximo ou Respeitar para cada aplicativo.</string>
+    <string name="per_app_desc2">Isso exige listar os apps instalados e armazenar preferências individuais por app.</string>
+
+    <string name="footer_title">Desenvolvido pela AlpWare Studio</string>
+    <string name="footer_desc">Este é um projeto de código aberto. Seus comentários e relatórios de testes em dispositivos são bem-vindos.</string>
+    <string name="footer_github">GitHub</string>
+    <string name="footer_play">Google Play</string>
+
+    <string name="toast_adb_verified">Permissão ADB verificada</string>
+    <string name="toast_adb_permission_missing">Permissão ausente. Conceda-a via ADB primeiro.</string>
+    <string name="toast_adb_verify_unavailable">Não foi possível verificar nesta ROM.</string>
+
+    <string name="label_ok">OK</string>
+    <string name="label_recommended">RECOMENDADO</string>
+
+    <string name="toast_stability_enabled">Modo de estabilidade ativado</string>
+    <string name="toast_stability_disabled">Modo de estabilidade desativado</string>
+    <string name="toast_open_notification_settings_failed">Não foi possível abrir as configurações de notificação.</string>
+
+    <string name="toast_adaptive_applied">Modo adaptativo aplicado</string>
+    <string name="toast_minimum_applied">Mínimo aplicado</string>
+    <string name="toast_maximum_applied">Máximo aplicado</string>
+    <string name="toast_secure_settings_missing">A permissão WRITE_SECURE_SETTINGS está ausente.</string>
+
+    <string name="label_missing">AUSENTE</string>
+    <string name="label_on">ATIVADO</string>
+    <string name="label_off">DESATIVADO</string>
+    <string name="label_granted">CONCEDIDA</string>
+    <string name="label_required">OBRIGATÓRIO</string>
+
+    <string name="label_notifications_status">Notificações: %1$s</string>
+
+    <string name="stability_notification_channel_name">Adaptive Hz</string>
+    <string name="stability_notification_title">Adaptive-Hz</string>
+    <string name="stability_notification_text">Em execução</string>
+
+    <string name="toast_open_accessibility_failed">Não foi possível abrir as configurações de acessibilidade. Ative manualmente em Configurações &gt; Acessibilidade.</string>
+
+    <string name="accessibility_service_description">Alterna automaticamente a taxa de atualização do dispositivo Galaxy com base na interação.</string>
+
+    <string name="toast_battery_already_ignored">As otimizações de bateria já estão desativadas.</string>
+    <string name="toast_battery_settings_failed">Não foi possível abrir as configurações de otimização de bateria.</string>
+
+    <string name="developer_signature">Desenvolvido pela AlpWare Studio</string>
+
+    <string name="label_idle">Inativo</string>
+    <string name="label_active">Ativo</string>
+    <string name="label_target_max_on_touch">Máximo ao tocar</string>
+    <string name="label_target_minimum">Mínimo</string>
+    <string name="label_target_maximum">Máximo</string>
+    <string name="label_target_system_default">Padrão do sistema</string>
+    <string name="status_target">Alvo</string>
+    <string name="status_interaction">Interação</string>
+
+    <string name="settings_enable_adaptive_hz">Ativar Adaptive Hz</string>
+    <string name="settings_enable_adaptive_hz_desc">Ativa ou desativa o mecanismo do Adaptive Hz. Quando desativado, o app deixa de controlar a taxa de atualização e o comportamento padrão do sistema é restaurado.</string>
+
+    <string name="setup_adb_desc_with_root">Conceda a permissão privilegiada necessária via ADB ou use a configuração root com um toque se o dispositivo tiver acesso root.</string>
+    <string name="setup_root_detected_desc">Foi detectado acesso root neste dispositivo. Você pode tentar conceder a permissão necessária automaticamente em vez de usar ADB.</string>
+    <string name="setup_root_grant_button">Conceder automaticamente</string>
+    <string name="root_grant_success">Permissão necessária concedida com sucesso.</string>
+    <string name="root_grant_denied">A solicitação de root foi negada.</string>
+    <string name="root_not_available">O acesso root não está disponível neste dispositivo.</string>
+    <string name="root_grant_failed">Falha na configuração automática via root.</string>
+
+    <!-- Common -->
+    <string name="cd_back">Voltar</string>
+    <string name="action_close">Fechar</string>
+    <string name="cd_expand">Expandir</string>
+    <string name="cd_collapse">Recolher</string>
+    <string name="error">Erro</string>
+
+    <!-- Settings -->
+    <string name="settings_accessibility_working_summary">O serviço de acessibilidade está ativo e funcionando corretamente.</string>
+    <string name="settings_accessibility_required_summary">Necessário para detectar interações de toque e rolagem.</string>
+
+    <string name="settings_adb_granted_summary">A permissão WRITE_SECURE_SETTINGS foi concedida.</string>
+    <string name="settings_adb_or_root_summary">Conceda a permissão usando ADB ou acesso root.</string>
+    <string name="settings_adb_required_summary">Necessário para controlar o comportamento da taxa de atualização.</string>
+
+    <string name="settings_usage_access_granted_summary">Os apps usados recentemente agora podem ser detectados corretamente.</string>
+    <string name="settings_usage_access_recommended_summary">Recomendado para mostrar os apps recentes reais no Painel.</string>
+
+    <string name="settings_battery_optimizations_disabled_summary">As otimizações de bateria estão desativadas para o Adaptive Hz.</string>
+    <string name="settings_battery_optimization_recommended_summary">Recomendado para melhorar a estabilidade em segundo plano.</string>
+
+    <string name="settings_notifications_enabled_summary">As notificações estão ativadas para o Modo de estabilidade.</string>
+    <string name="settings_notifications_required_summary">Necessário para notificações de estabilidade do serviço em primeiro plano.</string>
+
+    <string name="settings_diagnostics_summary">Veja o estado em tempo de execução e as informações de depuração.</string>
+    <string name="settings_event_inspector_summary">Inspecione eventos recentes de acessibilidade e sinais de rolagem.</string>
+
+    <!-- Settings - header -->
+    <string name="settings_title">Configurações</string>
+    <string name="settings_app_name">Adaptive Hz</string>
+    <string name="settings_app_tagline">O Adaptive Hz alterna automaticamente a taxa de atualização da tela entre 60 Hz e 120 Hz com base na interação do usuário.</string>
+
+    <!-- Settings - defaults (developer) -->
+    <string name="settings_developer_name">AlpWare Studio</string>
+    <string name="settings_developer_email">contact@alpwarestudio.com</string>
+    <string name="settings_website_url">https://alpwarestudio.com</string>
+
+    <!-- Settings - sections -->
+    <string name="settings_section_behavior">Comportamento</string>
+    <string name="settings_section_appearance">Aparência</string>
+    <string name="settings_section_debug">Depuração</string>
+    <string name="settings_section_about">Sobre</string>
+    <string name="settings_section_developer">Desenvolvedor</string>
+    <string name="settings_section_support">Suporte</string>
+    <string name="settings_section_legal">Legal</string>
+
+    <!-- Settings - items -->
+    <string name="settings_item_stability_mode">Modo de estabilidade</string>
+    <string name="settings_item_version">Versão</string>
+    <string name="settings_item_repository">Repositório</string>
+    <string name="settings_item_email">E-mail</string>
+    <string name="settings_item_website">Site</string>
+
+    <string name="settings_item_report_issue">Relatar um problema</string>
+    <string name="settings_item_share_app">Compartilhar app</string>
+
+    <string name="settings_item_privacy_policy">Política de Privacidade</string>
+    <string name="settings_item_open_source_notices">Avisos de código aberto</string>
+
+    <string name="settings_item_battery_optimization">Otimização de bateria</string>
+    <string name="settings_value_battery_optimization_ok">As restrições de bateria estão desativadas para maior estabilidade.</string>
+    <string name="settings_value_battery_optimization_recommended">Recomendado para maior estabilidade em segundo plano em dispositivos com gerenciamento agressivo.</string>
+    <string name="settings_item_notification_permission">Permissão de notificações</string>
+    <string name="settings_value_notification_permission_ok">A permissão de notificações foi concedida.</string>
+    <string name="settings_value_notification_permission_required">Necessário para ativar o Modo de estabilidade no Android 13 ou superior.</string>
+    <string name="settings_toast_notification_required_for_stability">A permissão de notificações é necessária para ativar o Modo de estabilidade.</string>
+    <string name="settings_item_keep_active_during_battery_saver">Manter o Adaptive Hz ativo durante a Economia de bateria</string>
+    <string name="settings_value_keep_active_during_battery_saver_summary">Quando ativado, o Adaptive Hz continuará aplicando o comportamento de taxa de atualização selecionado enquanto a Economia de bateria estiver ativa. Alguns dispositivos ainda podem forçar 60 Hz no nível do sistema.</string>
+    <string name="settings_item_drop_delay">Atraso para reduzir após o toque</string>
+    <string name="settings_value_drop_delay_summary">Volte para a taxa de atualização mínima após %1$s quando a interação por toque terminar. (Padrão: 2 s)</string>
+    <string name="settings_dialog_battery_saver_override_title">Compatibilidade com Economia de bateria</string>
+    <string name="settings_dialog_battery_saver_override_body">O Adaptive Hz continuará tentando aplicar o comportamento de taxa de atualização selecionado enquanto a Economia de bateria estiver ativada. No entanto, alguns dispositivos bloqueiam altas taxas de atualização no nível do sistema durante a Economia de bateria, portanto esta opção pode não funcionar em todos os celulares. Se o dispositivo continuar em 60 Hz, significa que o sistema está impondo esse limite.</string>
+
+    <string name="settings_item_theme">Tema</string>
+    <string name="settings_item_language">Idioma</string>
+    <string name="settings_value_theme_system">Padrão do sistema</string>
+    <string name="settings_value_theme_light">Claro</string>
+    <string name="settings_value_theme_dark">Escuro</string>
+    <string name="settings_value_language_system">Padrão do sistema</string>
+    <string name="settings_value_language_english">English</string>
+    <string name="settings_value_language_turkish">Türkçe</string>
+    <string name="settings_value_language_spanish">Español</string>
+    <string name="settings_value_language_portuguese_brazil">Português (Brasil)</string>
+    <string name="settings_dialog_theme_title">Escolher tema</string>
+    <string name="settings_dialog_language_title">Escolher idioma</string>
+
+    <!-- Settings - values -->
+    <string name="settings_value_stability_mode_summary">Mantém o Adaptive Hz mais confiável em segundo plano usando uma notificação persistente. Desativar esta opção remove a notificação, mas pode reduzir a estabilidade em alguns dispositivos.</string>
+    <string name="settings_value_version">%1$s (%2$d)</string>
+    <string name="settings_value_other_apps">Outros apps &amp; página do desenvolvedor</string>
+    <string name="settings_value_github_issues">Issues do GitHub</string>
+    <string name="settings_value_send_github_link">Enviar link do GitHub</string>
+    <string name="settings_value_privacy_short">Offline. Nenhuma coleta de dados.</string>
+    <string name="settings_value_third_party_licenses">Licenças de terceiros</string>
+
+    <!-- Settings - share -->
+    <string name="settings_share_title">Compartilhar %1$s</string>
+    <string name="settings_share_text">%1$s\n%2$s</string>
+
+    <!-- Settings - email -->
+    <string name="settings_email_subject">Feedback sobre %1$s</string>
+
+    <!-- Settings - footer -->
+    <string name="settings_footer_tip">Dica: mantenha este app preparado para uso offline — abra links apenas quando necessário.</string>
+
+    <!-- Settings - dialog actions -->
+    <string name="settings_action_view_on_github">Ver no GitHub</string>
+
+    <!-- Settings - dialog: Privacy -->
+    <string name="settings_dialog_privacy_title">Política de Privacidade</string>
+    <string name="settings_dialog_privacy_body">
+        Pontos principais
+        • Este app funciona offline.
+        • Nenhum dado pessoal é coletado.
+        • Nenhuma ferramenta de análise, anúncio ou rastreador é usada.
+        • Nenhuma permissão é solicitada para coleta de dados.
+
+        Detalhes
+        Este aplicativo não coleta, armazena nem compartilha nenhuma informação pessoal. Todas as funcionalidades são executadas localmente no seu dispositivo.
+
+        Em caso de dúvidas, entre em contato com o desenvolvedor pelo e-mail disponível em Configurações.
+    </string>
+
+    <!-- Settings - dialog: Notices -->
+    <string name="settings_dialog_notices_title">Avisos de código aberto</string>
+    <string name="settings_dialog_notices_body">
+        Este app é de código aberto e pode incluir bibliotecas de terceiros.
+
+        Talvez seja necessário incluir:
+        • Um link para o repositório (Configurações → Repositório)
+        • A LICENSE do projeto (por exemplo, MIT/Apache-2.0)
+        • Quaisquer arquivos NOTICE exigidos pelas dependências
+
+        Dica
+        Se quiser exibir os textos completos das licenças no app, coloque-os em res/raw ou assets e renderize-os aqui.
+    </string>
+
+    <!-- Widgets -->
+    <string name="widget_title">Adaptive Hz</string>
+    <string name="widget_description">Controle os modos da taxa de atualização pelo widget da tela inicial.</string>
+    <string name="widget_badge_setup">CONFIG.</string>
+    <string name="widget_off">DESL.</string>
+    <string name="widget_min">MÍN.</string>
+    <string name="widget_adaptive">AUTO</string>
+    <string name="widget_max">MÁX.</string>
+    <string name="widget_status_off">O controle da taxa de atualização está desativado</string>
+    <string name="widget_status_minimum">A taxa de atualização mínima está ativa</string>
+    <string name="widget_status_adaptive">O modo adaptativo está ativo</string>
+    <string name="widget_status_maximum">A taxa de atualização máxima está ativa</string>
+    <string name="widget_status_setup_required">Configuração necessária — toque para abrir o app</string>
+
+    <string name="accessibility_broken_adaptive_disabled">O modo adaptativo está temporariamente indisponível porque o Serviço de acessibilidade não está respondendo. Os modos manuais ainda podem ser usados.</string>
+    <string name="recovery_title">O serviço não está respondendo</string>
+    <string name="recovery_desc">
+        O Serviço de acessibilidade parece estar ativado, mas não está respondendo.
+        Isso pode acontecer devido a restrições do sistema ou limites de execução em segundo plano.
+        Tente reiniciar o serviço ou ajustar as configurações de bateria.
+    </string>
+    <string name="retry">Tentar novamente</string>
+    <string name="setup_continue_button">Continuar</string>
+    <string name="setup_continue_required_hint">Conclua as etapas obrigatórias acima para continuar. As etapas recomendadas são opcionais.</string>
+
+    <string name="setup_usage_access_title">Acesso ao uso</string>
+    <string name="setup_usage_access_desc">Recomendado. Permite que o Adaptive Hz mostre os apps usados recentemente no painel.</string>
+    <string name="setup_usage_access_button">Abrir Acesso ao uso</string>
+    <string name="setup_accessibility_enabled_message">O Serviço de acessibilidade está ativado. Você pode reabrir as configurações a qualquer momento usando o ícone de atualizar.</string>
+    <string name="setup_adb_granted_message">A permissão ADB foi concedida e está funcionando corretamente. Você pode verificá-la novamente usando o ícone de atualizar.</string>
+    <string name="setup_battery_ok_message">A otimização de bateria está desativada. O Adaptive Hz pode continuar funcionando em segundo plano com mais confiabilidade.</string>
+    <string name="setup_usage_access_ok_message">O Acesso ao uso está ativado. Os apps usados recentemente agora podem aparecer no painel.</string>
+    <string name="adaptive_hz_enabled">Adaptive Hz ativado</string>
+    <string name="enable_recent_apps_access">Ativar acesso aos apps recentes</string>
+    <string name="no_recent_apps_found">Nenhum app recente encontrado ainda.</string>
+    <string name="view_all_apps">Ver todos os apps</string>
+    <string name="per_app_profiles_title">Perfis por app</string>
+    <string name="back">Voltar</string>
+    <string name="per_app_profiles_description">Defina o comportamento da taxa de atualização para apps individuais ou aplique um perfil a todos os apps listados.</string>
+    <string name="search_apps">Pesquisar apps</string>
+    <string name="show_system_apps">Mostrar apps do sistema</string>
+    <string name="show_system_apps_description">Inclua launcher, navegador, reprodutor de vídeo e apps de sistema do fabricante.</string>
+    <string name="loading_apps">Carregando apps…</string>
+    <string name="loading_more_apps">Carregando mais apps…</string>
+    <string name="close">Fechar</string>
+    <string name="apply_profile_to_all">Aplicar perfil a todos</string>
+    <string name="bulk_profile_dialog_message_including_system">Isso atualizará %1$d apps listados, incluindo apps do sistema.</string>
+    <string name="bulk_profile_dialog_message_user_apps">Isso atualizará %1$d apps de usuário listados.</string>
+    <string name="all_listed_apps">Todos os apps listados</string>
+    <string name="app_count_including_system_apps">%1$d apps incluindo apps do sistema</string>
+    <string name="user_app_count">%1$d apps de usuário</string>
+    <string name="apply_profile">Aplicar perfil</string>
+    <string name="all">Todos</string>
+    <string name="event_inspector_title">Inspetor de eventos</string>
+    <string name="accessibility_event_inspector_title">Inspetor de eventos de acessibilidade</string>
+    <string name="accessibility_event_inspector_description">Inspecione apps com excesso de eventos, comportamento de rolagem e eventos de acessibilidade específicos do fabricante.</string>
+    <string name="paused">Pausado</string>
+    <string name="live">Ao vivo</string>
+    <string name="scroll_only">Somente rolagem</string>
+    <string name="adaptive_hz_events_clip_label">Eventos do Adaptive Hz</string>
+    <string name="events_copied">Eventos copiados</string>
+    <string name="copy">Copiar</string>
+    <string name="clear">Limpar</string>
+    <string name="events_captured">%1$d eventos capturados</string>
+    <string name="no_events_captured_yet">Nenhum evento capturado ainda.</string>
+    <string name="event_scroll_delta_x">ΔX</string>
+    <string name="event_scroll_delta_y">ΔY</string>
+    <string name="event_content_change">contentChange</string>
+    <string name="accessibility_event_report_title">Eventos de acessibilidade do Adaptive Hz</string>
+    <string name="accessibility_event_report_separator">--------------------------------</string>
+    <string name="accessibility_event_report_row">%1$s | %2$s | %3$s | ΔX=%4$d ΔY=%5$d | contentChange=%6$d</string>
+    <string name="empty_value_dash">-</string>
+    <string name="diagnostics_title">Diagnóstico</string>
+    <string name="diagnostics_description">Inspecione o estado em tempo de execução, a atividade do mecanismo de atualização e as informações de depuração.</string>
+    <string name="adaptive_hz_diagnostics_clip_label">Diagnóstico do Adaptive Hz</string>
+    <string name="diagnostics_copied">Diagnóstico copiado</string>
+    <string name="copy_report">Copiar relatório</string>
+    <string name="refresh">Atualizar</string>
+    <string name="xiaomi_stability_title">Estabilidade Xiaomi / HyperOS</string>
+    <string name="xiaomi_stability_desc">A Xiaomi pode interromper serviços em segundo plano se permissões extras não estiverem ativadas.</string>
+    <string name="xiaomi_stability_steps_intro">Para maior confiabilidade:</string>
+    <string name="xiaomi_stability_steps">• Economia de bateria do app: Sem restrições\n• Inicialização automática: Ativada\n• Apps recentes: Bloquear Adaptive Hz\n• Notificações: Permitidas\n• Acessibilidade: Ativada</string>
+    <string name="xiaomi_stability_settings_summary">Para maior confiabilidade em segundo plano, ative Sem restrições, Inicialização automática, bloqueio do Adaptive Hz nos apps recentes, notificações e acessibilidade.</string>
+    <string name="stability_notification_recovery_title">O Adaptive Hz precisa de atenção</string>
+    <string name="stability_notification_recovery_text">O Serviço de acessibilidade pode ter parado. Toque para restaurar.</string>
+    <string name="stability_notification_recovery_action">Restaurar</string>
+    <string name="action_enable">Ativar</string>
+    <string name="action_cancel">Cancelar</string>
+
+    <string name="diagnostics_system_title">Sistema</string>
+    <string name="diagnostics_vendor">Fabricante</string>
+    <string name="diagnostics_current_display">Tela atual</string>
+    <string name="diagnostics_setting_key">Chave da configuração</string>
+    <string name="diagnostics_setting_value">Valor da configuração</string>
+    <string name="diagnostics_battery_saver">Economia de bateria</string>
+    <string name="refresh_rate_hz">%1$d Hz</string>
+    <string name="diagnostics_current_mode">Modo atual</string>
+    <string name="diagnostics_adb_granted">ADB concedido</string>
+    <string name="diagnostics_keep_alive">Manter ativo</string>
+    <string name="diagnostics_accessibility">Acessibilidade</string>
+    <string name="diagnostics_last_heartbeat">Último sinal</string>
+    <string name="diagnostics_engine_debug_title">Depuração do mecanismo</string>
+    <string name="diagnostics_foreground_package">Pacote em primeiro plano</string>
+    <string name="diagnostics_last_event">Último evento</string>
+    <string name="diagnostics_last_write">Última gravação</string>
+    <string name="diagnostics_last_write_success">Sucesso da última gravação</string>
+    <string name="diagnostics_updated_at">Atualizado em</string>
+    <string name="diagnostics_report_title">Diagnóstico do Adaptive Hz</string>
+    <string name="diagnostics_report_separator">----------------------</string>
+    <string name="diagnostics_report_app_version">Versão do app: %1$s (%2$d)</string>
+    <string name="diagnostics_report_vendor">Fabricante: %1$s</string>
+    <string name="diagnostics_report_current_display">Tela atual: %1$d Hz</string>
+    <string name="diagnostics_report_setting_key">Chave da configuração: %1$s</string>
+    <string name="diagnostics_report_setting_value">Valor da configuração: %1$s</string>
+    <string name="diagnostics_report_battery_saver">Economia de bateria: %1$s</string>
+    <string name="diagnostics_report_current_mode">Modo atual: %1$s</string>
+    <string name="diagnostics_report_adb_granted">ADB concedido: %1$s</string>
+    <string name="diagnostics_report_keep_alive">Manter ativo: %1$s</string>
+    <string name="diagnostics_report_accessibility">Acessibilidade: %1$s</string>
+    <string name="diagnostics_report_last_heartbeat">Último sinal: %1$s</string>
+    <string name="diagnostics_report_foreground_package">Pacote em primeiro plano: %1$s</string>
+    <string name="diagnostics_report_last_event">Último evento: %1$s</string>
+    <string name="diagnostics_report_last_write">Última gravação: %1$s</string>
+    <string name="diagnostics_report_last_write_success">Sucesso da última gravação: %1$s</string>
+    <string name="diagnostics_report_debug_updated_at">Depuração atualizada em: %1$s</string>
+
+    <string name="profile_mode_respect_app">Controlado pelo sistema</string>
+    <string name="profile_mode_default_description">Use o comportamento global do Adaptive Hz.</string>
+    <string name="profile_mode_adaptive_description">O Adaptive Hz controla este app.</string>
+    <string name="profile_mode_minimum_description">Mantenha este app na taxa de atualização mínima.</string>
+    <string name="profile_mode_maximum_description">Mantenha este app na taxa de atualização máxima.</string>
+    <string name="profile_mode_respect_app_description">O Adaptive Hz não controlará este app. Será usado o comportamento da taxa de atualização definido pelo sistema ou pelo fabricante.</string>
+    <string name="profile_mode_disabled_description">Ignore este app e retorne a um estado seguro de baixa taxa de atualização.</string>
+    <string name="profile_mode_default">Padrão</string>
+    <string name="profile_mode_adaptive">Adaptativo</string>
+    <string name="profile_mode_minimum">Mínimo</string>
+    <string name="profile_mode_maximum">Máximo</string>
+    <string name="profile_mode_respect">Respeitar</string>
+    <string name="profile_mode_disabled">Desativado</string>
+
+    <string name="accessibility_health_notification_channel_name">Integridade do Adaptive Hz</string>
+    <string name="accessibility_health_notification_title">O Adaptive Hz precisa de atenção</string>
+    <string name="accessibility_health_notification_broken_text">O Serviço de acessibilidade não está respondendo. O Adaptive Hz pode parar de alternar as taxas de atualização. Toque para reabrir as Configurações de acessibilidade.</string>
+    <string name="accessibility_health_notification_disabled_text">O Serviço de acessibilidade está desativado. O Adaptive Hz precisa dele para detectar interações e alternar as taxas de atualização. Toque para ativá-lo novamente.</string>
+    <string name="accessibility_health_notification_action">Abrir Configurações de acessibilidade</string>
+</resources>
