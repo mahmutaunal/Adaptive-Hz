@@ -166,9 +166,7 @@ Adaptive Hz currently supports the following languages:
 | 🇺🇸 English | `en` | ✅ Supported |
 | 🇹🇷 Türkçe | `tr` | ✅ Supported |
 | 🇪🇸 Español | `es` | ✅ Supported |
-| 🇧🇷 Português (Brasil) | `pt-BR` | 🟡 Community review |
-
-> 💡 Brazilian Portuguese was initially translated with AI assistance and is currently awaiting native-speaker review.
+| 🇧🇷 Português (Brasil) | `pt-BR` | ✅ Supported |
 
 Want to help with translations?
 
