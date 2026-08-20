@@ -1,6 +1,7 @@
 package com.mahmutalperenunal.adaptivehz.ui.home
 
 import android.content.Intent
+import android.content.ActivityNotFoundException
 import android.content.pm.PackageManager
 import android.provider.Settings
 import android.widget.Toast
@@ -46,6 +47,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.DisposableEffect
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import com.mahmutalperenunal.adaptivehz.core.service.AdaptiveHzActionHandler
 import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs
 import com.mahmutalperenunal.adaptivehz.core.service.StabilityForegroundService
@@ -63,8 +65,17 @@ import com.mahmutalperenunal.adaptivehz.core.apps.InstalledAppsRepository
 import com.mahmutalperenunal.adaptivehz.core.apps.RecentAppsProvider
 import com.mahmutalperenunal.adaptivehz.core.engine.model.DeviceVendor
 import com.mahmutalperenunal.adaptivehz.core.system.RootManager
+import com.mahmutalperenunal.adaptivehz.core.quickaccess.QuickAccessManager
+import com.mahmutalperenunal.adaptivehz.core.update.GitHubUpdateChecker
+import com.mahmutalperenunal.adaptivehz.core.update.StableRelease
+import com.mahmutalperenunal.adaptivehz.core.update.UpdateCheckResult
 import com.mahmutalperenunal.adaptivehz.ui.home.components.DashboardComponent
 import com.mahmutalperenunal.adaptivehz.ui.home.components.SetupComponent
+import com.mahmutalperenunal.adaptivehz.ui.settings.components.QuickAccessDiscoverySheet
+import com.mahmutalperenunal.adaptivehz.ui.settings.components.ProjectSupportCard
+import com.mahmutalperenunal.adaptivehz.ui.components.UpdateAvailableDialog
+import com.mahmutalperenunal.adaptivehz.ui.components.UpdateCheckConsentDialog
+import java.time.LocalDate
 
 /**
  * Home route that coordinates setup state, dashboard state and quick actions.
@@ -86,6 +97,13 @@ fun HomeScreen(
     val context = LocalContext.current
     val appContext = context.applicationContext
     val prefs = remember { AdaptiveHzPrefs }
+    val githubRepositoryUrl = "https://github.com/mahmutaunal/Adaptive-Hz"
+    val shareTitle = stringResource(R.string.settings_share_title, stringResource(R.string.app_name))
+    val shareBody = stringResource(
+        R.string.settings_share_text,
+        stringResource(R.string.app_name),
+        githubRepositoryUrl
+    )
 
     val toastAdbVerified = stringResource(id = R.string.toast_adb_verified)
     val toastAdbPermissionMissing = stringResource(id = R.string.toast_adb_permission_missing)
@@ -117,6 +135,16 @@ fun HomeScreen(
     // UI state restored from persisted app preferences.
     var adbGranted by remember { mutableStateOf(prefs.isAdbGranted(appContext)) }
     val currentMode = remember { mutableStateOf(prefs.getCurrentMode(appContext)) }
+
+    // Keeps the visible dashboard synchronized with mode changes initiated by
+    // external app surfaces such as the Quick Settings tile or notification.
+    DisposableEffect(appContext) {
+        val stopObserving = prefs.observeCurrentMode(appContext) { mode ->
+            currentMode.value = mode
+        }
+
+        onDispose(stopObserving)
+    }
 
     val accessibilityState = remember { mutableStateOf(getAccessibilityState()) }
 
@@ -190,8 +218,67 @@ fun HomeScreen(
     // Setup is complete only after required permissions are ready and acknowledged.
     val requiredSetupReady = accessibilityConfigured && adbGranted
     val setupComplete = requiredSetupReady && initialSetupCompleted.value
+    var showQuickAccessDiscovery by remember { mutableStateOf(false) }
+    var showUpdateConsent by remember { mutableStateOf(false) }
+    var automaticUpdateChecks by remember {
+        mutableStateOf(prefs.isAutomaticUpdateCheckEnabled(appContext))
+    }
+    var availableRelease by remember { mutableStateOf<StableRelease?>(null) }
+    var showProjectSupport by remember { mutableStateOf(false) }
+
+    // Introduces optional features one at a time after required setup is complete.
+    LaunchedEffect(setupComplete) {
+        if (!setupComplete) return@LaunchedEffect
+
+        if (prefs.shouldShowQuickAccessDiscovery(appContext)) {
+            prefs.markQuickAccessDiscoveryShown(appContext)
+            val quickAccessAlreadyConfigured =
+                QuickAccessManager.isQuickSettingsTileAdded(appContext) &&
+                    QuickAccessManager.isWidgetAdded(appContext)
+            showQuickAccessDiscovery = !quickAccessAlreadyConfigured
+            if (quickAccessAlreadyConfigured && !prefs.hasMadeUpdateCheckChoice(appContext)) {
+                showUpdateConsent = true
+            }
+        } else if (!prefs.hasMadeUpdateCheckChoice(appContext)) {
+            showUpdateConsent = true
+        }
+    }
+
+    // Network access is opt-in, rate-limited and only checks stable GitHub releases.
+    LaunchedEffect(setupComplete, automaticUpdateChecks) {
+        if (!setupComplete || !prefs.shouldRunAutomaticUpdateCheck(appContext)) {
+            return@LaunchedEffect
+        }
+
+        prefs.markUpdateCheckAttempt(appContext)
+        when (val result = GitHubUpdateChecker.check()) {
+            is UpdateCheckResult.Available -> {
+                if (!prefs.wasReleaseAlreadyPrompted(appContext, result.release.tagName)) {
+                    prefs.markReleasePrompted(appContext, result.release.tagName)
+                    availableRelease = result.release
+                }
+            }
+
+            UpdateCheckResult.UpToDate,
+            UpdateCheckResult.InvalidResponse,
+            is UpdateCheckResult.Failed -> Unit
+        }
+    }
 
     val appEnabled = currentMode.value != AdaptiveHzMode.OFF
+
+    // Counts only qualified, well-spaced local sessions; nothing leaves the device.
+    LaunchedEffect(setupComplete, appEnabled) {
+        if (!setupComplete || !appEnabled) return@LaunchedEffect
+        prefs.recordSupportSession(
+            context = appContext,
+            localEpochDay = LocalDate.now().toEpochDay()
+        )
+        if (prefs.shouldShowSupportPrompt(appContext)) {
+            prefs.markSupportPromptShown(appContext)
+            showProjectSupport = true
+        }
+    }
 
     val currentModeLabel = when (currentMode.value) {
         AdaptiveHzMode.OFF -> stringResource(id = R.string.label_off)
@@ -381,6 +468,7 @@ fun HomeScreen(
                     accessibilityWorking = accessibilityWorking,
                     accessibilityBroken = accessibilityBroken,
                     vendorLabel = vendorLabel,
+                    currentMode = currentMode.value,
                     currentModeLabel = currentModeLabel,
                     targetLabel = targetLabel,
                     interactionLabel = interactionLabel,
@@ -451,6 +539,21 @@ fun HomeScreen(
                         }
                     }
                 )
+
+                if (showProjectSupport) {
+                    Spacer(modifier = Modifier.height(20.dp))
+                    ProjectSupportCard(
+                        onStar = {
+                            openExternalUrl(context, githubRepositoryUrl)
+                            showProjectSupport = false
+                        },
+                        onShare = {
+                            shareProject(context, shareTitle, shareBody)
+                            showProjectSupport = false
+                        },
+                        onDismiss = { showProjectSupport = false }
+                    )
+                }
             }
         }
 
@@ -503,6 +606,63 @@ fun HomeScreen(
                 reloadDashboardApps()
             }
         )
+    }
+
+    if (showQuickAccessDiscovery) {
+        QuickAccessDiscoverySheet(
+            onDismiss = { showQuickAccessDiscovery = false }
+        )
+    }
+
+    if (showUpdateConsent) {
+        UpdateCheckConsentDialog(
+            onEnable = {
+                prefs.setAutomaticUpdateChecksEnabled(appContext, true)
+                automaticUpdateChecks = true
+                showUpdateConsent = false
+            },
+            onDecline = {
+                prefs.setAutomaticUpdateChecksEnabled(appContext, false)
+                automaticUpdateChecks = false
+                showUpdateConsent = false
+            }
+        )
+    }
+
+    availableRelease?.let { release ->
+        UpdateAvailableDialog(
+            release = release,
+            onViewRelease = {
+                val intent = Intent(Intent.ACTION_VIEW, release.htmlUrl.toUri())
+                try {
+                    context.startActivity(intent)
+                } catch (_: ActivityNotFoundException) {
+                    Toast.makeText(context, R.string.error, Toast.LENGTH_SHORT).show()
+                }
+                availableRelease = null
+            },
+            onDismiss = { availableRelease = null }
+        )
+    }
+}
+
+private fun openExternalUrl(context: android.content.Context, url: String) {
+    try {
+        context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
+    } catch (_: ActivityNotFoundException) {
+        Toast.makeText(context, R.string.error, Toast.LENGTH_SHORT).show()
+    }
+}
+
+private fun shareProject(context: android.content.Context, title: String, body: String) {
+    val sendIntent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, body)
+    }
+    try {
+        context.startActivity(Intent.createChooser(sendIntent, title))
+    } catch (_: ActivityNotFoundException) {
+        Toast.makeText(context, R.string.error, Toast.LENGTH_SHORT).show()
     }
 }
 

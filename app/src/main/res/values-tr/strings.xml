@@ -147,14 +147,32 @@
 
     <!-- Settings - sections -->
     <string name="settings_section_behavior">Davranış</string>
+    <string name="settings_section_updates">Güncellemeler</string>
     <string name="settings_section_debug">Hata Ayıklama</string>
     <string name="settings_section_about">Hakkında</string>
     <string name="settings_section_developer">Geliştirici</string>
+    <string name="settings_section_other_apps">AlpWare Studio’dan diğer uygulamalar</string>
     <string name="settings_section_support">Destek</string>
     <string name="settings_section_legal">Yasal</string>
 
     <!-- Settings - items -->
     <string name="settings_item_stability_mode">Kararlılık Modu</string>
+    <string name="settings_item_automatic_update_checks">Otomatik güncelleme kontrolü</string>
+    <string name="settings_value_automatic_update_checks_summary">GitHub’daki kararlı sürümleri en fazla 24 saatte bir kontrol eder. Beta ve ön sürümler yok sayılır.</string>
+    <string name="settings_item_check_for_updates">Güncellemeleri kontrol et</string>
+    <string name="settings_value_stable_updates_summary">GitHub’daki en son kararlı sürümü elle kontrol edin.</string>
+    <string name="update_checking">GitHub kontrol ediliyor…</string>
+    <string name="update_up_to_date">En son kararlı sürümü kullanıyorsunuz.</string>
+    <string name="update_check_failed">Güncellemeler kontrol edilemedi. Bağlantınızı kontrol edip tekrar deneyin.</string>
+    <string name="update_invalid_release">En son sürümün geçerli bir sürüm numarası yok.</string>
+    <string name="update_consent_title">Güncel kalmak ister misiniz?</string>
+    <string name="update_consent_body">Adaptive Hz, GitHub’daki yeni kararlı sürümleri en fazla 24 saatte bir kontrol edebilir. Beta ve ön sürümler yok sayılır. Hiçbir güncelleme otomatik olarak indirilmez veya kurulmaz.</string>
+    <string name="update_consent_enable">Kontrolü etkinleştir</string>
+    <string name="update_consent_not_now">Şimdi değil</string>
+    <string name="update_available_title">Güncelleme mevcut</string>
+    <string name="update_available_body">%1$s kullanıma hazır. İndirmeden önce sürümü GitHub’da inceleyin.</string>
+    <string name="update_view_release">Sürümü görüntüle</string>
+    <string name="update_later">Daha sonra</string>
     <string name="settings_section_appearance">Görünüm</string>
     <string name="settings_item_version">Sürüm</string>
     <string name="settings_item_repository">Depo (GitHub)</string>
@@ -163,6 +181,18 @@
 
     <string name="settings_item_report_issue">Hata Bildir</string>
     <string name="settings_item_share_app">Uygulamayı Paylaş</string>
+    <string name="settings_item_star_github">GitHub’da yıldız ver</string>
+    <string name="settings_value_star_github">Bu açık kaynak projenin daha fazla kişiye ulaşmasına yardımcı olun.</string>
+    <string name="settings_item_all_apps">Tüm uygulamaları görüntüle</string>
+    <string name="other_app_password_book_title">Password Book</string>
+    <string name="other_app_password_book_summary">Çevrimdışı çalışan, AES-256 şifreli parola yöneticisi.</string>
+    <string name="other_app_kodex_title">Kodex</string>
+    <string name="other_app_kodex_summary">QR kodları oluşturun, özelleştirin ve tarayın.</string>
+    <string name="other_app_score_book_title">Score Book</string>
+    <string name="other_app_score_book_summary">Skorları sade ve anlaşılır biçimde takip edin.</string>
+    <string name="support_prompt_title">Adaptive Hz işinize yaradı mı?</string>
+    <string name="support_prompt_body">GitHub’da vereceğiniz bir yıldız veya paylaşımınız, bu açık kaynak projenin daha fazla kişiye ulaşmasına yardımcı olur. Bağımsız geliştirmeyi desteklediğiniz için teşekkürler.</string>
+    <string name="support_prompt_not_now">Şimdi değil</string>
 
     <string name="settings_item_privacy_policy">Gizlilik Politikası</string>
     <string name="settings_item_open_source_notices">Açık Kaynak Bildirimleri</string>
@@ -199,13 +229,13 @@
     <string name="settings_value_version">%1$s (%2$d)</string>
     <string name="settings_value_other_apps">Diğer uygulamalar ve yayıncı sayfası</string>
     <string name="settings_value_github_issues">GitHub Issues</string>
-    <string name="settings_value_send_github_link">GitHub bağlantısını gönder</string>
-    <string name="settings_value_privacy_short">Çevrimdışı. Veri toplanmaz.</string>
+    <string name="settings_value_send_github_link">Açık kaynak projeyi paylaşın</string>
+    <string name="settings_value_privacy_short">Analitik ve veri toplama yoktur. İsteğe bağlı güncelleme kontrolü GitHub’a bağlanır.</string>
     <string name="settings_value_third_party_licenses">Üçüncü taraf lisansları</string>
 
     <!-- Settings - share -->
     <string name="settings_share_title">%1$s paylaş</string>
-    <string name="settings_share_text">%1$s\n%2$s</string>
+    <string name="settings_share_text">%1$s; uygulama profilleri, Hızlı Ayarlar ve widget desteği sunan açık kaynaklı bir Android yenileme hızı yöneticisidir.\n%2$s</string>
 
     <!-- Settings - email -->
     <string name="settings_email_subject">%1$s geri bildirim</string>
@@ -220,13 +250,13 @@
     <string name="settings_dialog_privacy_title">Gizlilik Politikası</string>
     <string name="settings_dialog_privacy_body">
         Öne çıkanlar
-        • Bu uygulama çevrimdışı çalışır.
+        • Temel özellikler çevrimdışı çalışır.
         • Kişisel veri toplanmaz.
         • Analitik, reklam veya takipçi kullanılmaz.
         • Veri toplamak için izin istenmez.
 
         Detaylar
-        Bu uygulama kişisel bilgilerinizi toplamaz, saklamaz veya paylaşmaz. Tüm işlevler cihazınızda yerel olarak çalışır.
+        Bu uygulama kişisel bilgilerinizi toplamaz, saklamaz veya paylaşmaz. Otomatik güncelleme kontrolü etkinleştirildiğinde veya elle kontrol yaptığınızda uygulama GitHub Releases API’sine standart bir HTTPS isteği gönderir. GitHub, kendi gizlilik politikası kapsamında IP adresiniz gibi normal ağ meta verilerini alabilir. Adaptive Hz herhangi bir uygulama verisi veya hesap tanımlayıcısı göndermez. Güncellemeler hiçbir zaman otomatik olarak indirilmez veya kurulmaz.
 
         Sorularınız için Ayarlar bölümündeki e-posta üzerinden geliştiriciye ulaşabilirsiniz.
     </string>
@@ -311,6 +341,7 @@
     <string name="stability_notification_recovery_action">Kurtar</string>
     <string name="action_enable">Etkinleştir</string>
     <string name="action_cancel">İptal</string>
+    <string name="setup_adb_command_copied">ADB komutu kopyalandı</string>
 
     <string name="event_inspector_title">Olay İnceleyici</string>
     <string name="accessibility_event_inspector_title">Erişilebilirlik Olay İnceleyici</string>
@@ -395,4 +426,21 @@
     <string name="accessibility_health_notification_broken_text">Erişilebilirlik Servisi yanıt vermiyor. Adaptive Hz yenileme hızını değiştirmeyi durdurabilir. Erişilebilirlik Ayarları’nı yeniden açmak için dokunun.</string>
     <string name="accessibility_health_notification_disabled_text">Erişilebilirlik Servisi kapalı. Adaptive Hz, etkileşimleri algılamak ve yenileme hızını değiştirmek için bu servise ihtiyaç duyar. Yeniden etkinleştirmek için dokunun.</string>
     <string name="accessibility_health_notification_action">Erişilebilirlik Ayarları’nı aç</string>
+    <!-- Hızlı erişim keşfi -->
+    <string name="quick_access_section">Hızlı erişim</string>
+    <string name="quick_access_discovery_title">Adaptive Hz’i daha hızlı kontrol edin</string>
+    <string name="quick_access_discovery_description">Uygulamayı açmadan Adaptive Hz’i kontrol etmek için kısayollar ekleyin. Bunları daha sonra Ayarlar’dan değiştirebilirsiniz.</string>
+    <string name="quick_access_tile_title">Hızlı Ayarlar</string>
+    <string name="quick_access_tile_description">Bildirim panelinden Adaptive Hz’i açın veya kapatın.</string>
+    <string name="quick_access_widget_title">Ana ekran widget’ı</string>
+    <string name="quick_access_widget_description">Yenileme hızı modlarını doğrudan ana ekranınızdan değiştirin.</string>
+    <string name="quick_access_status_added">Eklendi</string>
+    <string name="quick_access_action_add">Ekle</string>
+    <string name="quick_access_action_done">Bitti</string>
+    <string name="quick_access_action_not_now">Şimdi değil</string>
+    <string name="quick_access_manual_title">Elle ekleyin</string>
+    <string name="quick_access_tile_manual_instructions">Hızlı Ayarlar’ı açın, Düzenle’ye dokunun ve Adaptive Hz’i etkin kutucuklarınızın arasına sürükleyin.</string>
+    <string name="quick_access_widget_manual_instructions">Ana ekranınızdaki boş bir alana basılı tutun, Widget’lar seçeneğini açın ve Adaptive Hz’i seçin.</string>
+    <string name="quick_access_request_failed">Sistem ekleme isteğini açamadı. Bu kısayolu elle ekleyebilirsiniz.</string>
+    <string name="quick_access_request_dismissed">Kısayol eklenmedi.</string>
 </resources>

@@ -1,26 +1,17 @@
-@file:Suppress("SameParameterValue")
-
 package com.mahmutalperenunal.adaptivehz.ui.settings
 
-import android.content.ActivityNotFoundException
-import android.content.Context
-import android.content.Intent
 import android.os.Build
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -37,46 +28,40 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.PrivacyTip
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.Password
+import androidx.compose.material.icons.outlined.QrCode2
+import androidx.compose.material.icons.outlined.Scoreboard
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.outlined.Storefront
 import androidx.compose.material.icons.outlined.Sync
+import androidx.compose.material.icons.outlined.SystemUpdate
 import androidx.compose.material.icons.outlined.Terminal
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.Alignment
 import com.mahmutalperenunal.adaptivehz.BuildConfig
 import com.mahmutalperenunal.adaptivehz.R
-import androidx.core.net.toUri
 import com.mahmutalperenunal.adaptivehz.core.engine.AdaptiveHzRuntimeState
 import com.mahmutalperenunal.adaptivehz.core.engine.model.DeviceVendor
 import com.mahmutalperenunal.adaptivehz.core.engine.model.DeviceVendorDetector
@@ -84,6 +69,25 @@ import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs
 import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs.getInteractionDropDelayMs
 import com.mahmutalperenunal.adaptivehz.core.prefs.AppLanguage
 import com.mahmutalperenunal.adaptivehz.core.prefs.AppThemeMode
+import com.mahmutalperenunal.adaptivehz.core.update.GitHubUpdateChecker
+import com.mahmutalperenunal.adaptivehz.core.update.StableRelease
+import com.mahmutalperenunal.adaptivehz.core.update.UpdateCheckResult
+import com.mahmutalperenunal.adaptivehz.ui.components.UpdateAvailableDialog
+import com.mahmutalperenunal.adaptivehz.ui.settings.components.DialogOptionRow
+import com.mahmutalperenunal.adaptivehz.ui.settings.components.LegalDialog
+import com.mahmutalperenunal.adaptivehz.ui.settings.components.QuickAccessOptions
+import com.mahmutalperenunal.adaptivehz.ui.settings.components.SectionTitle
+import com.mahmutalperenunal.adaptivehz.ui.settings.components.SettingsHeroCard
+import com.mahmutalperenunal.adaptivehz.ui.settings.components.SettingsRow
+import com.mahmutalperenunal.adaptivehz.ui.settings.components.SettingsSliderRow
+import com.mahmutalperenunal.adaptivehz.ui.settings.components.SettingsSwitchRow
+import com.mahmutalperenunal.adaptivehz.ui.settings.components.UpdateCheckUiState
+import com.mahmutalperenunal.adaptivehz.ui.settings.components.composeEmail
+import com.mahmutalperenunal.adaptivehz.ui.settings.components.formatDropDelay
+import com.mahmutalperenunal.adaptivehz.ui.settings.components.openPlayStoreApp
+import com.mahmutalperenunal.adaptivehz.ui.settings.components.openUrl
+import com.mahmutalperenunal.adaptivehz.ui.settings.components.shareText
+import kotlinx.coroutines.launch
 
 /**
  * Settings route for setup actions, diagnostics, support links and legal notices.
@@ -139,6 +143,12 @@ fun SettingsScreen(
     val themeDialogOpen = remember { mutableStateOf(false) }
     val languageDialogOpen = remember { mutableStateOf(false) }
     val batterySaverOverrideDialogOpen = remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    var automaticUpdateChecks by remember {
+        mutableStateOf(AdaptiveHzPrefs.isAutomaticUpdateCheckEnabled(appContext))
+    }
+    var updateCheckState by remember { mutableStateOf(UpdateCheckUiState.Idle) }
+    var availableRelease by remember { mutableStateOf<StableRelease?>(null) }
 
     val scrollState = rememberScrollState()
     val topBarState = rememberTopAppBarState()
@@ -171,11 +181,70 @@ fun SettingsScreen(
                 .padding(padding)
                 .verticalScroll(scrollState)
                 .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             SettingsHeroCard(
                 title = appNameText,
                 subtitle = appTaglineText
+            )
+
+            SectionTitle(stringResource(R.string.quick_access_section))
+            QuickAccessOptions(modifier = Modifier.fillMaxWidth())
+
+            SectionTitle(stringResource(R.string.settings_section_updates))
+            SettingsSwitchRow(
+                leading = Icons.Outlined.SystemUpdate,
+                title = stringResource(R.string.settings_item_automatic_update_checks),
+                subtitle = stringResource(R.string.settings_value_automatic_update_checks_summary),
+                checked = automaticUpdateChecks,
+                onCheckedChange = { enabled ->
+                    automaticUpdateChecks = enabled
+                    AdaptiveHzPrefs.setAutomaticUpdateChecksEnabled(appContext, enabled)
+                    updateCheckState = UpdateCheckUiState.Idle
+                }
+            )
+            SettingsRow(
+                leading = Icons.Outlined.Sync,
+                title = stringResource(R.string.settings_item_check_for_updates),
+                subtitle = when (updateCheckState) {
+                    UpdateCheckUiState.Idle -> stringResource(R.string.settings_value_stable_updates_summary)
+                    UpdateCheckUiState.Checking -> stringResource(R.string.update_checking)
+                    UpdateCheckUiState.UpToDate -> stringResource(R.string.update_up_to_date)
+                    UpdateCheckUiState.Failed -> stringResource(R.string.update_check_failed)
+                    UpdateCheckUiState.InvalidResponse -> stringResource(R.string.update_invalid_release)
+                },
+                onClick = if (updateCheckState == UpdateCheckUiState.Checking) {
+                    null
+                } else {
+                    {
+                        updateCheckState = UpdateCheckUiState.Checking
+                        coroutineScope.launch {
+                            AdaptiveHzPrefs.markUpdateCheckAttempt(appContext)
+                            when (val result = GitHubUpdateChecker.check()) {
+                                is UpdateCheckResult.Available -> {
+                                    updateCheckState = UpdateCheckUiState.Idle
+                                    AdaptiveHzPrefs.markReleasePrompted(
+                                        appContext,
+                                        result.release.tagName
+                                    )
+                                    availableRelease = result.release
+                                }
+
+                                UpdateCheckResult.UpToDate -> {
+                                    updateCheckState = UpdateCheckUiState.UpToDate
+                                }
+
+                                UpdateCheckResult.InvalidResponse -> {
+                                    updateCheckState = UpdateCheckUiState.InvalidResponse
+                                }
+
+                                is UpdateCheckResult.Failed -> {
+                                    updateCheckState = UpdateCheckUiState.Failed
+                                }
+                            }
+                        }
+                    }
+                }
             )
 
             SectionTitle(stringResource(R.string.settings_section_behavior))
@@ -372,14 +441,43 @@ fun SettingsScreen(
                 onClick = { openUrl(context, githubRepoUrl) }
             )
 
-            SectionTitle(stringResource(R.string.settings_section_developer))
+            SectionTitle(stringResource(R.string.settings_section_other_apps))
+            SettingsRow(
+                leading = Icons.Outlined.Password,
+                title = stringResource(R.string.other_app_password_book_title),
+                subtitle = stringResource(R.string.other_app_password_book_summary),
+                trailing = Icons.AutoMirrored.Outlined.OpenInNew,
+                onClick = {
+                    openPlayStoreApp(context, "com.mahmutalperenunal.passwordsbook")
+                }
+            )
+            SettingsRow(
+                leading = Icons.Outlined.QrCode2,
+                title = stringResource(R.string.other_app_kodex_title),
+                subtitle = stringResource(R.string.other_app_kodex_summary),
+                trailing = Icons.AutoMirrored.Outlined.OpenInNew,
+                onClick = {
+                    openPlayStoreApp(context, "com.mahmutalperenunal.kodex")
+                }
+            )
+            SettingsRow(
+                leading = Icons.Outlined.Scoreboard,
+                title = stringResource(R.string.other_app_score_book_title),
+                subtitle = stringResource(R.string.other_app_score_book_summary),
+                trailing = Icons.AutoMirrored.Outlined.OpenInNew,
+                onClick = {
+                    openPlayStoreApp(context, "com.mahmutalperenunal.skordefteri")
+                }
+            )
             SettingsRow(
                 leading = Icons.Outlined.Storefront,
-                title = developerNameText,
-                subtitle = stringResource(R.string.settings_value_other_apps),
+                title = stringResource(R.string.settings_item_all_apps),
+                subtitle = "$developerNameText · ${stringResource(R.string.settings_value_other_apps)}",
                 trailing = Icons.AutoMirrored.Outlined.OpenInNew,
                 onClick = { openUrl(context, playStoreDeveloperUrl) }
             )
+
+            SectionTitle(stringResource(R.string.settings_section_developer))
             SettingsRow(
                 leading = Icons.Outlined.Email,
                 title = stringResource(R.string.settings_item_email),
@@ -396,6 +494,13 @@ fun SettingsScreen(
             )
 
             SectionTitle(stringResource(R.string.settings_section_support))
+            SettingsRow(
+                leading = Icons.Outlined.FavoriteBorder,
+                title = stringResource(R.string.settings_item_star_github),
+                subtitle = stringResource(R.string.settings_value_star_github),
+                trailing = Icons.AutoMirrored.Outlined.OpenInNew,
+                onClick = { openUrl(context, githubRepoUrl) }
+            )
             SettingsRow(
                 leading = Icons.Outlined.BugReport,
                 title = stringResource(R.string.settings_item_report_issue),
@@ -483,6 +588,7 @@ fun SettingsScreen(
                 Column {
                     DialogOptionRow(
                         text = stringResource(R.string.settings_value_theme_system),
+                        selected = themeMode == AppThemeMode.SYSTEM,
                         onClick = {
                             onThemeModeChanged(AppThemeMode.SYSTEM)
                             themeDialogOpen.value = false
@@ -490,6 +596,7 @@ fun SettingsScreen(
                     )
                     DialogOptionRow(
                         text = stringResource(R.string.settings_value_theme_light),
+                        selected = themeMode == AppThemeMode.LIGHT,
                         onClick = {
                             onThemeModeChanged(AppThemeMode.LIGHT)
                             themeDialogOpen.value = false
@@ -497,6 +604,7 @@ fun SettingsScreen(
                     )
                     DialogOptionRow(
                         text = stringResource(R.string.settings_value_theme_dark),
+                        selected = themeMode == AppThemeMode.DARK,
                         onClick = {
                             onThemeModeChanged(AppThemeMode.DARK)
                             themeDialogOpen.value = false
@@ -516,6 +624,7 @@ fun SettingsScreen(
                 Column {
                     DialogOptionRow(
                         text = stringResource(R.string.settings_value_language_system),
+                        selected = appLanguage == AppLanguage.SYSTEM,
                         onClick = {
                             onAppLanguageChanged(AppLanguage.SYSTEM)
                             languageDialogOpen.value = false
@@ -523,6 +632,7 @@ fun SettingsScreen(
                     )
                     DialogOptionRow(
                         text = stringResource(R.string.settings_value_language_english),
+                        selected = appLanguage == AppLanguage.EN,
                         onClick = {
                             onAppLanguageChanged(AppLanguage.EN)
                             languageDialogOpen.value = false
@@ -530,6 +640,7 @@ fun SettingsScreen(
                     )
                     DialogOptionRow(
                         text = stringResource(R.string.settings_value_language_turkish),
+                        selected = appLanguage == AppLanguage.TR,
                         onClick = {
                             onAppLanguageChanged(AppLanguage.TR)
                             languageDialogOpen.value = false
@@ -537,6 +648,7 @@ fun SettingsScreen(
                     )
                     DialogOptionRow(
                         text = stringResource(R.string.settings_value_language_spanish),
+                        selected = appLanguage == AppLanguage.ES,
                         onClick = {
                             onAppLanguageChanged(AppLanguage.ES)
                             languageDialogOpen.value = false
@@ -544,6 +656,7 @@ fun SettingsScreen(
                     )
                     DialogOptionRow(
                         text = stringResource(R.string.settings_value_language_portuguese_brazil),
+                        selected = appLanguage == AppLanguage.PT_BR,
                         onClick = {
                             onAppLanguageChanged(AppLanguage.PT_BR)
                             languageDialogOpen.value = false
@@ -551,6 +664,17 @@ fun SettingsScreen(
                     )
                 }
             }
+        )
+    }
+
+    availableRelease?.let { release ->
+        UpdateAvailableDialog(
+            release = release,
+            onViewRelease = {
+                openUrl(context, release.htmlUrl)
+                availableRelease = null
+            },
+            onDismiss = { availableRelease = null }
         )
     }
 
@@ -604,444 +728,5 @@ fun SettingsScreen(
                 )
             }
         )
-    }
-}
-
-/**
- * Header card displaying the app name and tagline.
- */
-@Composable
-private fun SettingsHeroCard(
-    title: String,
-    subtitle: String
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(32.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-/**
- * Section label used to group related settings items.
- */
-@Composable
-private fun SectionTitle(text: String) {
-    Text(
-        text = text.uppercase(),
-        style = MaterialTheme.typography.labelMedium.copy(
-            fontWeight = FontWeight.Bold
-        ),
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 4.dp, top = 2.dp)
-    )
-}
-
-/**
- * Reusable settings row with optional subtitle, trailing icon and click action.
- */
-@Composable
-private fun SettingsRow(
-    leading: ImageVector,
-    title: String,
-    subtitle: String? = null,
-    subtitleMaxLines: Int = 2,
-    trailing: ImageVector? = null,
-    onClick: (() -> Unit)?,
-) {
-    val clickable = onClick != null
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(
-                if (clickable) Modifier.clickable(onClick = onClick) else Modifier
-            ),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Surface(
-                modifier = Modifier.size(46.dp),
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = leading,
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                subtitle?.let {
-                    Text(
-                        text = it,
-                        maxLines = subtitleMaxLines,
-                        overflow = TextOverflow.Ellipsis,
-                        softWrap = subtitleMaxLines != 1,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            trailing?.let {
-                Spacer(modifier = Modifier.width(12.dp))
-
-                Icon(
-                    imageVector = it,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
-
-/**
- * Reusable settings row for toggleable options.
- */
-@Composable
-private fun SettingsSwitchRow(
-    leading: ImageVector,
-    title: String,
-    subtitle: String? = null,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onCheckedChange(!checked) },
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Surface(
-                modifier = Modifier.size(46.dp),
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = leading,
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                subtitle?.let {
-                    Text(
-                        text = it,
-                        maxLines = 10,
-                        overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Switch(
-                checked = checked,
-                onCheckedChange = onCheckedChange,
-                colors = SwitchDefaults.colors()
-            )
-        }
-    }
-}
-
-@Composable
-private fun SettingsSliderRow(
-    leading: ImageVector,
-    title: String,
-    subtitle: String,
-    options: List<Long>,
-    selectedValue: Long,
-    onValueSelected: (Long) -> Unit,
-) {
-    val selectedIndex = options.indexOf(selectedValue)
-        .takeIf { it >= 0 }
-        ?: options.indexOf(
-            AdaptiveHzPrefs.DEFAULT_INTERACTION_DROP_DELAY_MS
-        ).coerceAtLeast(0)
-
-    var sliderValue by remember(selectedIndex) {
-        mutableFloatStateOf(selectedIndex.toFloat())
-    }
-
-    val activeIndex = sliderValue
-        .toInt()
-        .coerceIn(0, options.lastIndex)
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Surface(
-                    modifier = Modifier.size(46.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = leading,
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold
-                    )
-
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            Slider(
-                value = sliderValue,
-                onValueChange = { sliderValue = it },
-                valueRange = 0f..options.lastIndex.toFloat(),
-                steps = (options.size - 2).coerceAtLeast(0),
-                onValueChangeFinished = {
-                    val normalizedIndex = sliderValue
-                        .toInt()
-                        .coerceIn(0, options.lastIndex)
-
-                    onValueSelected(options[normalizedIndex])
-                }
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                options.forEachIndexed { index, option ->
-                    val selected = index == activeIndex
-
-                    Text(
-                        text = if (selected) formatDropDelay(option) else "",
-                        style = if (selected) {
-                            MaterialTheme.typography.labelLarge
-                        } else {
-                            MaterialTheme.typography.labelMedium
-                        },
-                        color = if (selected) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f)
-                        },
-                        fontWeight = if (selected) {
-                            FontWeight.Bold
-                        } else {
-                            FontWeight.Normal
-                        }
-                    )
-                }
-            }
-        }
-    }
-}
-
-private fun formatDropDelay(delayMs: Long): String {
-    return when {
-        delayMs == 0L -> "Instant"
-        delayMs < 1000L -> "${delayMs}ms"
-        delayMs % 1000L == 0L -> "${delayMs / 1000L}s"
-        else -> "${delayMs / 1000f}s"
-    }
-}
-
-@Composable
-private fun DialogOptionRow(
-    text: String,
-    onClick: () -> Unit
-) {
-    Text(
-        text = text,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 14.dp),
-        style = MaterialTheme.typography.bodyLarge
-    )
-}
-
-/**
- * Represents legal dialogs backed by string resources.
- */
-@Immutable
-private sealed class LegalDialog(
-    val titleRes: Int,
-    val bodyRes: Int,
-) {
-    data object PrivacyPolicy : LegalDialog(
-        R.string.settings_dialog_privacy_title,
-        R.string.settings_dialog_privacy_body
-    )
-
-    data object OpenSourceNotices : LegalDialog(
-        R.string.settings_dialog_notices_title,
-        R.string.settings_dialog_notices_body
-    )
-}
-
-/**
- * Opens a URL in the default browser.
- */
-private fun openUrl(context: Context, url: String) {
-    val appContext = context.applicationContext
-    val intent = Intent(Intent.ACTION_VIEW, url.toUri()).apply {
-        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    }
-
-    try {
-        appContext.startActivity(intent)
-    } catch (_: ActivityNotFoundException) {
-        Toast.makeText(appContext, R.string.error, Toast.LENGTH_SHORT).show()
-    }
-}
-
-/**
- * Launches an email client with a prefilled recipient and subject.
- */
-private fun composeEmail(context: Context, email: String, subject: String) {
-    val appContext = context.applicationContext
-    val intent = Intent(Intent.ACTION_SENDTO).apply {
-        data = "mailto:$email".toUri()
-        putExtra(Intent.EXTRA_SUBJECT, subject)
-        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    }
-
-    try {
-        appContext.startActivity(intent)
-    } catch (_: ActivityNotFoundException) {
-        Toast.makeText(appContext, R.string.error, Toast.LENGTH_SHORT).show()
-    }
-}
-
-/**
- * Opens the Android share sheet with plain text content.
- */
-private fun shareText(context: Context, title: String, text: String) {
-    val appContext = context.applicationContext
-    val sendIntent = Intent(Intent.ACTION_SEND).apply {
-        type = "text/plain"
-        putExtra(Intent.EXTRA_TEXT, text)
-    }
-    val chooser = Intent.createChooser(sendIntent, title).apply {
-        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    }
-
-    try {
-        appContext.startActivity(chooser)
-    } catch (_: ActivityNotFoundException) {
-        Toast.makeText(appContext, R.string.error, Toast.LENGTH_SHORT).show()
     }
 }

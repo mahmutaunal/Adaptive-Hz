@@ -147,15 +147,33 @@
 
     <!-- Settings - sections -->
     <string name="settings_section_behavior">Behavior</string>
+    <string name="settings_section_updates">Updates</string>
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_section_debug">Debug</string>
     <string name="settings_section_about">About</string>
     <string name="settings_section_developer">Developer</string>
+    <string name="settings_section_other_apps">More from AlpWare Studio</string>
     <string name="settings_section_support">Support</string>
     <string name="settings_section_legal">Legal</string>
 
     <!-- Settings - items -->
     <string name="settings_item_stability_mode">Stability Mode</string>
+    <string name="settings_item_automatic_update_checks">Automatic update checks</string>
+    <string name="settings_value_automatic_update_checks_summary">Checks GitHub for stable releases at most once every 24 hours. Beta and pre-release versions are ignored.</string>
+    <string name="settings_item_check_for_updates">Check for updates</string>
+    <string name="settings_value_stable_updates_summary">Manually check the latest stable GitHub release.</string>
+    <string name="update_checking">Checking GitHub…</string>
+    <string name="update_up_to_date">You’re using the latest stable version.</string>
+    <string name="update_check_failed">Couldn’t check for updates. Check your connection and try again.</string>
+    <string name="update_invalid_release">The latest release does not have a valid version number.</string>
+    <string name="update_consent_title">Stay up to date?</string>
+    <string name="update_consent_body">Adaptive Hz can check GitHub for new stable releases at most once every 24 hours. Beta and pre-release versions are ignored. No update is downloaded or installed automatically.</string>
+    <string name="update_consent_enable">Enable checks</string>
+    <string name="update_consent_not_now">Not now</string>
+    <string name="update_available_title">Update available</string>
+    <string name="update_available_body">%1$s is available. Review the release on GitHub before downloading.</string>
+    <string name="update_view_release">View release</string>
+    <string name="update_later">Later</string>
     <string name="settings_item_version">Version</string>
     <string name="settings_item_repository">Repository</string>
     <string name="settings_item_email">Email</string>
@@ -163,6 +181,18 @@
 
     <string name="settings_item_report_issue">Report an Issue</string>
     <string name="settings_item_share_app">Share App</string>
+    <string name="settings_item_star_github">Star on GitHub</string>
+    <string name="settings_value_star_github">Help more people discover this open-source project.</string>
+    <string name="settings_item_all_apps">View all apps</string>
+    <string name="other_app_password_book_title">Password Book</string>
+    <string name="other_app_password_book_summary">An offline, AES-256 encrypted password manager.</string>
+    <string name="other_app_kodex_title">Kodex</string>
+    <string name="other_app_kodex_summary">Create, customize and scan QR codes.</string>
+    <string name="other_app_score_book_title">Score Book</string>
+    <string name="other_app_score_book_summary">Keep scores simply and clearly.</string>
+    <string name="support_prompt_title">Enjoying Adaptive Hz?</string>
+    <string name="support_prompt_body">A GitHub star or a share helps this open-source project reach more people. Thank you for supporting independent development.</string>
+    <string name="support_prompt_not_now">Not now</string>
 
     <string name="settings_item_privacy_policy">Privacy Policy</string>
     <string name="settings_item_open_source_notices">Open source notices</string>
@@ -199,13 +229,13 @@
     <string name="settings_value_version">%1$s (%2$d)</string>
     <string name="settings_value_other_apps">Other apps &amp; publisher page</string>
     <string name="settings_value_github_issues">GitHub Issues</string>
-    <string name="settings_value_send_github_link">Send GitHub link</string>
-    <string name="settings_value_privacy_short">Offline. No data collection.</string>
+    <string name="settings_value_send_github_link">Share the open-source project</string>
+    <string name="settings_value_privacy_short">No analytics or data collection. Optional update checks contact GitHub.</string>
     <string name="settings_value_third_party_licenses">Third-party licenses</string>
 
     <!-- Settings - share -->
     <string name="settings_share_title">Share %1$s</string>
-    <string name="settings_share_text">%1$s\n%2$s</string>
+    <string name="settings_share_text">%1$s is an open-source Android refresh-rate controller with per-app profiles, Quick Settings and widgets.\n%2$s</string>
 
     <!-- Settings - email -->
     <string name="settings_email_subject">%1$s feedback</string>
@@ -220,13 +250,13 @@
     <string name="settings_dialog_privacy_title">Privacy Policy</string>
     <string name="settings_dialog_privacy_body">
         Key points
-        • This app works offline.
+        • Core features work offline.
         • No personal data is collected.
         • No analytics, ads, or trackers are used.
         • No permissions are requested for data collection.
 
         Details
-        This application does not collect, store, or share any personal information. All functionality runs locally on your device.
+        This application does not collect, store, or share personal information. When automatic update checks are enabled, or when you manually check, the app sends a standard HTTPS request to the GitHub Releases API. GitHub may receive normal network metadata such as your IP address under its own privacy policy. Adaptive Hz sends no app data or account identifier. Updates are never downloaded or installed automatically.
 
         If you have questions, contact the developer via the email in Settings.
     </string>
@@ -333,6 +363,7 @@
     <string name="stability_notification_recovery_action">Recover</string>
     <string name="action_enable">Enable</string>
     <string name="action_cancel">Cancel</string>
+    <string name="setup_adb_command_copied">ADB command copied</string>
 
     <string name="diagnostics_system_title">System</string>
     <string name="diagnostics_vendor">Vendor</string>
@@ -390,4 +421,21 @@
     <string name="accessibility_health_notification_broken_text">Accessibility Service is not responding. Adaptive Hz may stop switching refresh rates. Tap to reopen Accessibility Settings.</string>
     <string name="accessibility_health_notification_disabled_text">Accessibility Service is disabled. Adaptive Hz needs it to detect interactions and switch refresh rates. Tap to enable it again.</string>
     <string name="accessibility_health_notification_action">Open Accessibility Settings</string>
+    <!-- Quick access discovery -->
+    <string name="quick_access_section">Quick access</string>
+    <string name="quick_access_discovery_title">Control Adaptive Hz faster</string>
+    <string name="quick_access_discovery_description">Add shortcuts to control Adaptive Hz without opening the app. You can change these later in Settings.</string>
+    <string name="quick_access_tile_title">Quick Settings</string>
+    <string name="quick_access_tile_description">Turn Adaptive Hz on or off from the notification panel.</string>
+    <string name="quick_access_widget_title">Home screen widget</string>
+    <string name="quick_access_widget_description">Switch refresh-rate modes directly from your home screen.</string>
+    <string name="quick_access_status_added">Added</string>
+    <string name="quick_access_action_add">Add</string>
+    <string name="quick_access_action_done">Done</string>
+    <string name="quick_access_action_not_now">Not now</string>
+    <string name="quick_access_manual_title">Add manually</string>
+    <string name="quick_access_tile_manual_instructions">Open Quick Settings, tap Edit, then drag Adaptive Hz into your active tiles.</string>
+    <string name="quick_access_widget_manual_instructions">Touch and hold an empty area of your home screen, choose Widgets, then select Adaptive Hz.</string>
+    <string name="quick_access_request_failed">The system could not open the add request. You can add this shortcut manually.</string>
+    <string name="quick_access_request_dismissed">Shortcut was not added.</string>
 </resources>

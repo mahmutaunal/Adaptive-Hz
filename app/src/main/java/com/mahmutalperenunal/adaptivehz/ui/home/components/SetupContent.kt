@@ -1,11 +1,15 @@
 package com.mahmutalperenunal.adaptivehz.ui.home.components
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -29,16 +33,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Accessibility
 import androidx.compose.material.icons.outlined.AdminPanelSettings
 import androidx.compose.material.icons.outlined.BatterySaver
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Terminal
-import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import com.mahmutalperenunal.adaptivehz.R
 
 /**
@@ -114,14 +118,6 @@ fun SetupComponent(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Shows the equivalent manual ADB command for transparency.
-                CodeBlock(
-                    label = stringResource(id = R.string.setup_adb_instruction),
-                    text = "adb shell pm grant com.mahmutalperenunal.adaptivehz android.permission.WRITE_SECURE_SETTINGS"
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
                 OutlinedButton(
                     onClick = onGrantWithRoot,
                     modifier = Modifier.fillMaxWidth(),
@@ -134,9 +130,15 @@ fun SetupComponent(
                         imageVector = Icons.Outlined.AdminPanelSettings,
                         contentDescription = null
                     )
-                    Spacer(modifier = Modifier.height(0.dp))
                     Text(stringResource(id = R.string.setup_root_grant_button))
                 }
+            }
+
+            if (!adbGranted) {
+                CodeBlock(
+                    label = stringResource(id = R.string.setup_adb_instruction),
+                    text = "adb shell pm grant com.mahmutalperenunal.adaptivehz android.permission.WRITE_SECURE_SETTINGS"
+                )
             }
         }
     )
@@ -308,29 +310,32 @@ private fun SetupCard(
                         text = title,
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        maxLines = Int.MAX_VALUE
                     )
                     Text(
                         text = description,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        overflow = TextOverflow.Ellipsis
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
                 if (ok) {
                     IconButton(onClick = onPrimaryClick) {
                         Icon(
-                            imageVector = Icons.Outlined.Refresh,
+                            imageVector = Icons.Outlined.CheckCircle,
                             contentDescription = stringResource(id = R.string.retry),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
-                } else {
+                }
+            }
+
+            if (!ok) {
+                Row(modifier = Modifier.fillMaxWidth()) {
                     StatusPill(
                         text = okLabelOverride ?: stringResource(id = R.string.label_missing),
-                        positive = false
+                        positive = false,
+                        critical = okLabelOverride == null
                     )
                 }
             }
@@ -339,8 +344,7 @@ private fun SetupCard(
                 Text(
                     text = successMessage,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.95f),
-                    modifier = Modifier.padding(start = 62.dp)
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
 
@@ -372,7 +376,7 @@ private fun SetupHeroCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            containerColor = MaterialTheme.colorScheme.primaryContainer
         )
     ) {
         Column(
@@ -387,7 +391,7 @@ private fun SetupHeroCard(
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
     }
@@ -396,24 +400,25 @@ private fun SetupHeroCard(
 @Composable
 private fun StatusPill(
     text: String,
-    positive: Boolean
+    positive: Boolean,
+    critical: Boolean = false
 ) {
     Surface(
         shape = RoundedCornerShape(14.dp),
-        color = if (positive) {
-            MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.75f)
-        } else {
-            MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.7f)
+        color = when {
+            positive -> MaterialTheme.colorScheme.primaryContainer
+            critical -> MaterialTheme.colorScheme.errorContainer
+            else -> MaterialTheme.colorScheme.secondaryContainer
         }
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Bold,
-            color = if (positive) {
-                MaterialTheme.colorScheme.onTertiaryContainer
-            } else {
-                MaterialTheme.colorScheme.onErrorContainer
+            color = when {
+                positive -> MaterialTheme.colorScheme.onPrimaryContainer
+                critical -> MaterialTheme.colorScheme.onErrorContainer
+                else -> MaterialTheme.colorScheme.onSecondaryContainer
             },
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
             maxLines = 1
@@ -422,31 +427,74 @@ private fun StatusPill(
 }
 
 /**
- * Displays command snippets in a readable block.
+ * Displays command snippets in a readable block with one-tap copy support.
  */
 @Composable
 private fun CodeBlock(
     label: String,
     text: String
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    val context = LocalContext.current
+    val copiedMessage = stringResource(R.string.setup_adb_command_copied)
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Text(
-            text = text,
+
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
                     color = MaterialTheme.colorScheme.surfaceContainerHigh,
                     shape = RoundedCornerShape(14.dp)
                 )
-                .padding(12.dp),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+                .padding(
+                    start = 12.dp,
+                    top = 8.dp,
+                    end = 4.dp,
+                    bottom = 8.dp
+                ),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            SelectionContainer(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            IconButton(
+                onClick = {
+                    val clipboard = context.getSystemService(
+                        Context.CLIPBOARD_SERVICE
+                    ) as ClipboardManager
+
+                    clipboard.setPrimaryClip(
+                        ClipData.newPlainText(
+                            "ADB command",
+                            text
+                        )
+                    )
+
+                    Toast.makeText(
+                        context,
+                        copiedMessage,
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.ContentCopy,
+                    contentDescription = stringResource(id = R.string.copy)
+                )
+            }
+        }
     }
 }
 
@@ -509,23 +557,22 @@ private fun SetupSwitchCard(
                         text = title,
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        maxLines = Int.MAX_VALUE
                     )
                     Text(
                         text = description,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
+                        maxLines = Int.MAX_VALUE
                     )
                 }
 
-                StatusPill(
-                    text = statusLabel,
-                    positive = checked
-                )
             }
+
+            StatusPill(
+                text = statusLabel,
+                positive = checked
+            )
 
             notificationStatus?.let {
                 Text(

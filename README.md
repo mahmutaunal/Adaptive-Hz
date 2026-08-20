@@ -110,19 +110,54 @@ Adaptive Hz was built to fix this gap with a simple, system-wide solution.
 
 ## Screenshots
 
-<p align="center">
-  <img src="assets/1.png" width="250" />
-  <img src="assets/2.png" width="250" />
-  <img src="assets/3.png" width="250" />
-  <img src="assets/4.png" width="250" />
-  <img src="assets/5.png" width="250" />
-</p>
+A compact look at Adaptive Hz across the app and Android system surfaces.
 
-- Setup & Permissions
-- Dashboard (Light mode)
-- Settings
-- Per-App
-- Dashboard (Dark mode)
+<table>
+  <tr>
+    <td align="center" valign="top" width="25%">
+      <img src="assets/1.png" width="220" alt="Adaptive Hz home screen widget" /><br />
+      <strong>Home Screen Widget</strong><br />
+      <sub>Switch refresh-rate modes directly from the launcher.</sub>
+    </td>
+    <td align="center" valign="top" width="25%">
+      <img src="assets/2.png" width="220" alt="Adaptive Hz notification controls" /><br />
+      <strong>Notification Controls</strong><br />
+      <sub>Change modes from the persistent notification.</sub>
+    </td>
+    <td align="center" valign="top" width="25%">
+      <img src="assets/3.png" width="220" alt="Adaptive Hz Quick Settings tile" /><br />
+      <strong>Quick Settings Tile</strong><br />
+      <sub>Turn Adaptive Hz on or off without opening the app.</sub>
+    </td>
+    <td align="center" valign="top" width="25%">
+      <img src="assets/4.png" width="220" alt="Adaptive Hz guided setup screen" /><br />
+      <strong>Guided Setup</strong><br />
+      <sub>Follow clear permission steps with a copyable ADB command.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" valign="top" width="25%">
+      <img src="assets/5.png" width="220" alt="Adaptive Hz light dashboard" /><br />
+      <strong>Dashboard · Light</strong><br />
+      <sub>See the active mode and reach recent app profiles quickly.</sub>
+    </td>
+    <td align="center" valign="top" width="25%">
+      <img src="assets/6.png" width="220" alt="Adaptive Hz per-app profiles screen" /><br />
+      <strong>Per-app Profiles</strong><br />
+      <sub>Search, filter and configure refresh behavior for each app.</sub>
+    </td>
+    <td align="center" valign="top" width="25%">
+      <img src="assets/7.png" width="220" alt="Adaptive Hz settings screen" /><br />
+      <strong>Settings &amp; Quick Access</strong><br />
+      <sub>Manage shortcuts, updates and app preferences in one place.</sub>
+    </td>
+    <td align="center" valign="top" width="25%">
+      <img src="assets/8.png" width="220" alt="Adaptive Hz dark dashboard" /><br />
+      <strong>Dashboard · Dark</strong><br />
+      <sub>Enjoy the complete Material You experience in dark theme.</sub>
+    </td>
+  </tr>
+</table>
 
 Many Android devices offer multiple refresh rates (60Hz / 90Hz / 120Hz) but:
 

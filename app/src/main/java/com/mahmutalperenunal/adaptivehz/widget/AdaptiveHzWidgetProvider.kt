@@ -50,6 +50,7 @@ class AdaptiveHzWidgetProvider : AppWidgetProvider() {
             ACTION_SET_ADAPTIVE -> AdaptiveHzActionHandler.applyMode(appContext, AdaptiveHzMode.ADAPTIVE)
             ACTION_SET_MAX -> AdaptiveHzActionHandler.applyMode(appContext, AdaptiveHzMode.FORCE_MAX)
             ACTION_REFRESH -> AdaptiveHzWidgetUpdater.refreshAll(appContext)
+            ACTION_WIDGET_PINNED -> AdaptiveHzWidgetUpdater.refreshAll(appContext)
         }
     }
 
@@ -64,6 +65,8 @@ class AdaptiveHzWidgetProvider : AppWidgetProvider() {
             "com.mahmutalperenunal.adaptivehz.widget.action.SET_MAX"
         const val ACTION_REFRESH =
             "com.mahmutalperenunal.adaptivehz.widget.action.REFRESH"
+        const val ACTION_WIDGET_PINNED =
+            "com.mahmutalperenunal.adaptivehz.widget.action.PINNED"
 
         fun getBroadcastPendingIntent(
             context: Context,

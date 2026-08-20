@@ -2,10 +2,12 @@ package com.mahmutalperenunal.adaptivehz.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// Calm blue fallbacks used on devices that do not support Material You dynamic color.
+// Android 12+ still derives the complete scheme from the user's wallpaper.
+val Blue80 = Color(0xFFADC6FF)
+val BlueGrey80 = Color(0xFFBEC6DC)
+val Cyan80 = Color(0xFF9DCDDC)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+val Blue40 = Color(0xFF355F9F)
+val BlueGrey40 = Color(0xFF565F71)
+val Cyan40 = Color(0xFF386573)

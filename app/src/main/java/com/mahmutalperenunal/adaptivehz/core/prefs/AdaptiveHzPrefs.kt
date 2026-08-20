@@ -1,9 +1,11 @@
 package com.mahmutalperenunal.adaptivehz.core.prefs
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.mahmutalperenunal.adaptivehz.core.engine.model.AdaptiveHzMode
 import com.mahmutalperenunal.adaptivehz.core.engine.model.AppRefreshProfileMode
+import com.mahmutalperenunal.adaptivehz.core.support.SupportPromptPolicy
 
 /**
  * Centralized preferences access for lightweight app state.
@@ -52,7 +54,19 @@ object AdaptiveHzPrefs {
     const val KEY_THEME_MODE = "theme_mode"
     const val KEY_APP_LANGUAGE = "app_language"
     const val KEY_INTERACTION_DROP_DELAY_MS = "interaction_drop_delay_ms"
+    const val KEY_QUICK_SETTINGS_TILE_ADDED = "quick_settings_tile_added"
+    const val KEY_QUICK_ACCESS_DISCOVERY_SHOWN = "quick_access_discovery_shown"
+    const val KEY_UPDATE_CHECK_CHOICE_MADE = "update_check_choice_made"
+    const val KEY_AUTOMATIC_UPDATE_CHECKS = "automatic_update_checks"
+    const val KEY_LAST_UPDATE_CHECK_AT = "last_update_check_at"
+    const val KEY_LAST_PROMPTED_RELEASE_TAG = "last_prompted_release_tag"
+    const val KEY_SUPPORT_PROMPT_SHOWN = "support_prompt_shown"
+    const val KEY_SUPPORT_SESSION_COUNT = "support_session_count"
+    const val KEY_SUPPORT_DISTINCT_DAY_COUNT = "support_distinct_day_count"
+    const val KEY_SUPPORT_LAST_SESSION_AT = "support_last_session_at"
+    const val KEY_SUPPORT_LAST_SESSION_DAY = "support_last_session_day"
     const val DEFAULT_INTERACTION_DROP_DELAY_MS = 2000L
+    const val UPDATE_CHECK_INTERVAL_MS = 24L * 60L * 60L * 1000L
     val INTERACTION_DROP_DELAY_OPTIONS_MS = listOf(250L, 500L, 750L, 1000L, 1500L, 2000L, 2500L, 3000L, 3500L, 4000L, 4500L)
 
     private fun prefs(context: Context) =
@@ -133,6 +147,148 @@ object AdaptiveHzPrefs {
 
     fun setCurrentMode(context: Context, mode: AdaptiveHzMode) {
         prefs(context).edit { putString(KEY_CURRENT_MODE, mode.name) }
+    }
+
+    fun isQuickSettingsTileAdded(context: Context): Boolean {
+        return prefs(context).getBoolean(KEY_QUICK_SETTINGS_TILE_ADDED, false)
+    }
+
+    fun setQuickSettingsTileAdded(context: Context, added: Boolean) {
+        prefs(context).edit { putBoolean(KEY_QUICK_SETTINGS_TILE_ADDED, added) }
+    }
+
+    fun observeQuickSettingsTile(
+        context: Context,
+        onChanged: (Boolean) -> Unit
+    ): () -> Unit {
+        val appContext = context.applicationContext
+        val sharedPreferences = prefs(appContext)
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == KEY_QUICK_SETTINGS_TILE_ADDED) {
+                onChanged(isQuickSettingsTileAdded(appContext))
+            }
+        }
+
+        sharedPreferences.registerOnSharedPreferenceChangeListener(listener)
+        return {
+            sharedPreferences.unregisterOnSharedPreferenceChangeListener(listener)
+        }
+    }
+
+    fun shouldShowQuickAccessDiscovery(context: Context): Boolean {
+        return !prefs(context).getBoolean(KEY_QUICK_ACCESS_DISCOVERY_SHOWN, false)
+    }
+
+    fun markQuickAccessDiscoveryShown(context: Context) {
+        prefs(context).edit { putBoolean(KEY_QUICK_ACCESS_DISCOVERY_SHOWN, true) }
+    }
+
+    fun hasMadeUpdateCheckChoice(context: Context): Boolean {
+        return prefs(context).getBoolean(KEY_UPDATE_CHECK_CHOICE_MADE, false)
+    }
+
+    fun isAutomaticUpdateCheckEnabled(context: Context): Boolean {
+        return prefs(context).getBoolean(KEY_AUTOMATIC_UPDATE_CHECKS, false)
+    }
+
+    fun setAutomaticUpdateChecksEnabled(context: Context, enabled: Boolean) {
+        prefs(context).edit {
+            putBoolean(KEY_UPDATE_CHECK_CHOICE_MADE, true)
+            putBoolean(KEY_AUTOMATIC_UPDATE_CHECKS, enabled)
+        }
+    }
+
+    fun shouldRunAutomaticUpdateCheck(
+        context: Context,
+        nowMillis: Long = System.currentTimeMillis()
+    ): Boolean {
+        if (!isAutomaticUpdateCheckEnabled(context)) return false
+        val lastCheck = prefs(context).getLong(KEY_LAST_UPDATE_CHECK_AT, 0L)
+        return lastCheck == 0L || nowMillis - lastCheck >= UPDATE_CHECK_INTERVAL_MS
+    }
+
+    fun markUpdateCheckAttempt(
+        context: Context,
+        atMillis: Long = System.currentTimeMillis()
+    ) {
+        prefs(context).edit { putLong(KEY_LAST_UPDATE_CHECK_AT, atMillis) }
+    }
+
+    fun wasReleaseAlreadyPrompted(context: Context, tag: String): Boolean {
+        return prefs(context).getString(KEY_LAST_PROMPTED_RELEASE_TAG, null) == tag
+    }
+
+    fun markReleasePrompted(context: Context, tag: String) {
+        prefs(context).edit { putString(KEY_LAST_PROMPTED_RELEASE_TAG, tag) }
+    }
+
+    /** Records a qualified session without analytics or network access. */
+    fun recordSupportSession(
+        context: Context,
+        nowMillis: Long = System.currentTimeMillis(),
+        localEpochDay: Long,
+    ) {
+        val storage = prefs(context)
+        val lastSessionAt = storage.getLong(KEY_SUPPORT_LAST_SESSION_AT, 0L)
+        if (
+            lastSessionAt != 0L &&
+            nowMillis - lastSessionAt < SupportPromptPolicy.MIN_SESSION_GAP_MS
+        ) {
+            return
+        }
+
+        val lastSessionDay = storage.getLong(KEY_SUPPORT_LAST_SESSION_DAY, Long.MIN_VALUE)
+        val distinctDays = storage.getInt(KEY_SUPPORT_DISTINCT_DAY_COUNT, 0) +
+            if (lastSessionDay != localEpochDay) 1 else 0
+
+        storage.edit {
+            putInt(KEY_SUPPORT_SESSION_COUNT, getSupportSessionCount(context) + 1)
+            putInt(KEY_SUPPORT_DISTINCT_DAY_COUNT, distinctDays)
+            putLong(KEY_SUPPORT_LAST_SESSION_AT, nowMillis)
+            putLong(KEY_SUPPORT_LAST_SESSION_DAY, localEpochDay)
+        }
+    }
+
+    fun shouldShowSupportPrompt(context: Context): Boolean {
+        val storage = prefs(context)
+        return SupportPromptPolicy.isEligible(
+            promptShown = storage.getBoolean(KEY_SUPPORT_PROMPT_SHOWN, false),
+            sessionCount = getSupportSessionCount(context),
+            distinctDayCount = storage.getInt(KEY_SUPPORT_DISTINCT_DAY_COUNT, 0),
+        )
+    }
+
+    fun markSupportPromptShown(context: Context) {
+        prefs(context).edit { putBoolean(KEY_SUPPORT_PROMPT_SHOWN, true) }
+    }
+
+    private fun getSupportSessionCount(context: Context): Int {
+        return prefs(context).getInt(KEY_SUPPORT_SESSION_COUNT, 0)
+    }
+
+    /**
+     * Observes persisted mode changes made by any in-process surface, including
+     * the Quick Settings tile, widget and foreground notification.
+     *
+     * Returns a cleanup callback that must be invoked when observation stops.
+     */
+    fun observeCurrentMode(
+        context: Context,
+        onChanged: (AdaptiveHzMode) -> Unit
+    ): () -> Unit {
+        val appContext = context.applicationContext
+        val sharedPreferences = prefs(appContext)
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == KEY_CURRENT_MODE) {
+                onChanged(getCurrentMode(appContext))
+            }
+        }
+
+        sharedPreferences.registerOnSharedPreferenceChangeListener(listener)
+
+        return {
+            sharedPreferences.unregisterOnSharedPreferenceChangeListener(listener)
+        }
     }
 
     /**

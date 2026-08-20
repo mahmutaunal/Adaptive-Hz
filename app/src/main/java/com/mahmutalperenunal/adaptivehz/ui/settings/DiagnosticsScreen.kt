@@ -22,7 +22,8 @@ import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Card
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -30,7 +31,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -111,9 +111,10 @@ fun DiagnosticsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            ElevatedCard(
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            Card(
+                shape = MaterialTheme.shapes.extraLarge,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
             ) {
                 Column(
@@ -123,15 +124,15 @@ fun DiagnosticsScreen(
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        ElevatedCard(
-                            colors = CardDefaults.elevatedCardColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primary
                             )
                         ) {
                             Icon(
                                 imageVector = Icons.Outlined.BugReport,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
+                                tint = MaterialTheme.colorScheme.onPrimary,
                                 modifier = Modifier
                                     .padding(14.dp)
                             )
@@ -151,7 +152,7 @@ fun DiagnosticsScreen(
                             Text(
                                 text = stringResource(id = R.string.diagnostics_description),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         }
                     }
@@ -160,7 +161,7 @@ fun DiagnosticsScreen(
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        TextButton(
+                        FilledTonalButton(
                             onClick = {
                                 val report = buildDiagnosticsReport(
                                     context = appContext,
@@ -198,7 +199,7 @@ fun DiagnosticsScreen(
                             )
                         }
 
-                        TextButton(
+                        FilledTonalButton(
                             onClick = { refreshTick++ },
                             modifier = Modifier.weight(1f)
                         ) {
@@ -216,8 +217,9 @@ fun DiagnosticsScreen(
                 }
             }
 
-            ElevatedCard(
-                colors = CardDefaults.elevatedCardColors(
+            Card(
+                shape = MaterialTheme.shapes.large,
+                colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerLow
                 )
             ) {
@@ -253,8 +255,9 @@ fun DiagnosticsScreen(
                 }
             }
 
-            ElevatedCard(
-                colors = CardDefaults.elevatedCardColors(
+            Card(
+                shape = MaterialTheme.shapes.large,
+                colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerLow
                 )
             ) {
@@ -287,8 +290,9 @@ fun DiagnosticsScreen(
                 }
             }
 
-            ElevatedCard(
-                colors = CardDefaults.elevatedCardColors(
+            Card(
+                shape = MaterialTheme.shapes.large,
+                colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerLow
                 )
             ) {
@@ -360,8 +364,9 @@ private fun DebugRow(
                 modifier = Modifier.weight(0.42f)
             )
 
-            ElevatedCard(
-                colors = CardDefaults.elevatedCardColors(
+            Card(
+                shape = MaterialTheme.shapes.small,
+                colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
                 ),
                 modifier = Modifier.weight(0.58f)

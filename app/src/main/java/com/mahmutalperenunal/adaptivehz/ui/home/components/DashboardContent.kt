@@ -2,6 +2,8 @@ package com.mahmutalperenunal.adaptivehz.ui.home.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
@@ -21,12 +22,8 @@ import androidx.compose.material.icons.outlined.Eco
 import androidx.compose.material.icons.outlined.Factory
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Speed
-import androidx.compose.material.icons.outlined.TrackChanges
-import androidx.compose.material.icons.outlined.Tune
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -51,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import com.mahmutalperenunal.adaptivehz.R
 import com.mahmutalperenunal.adaptivehz.core.apps.InstalledAppInfo
 import com.mahmutalperenunal.adaptivehz.core.engine.model.AppRefreshProfileMode
+import com.mahmutalperenunal.adaptivehz.core.engine.model.AdaptiveHzMode
 import androidx.core.graphics.drawable.toBitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -64,6 +62,7 @@ fun DashboardComponent(
     accessibilityWorking: Boolean,
     accessibilityBroken: Boolean,
     vendorLabel: String,
+    currentMode: AdaptiveHzMode,
     currentModeLabel: String,
     targetLabel: String,
     interactionLabel: String,
@@ -77,10 +76,15 @@ fun DashboardComponent(
     onMinimumClick: () -> Unit,
     onMaximumClick: () -> Unit
 ) {
-    ElevatedCard(
+    Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        shape = MaterialTheme.shapes.extraLarge,
+        colors = CardDefaults.cardColors(
+            containerColor = if (appEnabled) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceContainerHigh
+            }
         )
     ) {
         Column(
@@ -94,13 +98,21 @@ fun DashboardComponent(
                 Surface(
                     modifier = Modifier.size(48.dp),
                     shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
+                    color = if (appEnabled) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.surfaceVariant
+                    }
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = Icons.Outlined.Speed,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = if (appEnabled) {
+                                MaterialTheme.colorScheme.onPrimary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
                             modifier = Modifier.size(28.dp)
                         )
                     }
@@ -113,18 +125,22 @@ fun DashboardComponent(
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     Text(
-                        text = stringResource(id = R.string.home_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
                         text = if (appEnabled) {
                             stringResource(id = R.string.adaptive_hz_enabled)
                         } else {
                             stringResource(id = R.string.settings_enable_adaptive_hz)
                         },
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "$currentModeLabel · $targetLabel",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = if (appEnabled) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        }
                     )
                 }
 
@@ -136,60 +152,70 @@ fun DashboardComponent(
                 )
             }
 
-            Text(
-                text = stringResource(id = R.string.settings_enable_adaptive_hz_desc),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.9f),
-                modifier = Modifier.padding(top = 8.dp)
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            StatusLine(
-                icon = Icons.Outlined.Factory,
-                label = stringResource(id = R.string.status_vendor),
-                value = vendorLabel
-            )
-            StatusLine(
-                icon = Icons.Outlined.Tune,
-                label = stringResource(id = R.string.status_mode),
-                value = currentModeLabel
-            )
-            StatusLine(
-                icon = Icons.Outlined.TrackChanges,
-                label = stringResource(id = R.string.status_target),
-                value = targetLabel
-            )
-            StatusLine(
-                icon = Icons.Outlined.Bolt,
-                label = stringResource(id = R.string.status_interaction),
-                value = interactionLabel
-            )
+            if (appEnabled) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    StatusChip(
+                        icon = Icons.Outlined.Bolt,
+                        text = interactionLabel,
+                        modifier = Modifier.weight(1f)
+                    )
+                    StatusChip(
+                        icon = Icons.Outlined.Factory,
+                        text = vendorLabel,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
         }
     }
 
-    Spacer(modifier = Modifier.height(24.dp))
+    Spacer(modifier = Modifier.height(20.dp))
 
     Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .selectableGroup(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        FilledTonalButton(
-            onClick = onAdaptiveClick,
-            enabled = appEnabled && accessibilityWorking,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(28.dp),
-            colors = ButtonDefaults.filledTonalButtonColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-            )
+        Text(
+            text = stringResource(id = R.string.status_mode),
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 4.dp)
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
+            ModeButton(
                 text = stringResource(id = R.string.mode_adaptive),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold
+                icon = Icons.Outlined.Speed,
+                selected = currentMode == AdaptiveHzMode.ADAPTIVE,
+                enabled = appEnabled && accessibilityWorking,
+                onClick = onAdaptiveClick,
+                modifier = Modifier.weight(1f)
+            )
+            ModeButton(
+                text = stringResource(id = R.string.minimum),
+                icon = Icons.Outlined.Eco,
+                selected = currentMode == AdaptiveHzMode.FORCE_MIN,
+                enabled = appEnabled,
+                onClick = onMinimumClick,
+                modifier = Modifier.weight(1f)
+            )
+            ModeButton(
+                text = stringResource(id = R.string.maximum),
+                icon = Icons.Outlined.Bolt,
+                selected = currentMode == AdaptiveHzMode.FORCE_MAX,
+                enabled = appEnabled,
+                onClick = onMaximumClick,
+                modifier = Modifier.weight(1f)
             )
         }
 
@@ -201,62 +227,15 @@ fun DashboardComponent(
             )
         }
 
-        Spacer(modifier = Modifier.width(4.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            FilledTonalButton(
-                onClick = onMinimumClick,
-                enabled = appEnabled,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(52.dp),
-                shape = RoundedCornerShape(26.dp),
-                colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    contentColor = MaterialTheme.colorScheme.onSurface
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Eco,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(id = R.string.minimum))
-            }
-
-            FilledTonalButton(
-                onClick = onMaximumClick,
-                enabled = appEnabled,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(52.dp),
-                shape = RoundedCornerShape(26.dp),
-                colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    contentColor = MaterialTheme.colorScheme.onSurface
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Bolt,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(id = R.string.maximum))
-            }
-        }
     }
 
-    Spacer(modifier = Modifier.height(24.dp))
+    Spacer(modifier = Modifier.height(20.dp))
 
     // Shows recent app profiles when Usage Access is available.
-    ElevatedCard(
+    Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.elevatedCardColors(
+        shape = MaterialTheme.shapes.extraLarge,
+        colors = CardDefaults.cardColors(
             containerColor = if (appEnabled) {
                 MaterialTheme.colorScheme.surfaceContainerLow
             } else {
@@ -275,13 +254,13 @@ fun DashboardComponent(
                 Surface(
                     modifier = Modifier.size(48.dp),
                     shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
+                    color = MaterialTheme.colorScheme.secondaryContainer
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = Icons.Outlined.GridView,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
                             modifier = Modifier.size(28.dp)
                         )
                     }
@@ -338,7 +317,7 @@ fun DashboardComponent(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(18.dp))
+                        .clip(MaterialTheme.shapes.large)
                         .clickable(enabled = appEnabled, onClick = onPerAppClick)
                         .padding(vertical = 10.dp),
                     horizontalArrangement = Arrangement.Center,
@@ -363,43 +342,74 @@ fun DashboardComponent(
 }
 
 @Composable
-private fun StatusLine(
+private fun StatusChip(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    value: String
+    text: String,
+    modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 3.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+    Surface(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.42f)
     ) {
         Row(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(22.dp)
-            )
+            Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp))
             Text(
-                text = label,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 14.dp)
+                text = text,
+                style = MaterialTheme.typography.labelMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
+    }
+}
 
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
+@Composable
+private fun ModeButton(
+    text: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    selected: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .selectable(
+                selected = selected,
+                enabled = enabled,
+                onClick = onClick
+            ),
+        shape = MaterialTheme.shapes.large,
+        color = when {
+            !enabled -> MaterialTheme.colorScheme.surfaceContainerLow
+            selected -> MaterialTheme.colorScheme.primary
+            else -> MaterialTheme.colorScheme.surfaceContainerHigh
+        },
+        contentColor = when {
+            !enabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+            selected -> MaterialTheme.colorScheme.onPrimary
+            else -> MaterialTheme.colorScheme.onSurfaceVariant
+        }
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(5.dp)
+        ) {
+            Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelMedium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+        }
     }
 }
 

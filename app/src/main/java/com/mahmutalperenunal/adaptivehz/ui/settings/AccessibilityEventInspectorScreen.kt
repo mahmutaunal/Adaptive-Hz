@@ -22,7 +22,8 @@ import androidx.compose.material.icons.outlined.Pause
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Card
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -30,7 +31,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -116,12 +116,13 @@ fun AccessibilityEventInspectorScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            ElevatedCard(
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                shape = MaterialTheme.shapes.extraLarge,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
             ) {
                 Column(
@@ -131,15 +132,15 @@ fun AccessibilityEventInspectorScreen(
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        ElevatedCard(
-                            colors = CardDefaults.elevatedCardColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primary
                             )
                         ) {
                             Icon(
                                 imageVector = Icons.Outlined.BugReport,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
+                                tint = MaterialTheme.colorScheme.onPrimary,
                                 modifier = Modifier.padding(14.dp)
                             )
                         }
@@ -158,7 +159,7 @@ fun AccessibilityEventInspectorScreen(
                             Text(
                                 text = stringResource(id = R.string.accessibility_event_inspector_description),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         }
                     }
@@ -215,7 +216,7 @@ fun AccessibilityEventInspectorScreen(
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        TextButton(
+                        FilledTonalButton(
                             onClick = {
                                 val report = buildEventReport(appContext, events)
                                 val clipboard =
@@ -247,7 +248,7 @@ fun AccessibilityEventInspectorScreen(
                             )
                         }
 
-                        TextButton(
+                        FilledTonalButton(
                             onClick = {
                                 DebugEventStore.clear()
                                 refreshTick++
@@ -308,8 +309,9 @@ fun AccessibilityEventInspectorScreen(
 private fun EventCard(
     event: DebugAccessibilityEvent
 ) {
-    ElevatedCard(
-        colors = CardDefaults.elevatedCardColors(
+    Card(
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         )
     ) {
@@ -322,8 +324,9 @@ private fun EventCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
-                ElevatedCard(
-                    colors = CardDefaults.elevatedCardColors(
+                Card(
+                    shape = MaterialTheme.shapes.small,
+                    colors = CardDefaults.cardColors(
                         containerColor = if (
                             event.scrollDeltaX != 0 || event.scrollDeltaY != 0
                         ) {
@@ -385,8 +388,9 @@ private fun EventValueChip(
     label: String,
     value: String
 ) {
-    ElevatedCard(
-        colors = CardDefaults.elevatedCardColors(
+    Card(
+        shape = MaterialTheme.shapes.small,
+        colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
         )
     ) {

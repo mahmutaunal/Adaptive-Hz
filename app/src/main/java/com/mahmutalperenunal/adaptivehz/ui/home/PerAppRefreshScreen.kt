@@ -24,15 +24,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowLeft
 import androidx.compose.material.icons.outlined.Apps
-import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Card
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -189,54 +188,17 @@ fun PerAppRefreshScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             item {
-                ElevatedCard(
+                Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.elevatedCardColors(
+                    shape = MaterialTheme.shapes.extraLarge,
+                    colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerLow
                     )
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.Top
-                        ) {
-                            Surface(
-                                modifier = Modifier.size(44.dp),
-                                shape = RoundedCornerShape(14.dp),
-                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        imageVector = Icons.Outlined.GridView,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(26.dp)
-                                    )
-                                }
-                            }
-
-                            Column(
-                                modifier = Modifier
-                                    .padding(start = 14.dp)
-                                    .weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Text(
-                                    text = stringResource(id = R.string.per_app_profiles_title),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Text(
-                                    text = stringResource(id = R.string.per_app_profiles_description),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-
                         OutlinedTextField(
                             value = query,
                             onValueChange = { query = it },
@@ -248,8 +210,8 @@ fun PerAppRefreshScreen(
                                     contentDescription = null
                                 )
                             },
-                            label = { Text(text = stringResource(id = R.string.search_apps)) },
-                            shape = RoundedCornerShape(18.dp)
+                            placeholder = { Text(text = stringResource(id = R.string.search_apps)) },
+                            shape = MaterialTheme.shapes.large
                         )
 
                         ProfileFilterChips(
@@ -395,7 +357,7 @@ fun AppProfileRow(
     Surface(
         modifier = modifier
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
         Row(
@@ -682,10 +644,11 @@ private fun BulkProfileActionRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    ElevatedCard(
-        modifier = modifier.clickable(onClick = onClick),
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+    Card(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
         )
     ) {
         Row(
@@ -697,13 +660,13 @@ private fun BulkProfileActionRow(
             Surface(
                 modifier = Modifier.size(44.dp),
                 shape = RoundedCornerShape(14.dp),
-                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
+                        color = MaterialTheme.colorScheme.secondary
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = Icons.Outlined.Layers,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
+                        tint = MaterialTheme.colorScheme.onSecondary,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -719,8 +682,7 @@ private fun BulkProfileActionRow(
                     text = stringResource(id = R.string.all_listed_apps),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    maxLines = Int.MAX_VALUE
                 )
 
                 Text(
@@ -737,17 +699,21 @@ private fun BulkProfileActionRow(
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    maxLines = Int.MAX_VALUE
                 )
             }
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            ModePill(
-                text = stringResource(id = R.string.apply_profile),
-                selected = true
-            )
+            FilledTonalButton(onClick = onClick) {
+                Text(text = stringResource(id = R.string.apply_profile))
+                Spacer(modifier = Modifier.width(4.dp))
+                Icon(
+                    imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         }
     }
 }
@@ -757,9 +723,9 @@ private fun LoadingCard(
     text: String,
     modifier: Modifier = Modifier
 ) {
-    ElevatedCard(
+    Card(
         modifier = modifier,
-        colors = CardDefaults.elevatedCardColors(
+        colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         )
     ) {
@@ -788,7 +754,8 @@ private fun LoadingCard(
 }
 
 /**
- * Horizontally scrollable filter chips with edge indicators.
+ * Horizontally scrollable Material filter chips. A partially visible last chip
+ * naturally communicates that more filters are available.
  */
 @SuppressLint("FrequentlyChangingValue")
 @Composable
@@ -797,16 +764,12 @@ private fun ProfileFilterChips(
     onFilterSelected: (AppRefreshProfileMode?) -> Unit
 ) {
     val scrollState = rememberScrollState()
-    val canScrollBackward = scrollState.value > 0
-    val canScrollForward = scrollState.value < scrollState.maxValue
-
-    Box(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(scrollState),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(scrollState),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
             FilterChip(
                 selected = selectedFilter == null,
                 onClick = { onFilterSelected(null) },
@@ -820,45 +783,6 @@ private fun ProfileFilterChips(
                     label = { Text(mode.title()) }
                 )
             }
-        }
-
-        if (canScrollBackward) {
-            Surface(
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .size(26.dp),
-                shape = RoundedCornerShape(13.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.96f)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowLeft,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            }
-        }
-
-        if (canScrollForward) {
-            Surface(
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .size(26.dp),
-                shape = RoundedCornerShape(13.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.96f)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            }
-        }
     }
 }
 

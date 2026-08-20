@@ -147,15 +147,33 @@
 
     <!-- Settings - sections -->
     <string name="settings_section_behavior">Comportamiento</string>
+    <string name="settings_section_updates">Actualizaciones</string>
     <string name="settings_section_appearance">Apariencia</string>
     <string name="settings_section_debug">Depuración</string>
     <string name="settings_section_about">Acerca de</string>
     <string name="settings_section_developer">Desarrollador</string>
+    <string name="settings_section_other_apps">Más de AlpWare Studio</string>
     <string name="settings_section_support">Soporte</string>
     <string name="settings_section_legal">Legal</string>
 
     <!-- Settings - items -->
     <string name="settings_item_stability_mode">Modo de estabilidad</string>
+    <string name="settings_item_automatic_update_checks">Comprobaciones automáticas</string>
+    <string name="settings_value_automatic_update_checks_summary">Comprueba versiones estables en GitHub como máximo una vez cada 24 horas. Se ignoran las versiones beta y preliminares.</string>
+    <string name="settings_item_check_for_updates">Buscar actualizaciones</string>
+    <string name="settings_value_stable_updates_summary">Comprueba manualmente la última versión estable de GitHub.</string>
+    <string name="update_checking">Comprobando GitHub…</string>
+    <string name="update_up_to_date">Estás usando la última versión estable.</string>
+    <string name="update_check_failed">No se pudieron buscar actualizaciones. Comprueba tu conexión e inténtalo de nuevo.</string>
+    <string name="update_invalid_release">La última versión no tiene un número de versión válido.</string>
+    <string name="update_consent_title">¿Quieres mantener la aplicación actualizada?</string>
+    <string name="update_consent_body">Adaptive Hz puede comprobar nuevas versiones estables en GitHub como máximo una vez cada 24 horas. Se ignoran las versiones beta y preliminares. Ninguna actualización se descarga ni instala automáticamente.</string>
+    <string name="update_consent_enable">Activar comprobaciones</string>
+    <string name="update_consent_not_now">Ahora no</string>
+    <string name="update_available_title">Actualización disponible</string>
+    <string name="update_available_body">%1$s está disponible. Revisa la versión en GitHub antes de descargarla.</string>
+    <string name="update_view_release">Ver versión</string>
+    <string name="update_later">Más tarde</string>
     <string name="settings_item_version">Versión</string>
     <string name="settings_item_repository">Repositorio</string>
     <string name="settings_item_email">Correo electrónico</string>
@@ -163,6 +181,18 @@
 
     <string name="settings_item_report_issue">Reportar un problema</string>
     <string name="settings_item_share_app">Compartir aplicación</string>
+    <string name="settings_item_star_github">Dar una estrella en GitHub</string>
+    <string name="settings_value_star_github">Ayuda a que más personas descubran este proyecto de código abierto.</string>
+    <string name="settings_item_all_apps">Ver todas las aplicaciones</string>
+    <string name="other_app_password_book_title">Password Book</string>
+    <string name="other_app_password_book_summary">Un gestor de contraseñas sin conexión y cifrado con AES-256.</string>
+    <string name="other_app_kodex_title">Kodex</string>
+    <string name="other_app_kodex_summary">Crea, personaliza y escanea códigos QR.</string>
+    <string name="other_app_score_book_title">Score Book</string>
+    <string name="other_app_score_book_summary">Lleva las puntuaciones de forma sencilla y clara.</string>
+    <string name="support_prompt_title">¿Te resulta útil Adaptive Hz?</string>
+    <string name="support_prompt_body">Una estrella en GitHub o compartir la aplicación ayuda a que este proyecto de código abierto llegue a más personas. Gracias por apoyar el desarrollo independiente.</string>
+    <string name="support_prompt_not_now">Ahora no</string>
 
     <string name="settings_item_privacy_policy">Política de privacidad</string>
     <string name="settings_item_open_source_notices">Licencias de código abierto</string>
@@ -199,13 +229,13 @@
     <string name="settings_value_version">%1$s (%2$d)</string>
     <string name="settings_value_other_apps">Otras aplicaciones y página del desarrollador</string>
     <string name="settings_value_github_issues">GitHub Issues</string>
-    <string name="settings_value_send_github_link">Enviar enlace de GitHub</string>
-    <string name="settings_value_privacy_short">Sin conexión. No se recopilan datos.</string>
+    <string name="settings_value_send_github_link">Compartir el proyecto de código abierto</string>
+    <string name="settings_value_privacy_short">Sin analíticas ni recopilación de datos. La comprobación opcional contacta con GitHub.</string>
     <string name="settings_value_third_party_licenses">Licencias de terceros</string>
 
     <!-- Settings - share -->
     <string name="settings_share_title">Compartir %1$s</string>
-    <string name="settings_share_text">%1$s\n%2$s</string>
+    <string name="settings_share_text">%1$s es un gestor de frecuencia de actualización de código abierto para Android, con perfiles por aplicación, Ajustes rápidos y widgets.\n%2$s</string>
 
     <!-- Settings - email -->
     <string name="settings_email_subject">%1$s feedback</string>
@@ -220,13 +250,13 @@
     <string name="settings_dialog_privacy_title">Política de privacidad</string>
     <string name="settings_dialog_privacy_body">
         Puntos clave
-        • Esta aplicación funciona sin conexión.
+        • Las funciones principales funcionan sin conexión.
         • No se recopilan datos personales.
         • No se utilizan analíticas, anuncios ni rastreadores.
         • No se solicitan permisos para recopilar datos.
 
         Detalles
-        Esta aplicación no recopila, almacena ni comparte información personal. Toda la funcionalidad se ejecuta localmente en tu dispositivo.
+        Esta aplicación no recopila, almacena ni comparte información personal. Al activar las comprobaciones automáticas o realizar una comprobación manual, la aplicación envía una solicitud HTTPS estándar a la API de GitHub Releases. GitHub puede recibir metadatos de red normales, como tu dirección IP, conforme a su propia política de privacidad. Adaptive Hz no envía datos de la aplicación ni identificadores de cuenta. Las actualizaciones nunca se descargan ni instalan automáticamente.
 
         Si tienes preguntas, contacta al desarrollador mediante el correo disponible en Ajustes.
     </string>
@@ -322,6 +352,7 @@
     <string name="stability_notification_recovery_action">Recuperar</string>
     <string name="action_enable">Activar</string>
     <string name="action_cancel">Cancelar</string>
+    <string name="setup_adb_command_copied">Comando ADB copiado</string>
 
     <string name="event_scroll_delta_x">ΔX</string>
     <string name="event_scroll_delta_y">ΔY</string>
@@ -394,4 +425,21 @@
     <string name="accessibility_health_notification_broken_text">El servicio de accesibilidad no responde. Adaptive Hz puede dejar de cambiar la frecuencia de actualización. Toca para abrir los ajustes de accesibilidad.</string>
     <string name="accessibility_health_notification_disabled_text">El servicio de accesibilidad está desactivado. Adaptive Hz lo necesita para detectar interacciones y cambiar la frecuencia de actualización. Toca para activarlo de nuevo.</string>
     <string name="accessibility_health_notification_action">Abrir ajustes de accesibilidad</string>
+    <!-- Descubrimiento de acceso rápido -->
+    <string name="quick_access_section">Acceso rápido</string>
+    <string name="quick_access_discovery_title">Controla Adaptive Hz más rápido</string>
+    <string name="quick_access_discovery_description">Añade accesos directos para controlar Adaptive Hz sin abrir la aplicación. Puedes cambiarlos más tarde en Ajustes.</string>
+    <string name="quick_access_tile_title">Ajustes rápidos</string>
+    <string name="quick_access_tile_description">Activa o desactiva Adaptive Hz desde el panel de notificaciones.</string>
+    <string name="quick_access_widget_title">Widget de pantalla de inicio</string>
+    <string name="quick_access_widget_description">Cambia los modos de frecuencia directamente desde la pantalla de inicio.</string>
+    <string name="quick_access_status_added">Añadido</string>
+    <string name="quick_access_action_add">Añadir</string>
+    <string name="quick_access_action_done">Listo</string>
+    <string name="quick_access_action_not_now">Ahora no</string>
+    <string name="quick_access_manual_title">Añadir manualmente</string>
+    <string name="quick_access_tile_manual_instructions">Abre Ajustes rápidos, toca Editar y arrastra Adaptive Hz a los mosaicos activos.</string>
+    <string name="quick_access_widget_manual_instructions">Mantén pulsada una zona vacía de la pantalla de inicio, elige Widgets y selecciona Adaptive Hz.</string>
+    <string name="quick_access_request_failed">El sistema no pudo abrir la solicitud. Puedes añadir este acceso directo manualmente.</string>
+    <string name="quick_access_request_dismissed">No se añadió el acceso directo.</string>
 </resources>

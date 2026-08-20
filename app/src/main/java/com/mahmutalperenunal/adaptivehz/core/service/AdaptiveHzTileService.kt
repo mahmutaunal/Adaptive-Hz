@@ -4,6 +4,7 @@ import android.graphics.drawable.Icon
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import com.mahmutalperenunal.adaptivehz.R
+import com.mahmutalperenunal.adaptivehz.core.quickaccess.QuickAccessManager
 
 /**
  * Quick Settings Tile service for toggling Adaptive Hz.
@@ -15,11 +16,19 @@ class AdaptiveHzTileService : TileService() {
 
     override fun onTileAdded() {
         super.onTileAdded()
+        QuickAccessManager.setQuickSettingsTileAdded(applicationContext, true)
         updateTile()
+    }
+
+    override fun onTileRemoved() {
+        QuickAccessManager.setQuickSettingsTileAdded(applicationContext, false)
+        super.onTileRemoved()
     }
 
     override fun onStartListening() {
         super.onStartListening()
+        // Also migrates users who added the tile before status tracking existed.
+        QuickAccessManager.setQuickSettingsTileAdded(applicationContext, true)
         updateTile()
     }
 
