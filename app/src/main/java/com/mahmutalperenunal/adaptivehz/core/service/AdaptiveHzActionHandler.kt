@@ -1,6 +1,9 @@
 package com.mahmutalperenunal.adaptivehz.core.service
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
 import android.util.Log
 import com.mahmutalperenunal.adaptivehz.core.engine.model.AdaptiveHzMode
 import com.mahmutalperenunal.adaptivehz.core.engine.model.RefreshRateApplyResult
@@ -9,12 +12,29 @@ import com.mahmutalperenunal.adaptivehz.core.engine.strategy.VendorStrategyProvi
 import com.mahmutalperenunal.adaptivehz.core.health.AccessibilityHealthMonitor
 import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs
 import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateController
+import com.mahmutalperenunal.adaptivehz.core.system.CustomRefreshRateController
+import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateOperationCoordinator
+import com.mahmutalperenunal.adaptivehz.core.system.isSuccess
 import com.mahmutalperenunal.adaptivehz.widget.AdaptiveHzWidgetUpdater
+import java.util.concurrent.Executors
 
 // Coordinates user-triggered mode changes and refreshes related app surfaces.
 object AdaptiveHzActionHandler {
 
     private const val TAG = "AdaptiveHzAction"
+
+    private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
+    private val modeCommandExecutor by lazy {
+        Executors.newSingleThreadExecutor { runnable ->
+            Thread(runnable, "AdaptiveHzModeCommand").apply { isDaemon = true }
+        }
+    }
+    private val modeCommandDispatcher by lazy {
+        LatestCommandDispatcher(
+            workerExecutor = modeCommandExecutor,
+            callbackExecutor = { command -> mainHandler.post(command) }
+        )
+    }
 
     // Refreshes widgets and the foreground notification after a mode change.
     private fun refreshSurfaces(context: Context) {
@@ -51,29 +71,58 @@ object AdaptiveHzActionHandler {
         val appContext = context.applicationContext
         val strategy = VendorStrategyProvider.provide()
 
-        // Map the selected mode to the vendor-specific settings write.
+        // Keep the existing mode-to-vendor mapping intact for the fallback path.
         val write = when (mode) {
-            AdaptiveHzMode.OFF -> {
-                strategy.desiredSystemControlled(appContext)
-            }
+            AdaptiveHzMode.OFF -> strategy.desiredSystemControlled(appContext)
+            AdaptiveHzMode.ADAPTIVE -> strategy.desiredLow(appContext)
+            AdaptiveHzMode.FORCE_MIN -> strategy.desiredForceMinimum(appContext)
+            AdaptiveHzMode.FORCE_MAX -> strategy.desiredForceMaximum(appContext)
+        }
 
-            AdaptiveHzMode.ADAPTIVE -> {
-                strategy.desiredLow(appContext)
-            }
+        val customRate = when (mode) {
+            // Adaptive custom rates are interaction targets only. LOW must keep using
+            // the unchanged vendor strategy so the first touch is never rendered at
+            // a previously configured custom minimum.
+            AdaptiveHzMode.ADAPTIVE -> null
+            AdaptiveHzMode.FORCE_MIN -> AdaptiveHzPrefs.getGlobalCustomMinimumRate(appContext)
+            AdaptiveHzMode.FORCE_MAX -> AdaptiveHzPrefs.getGlobalCustomMaximumRate(appContext)
+            AdaptiveHzMode.OFF -> null
+        }
+        var customFallbackRequired = false
 
-            AdaptiveHzMode.FORCE_MIN -> {
-                strategy.desiredForceMinimum(appContext)
+        if (customRate != null) {
+            val customResult = CustomRefreshRateController.applyFixedRate(appContext, customRate)
+            if (customResult.isSuccess) {
+                AdaptiveHzPrefs.updateDebugLastWrite(
+                    context = appContext,
+                    label = "${mode.name}: custom ${customRate}Hz / ${customResult::class.simpleName}",
+                    success = true
+                )
+                return RefreshRateApplyResult.NoOperation
             }
+            customFallbackRequired = true
+            Log.w(TAG, "Custom ${customRate}Hz unavailable; falling back to ${strategy.name}")
+        }
 
-            AdaptiveHzMode.FORCE_MAX -> {
-                strategy.desiredForceMaximum(appContext)
-            }
+        // Custom overrides must be removed before returning to a vendor strategy.
+        if (!CustomRefreshRateController.restoreOriginal(appContext)) {
+            Log.e(TAG, "Unable to restore original min/peak settings before legacy write")
+            return write?.let {
+                RefreshRateApplyResult.Failure(
+                    requestedWrite = it,
+                    throwable = IllegalStateException("Custom refresh-rate restore failed")
+                )
+            } ?: RefreshRateApplyResult.NoOperation
         }
 
         // Some strategies may not require a direct settings write for the selected mode.
         if (write == null) {
             Log.d(TAG, "No setting write required. mode=$mode strategy=${strategy.name}")
-            return RefreshRateApplyResult.NoOperation
+            return if (customFallbackRequired && customRate != null) {
+                RefreshRateApplyResult.CustomFallbackApplied(null, customRate)
+            } else {
+                RefreshRateApplyResult.NoOperation
+            }
         }
 
         val result = RefreshRateController.applySetting(
@@ -92,7 +141,11 @@ object AdaptiveHzActionHandler {
             "applyRefreshMode mode=$mode strategy=${strategy.name} result=$result"
         )
 
-        return result
+        return if (customFallbackRequired && customRate != null && result.isOperationalSuccess) {
+            RefreshRateApplyResult.CustomFallbackApplied(write, customRate)
+        } else {
+            result
+        }
     }
 
     // Starts the foreground keep-alive service when the user has enabled it.
@@ -108,117 +161,132 @@ object AdaptiveHzActionHandler {
         }
     }
 
-    // Enables Adaptive Hz using the default adaptive mode.
-    fun turnOn(context: Context): RefreshRateApplyResult {
-        return setAdaptive(context)
-    }
-
-    // Disables Adaptive Hz and stops active recovery and keep-alive components.
-    fun turnOff(context: Context): RefreshRateApplyResult {
+    private fun requestMode(
+        context: Context,
+        mode: AdaptiveHzMode,
+        stopKeepAliveWhenOff: Boolean,
+        onComplete: ((RefreshRateApplyResult) -> Unit)?,
+        onSettled: (() -> Unit)?
+    ) {
         val appContext = context.applicationContext
-
+        val requestedAt = SystemClock.elapsedRealtime()
         AdaptiveHzPrefs.syncLegacyStateFromMode(
             appContext,
-            AdaptiveHzMode.OFF
+            mode
         )
 
-        val result = applyRefreshMode(
-            appContext,
-            AdaptiveHzMode.OFF
+        modeCommandDispatcher.submit(
+            operation = {
+                val operationStartedAt = SystemClock.elapsedRealtime()
+                RefreshRateOperationCoordinator.run {
+                    if (AdaptiveHzPrefs.getCurrentMode(appContext) != mode) {
+                        RefreshRateApplyResult.NoOperation
+                    } else {
+                        applyRefreshMode(appContext, mode)
+                    }
+                }.also {
+                    Log.d(
+                        TAG,
+                        "Mode timing mode=$mode queueMs=${operationStartedAt - requestedAt} " +
+                            "applyMs=${SystemClock.elapsedRealtime() - operationStartedAt}"
+                    )
+                }
+            },
+            onComplete = { result ->
+                finishLatestModeRequest(appContext, mode, stopKeepAliveWhenOff)
+                onComplete?.invoke(result)
+            },
+            onError = { error ->
+                Log.e(TAG, "Unexpected asynchronous mode failure: $mode", error)
+                finishLatestModeRequest(appContext, mode, stopKeepAliveWhenOff)
+                onComplete?.invoke(
+                    RefreshRateApplyResult.Failure(
+                        requestedWrite = null,
+                        throwable = error
+                    )
+                )
+            },
+            onSettled = { onSettled?.invoke() }
         )
+    }
 
-        runCatching {
-            AccessibilityHealthMonitor.cancelRecoveryNotification(appContext)
+    private fun finishLatestModeRequest(
+        context: Context,
+        mode: AdaptiveHzMode,
+        stopKeepAliveWhenOff: Boolean
+    ) {
+        if (mode == AdaptiveHzMode.OFF) {
+            runCatching {
+                AccessibilityHealthMonitor.cancelRecoveryNotification(context)
+            }
+            if (stopKeepAliveWhenOff) {
+                runCatching { StabilityForegroundService.stop(context) }
+            }
+        } else {
+            ensureKeepAliveIfNeeded(context)
         }
 
-        runCatching {
-            StabilityForegroundService.stop(appContext)
-        }
-
-        refreshSurfaces(appContext)
-        return result
+        refreshSurfaces(context)
     }
 
-    // Disables Adaptive Hz from the notification without stopping the host service directly.
-    fun turnOffForNotification(context: Context): RefreshRateApplyResult {
-        val appContext = context.applicationContext
-
-        AdaptiveHzPrefs.syncLegacyStateFromMode(
-            appContext,
-            AdaptiveHzMode.OFF
-        )
-
-        val result = applyRefreshMode(
-            appContext,
-            AdaptiveHzMode.OFF
-        )
-
-        runCatching {
-            AccessibilityHealthMonitor.cancelRecoveryNotification(appContext)
-        }
-
-        refreshSurfaces(appContext)
-        return result
+    fun turnOnAsync(
+        context: Context,
+        onComplete: ((RefreshRateApplyResult) -> Unit)? = null,
+        onSettled: (() -> Unit)? = null
+    ) {
+        setAdaptiveAsync(context, onComplete, onSettled)
     }
 
-    // Enables vendor-aware adaptive refresh-rate behavior.
-    fun setAdaptive(context: Context): RefreshRateApplyResult {
-        val appContext = context.applicationContext
-
-        AdaptiveHzPrefs.syncLegacyStateFromMode(
-            appContext,
-            AdaptiveHzMode.ADAPTIVE
+    fun turnOffAsync(
+        context: Context,
+        onComplete: ((RefreshRateApplyResult) -> Unit)? = null,
+        onSettled: (() -> Unit)? = null
+    ) {
+        requestMode(
+            context = context,
+            mode = AdaptiveHzMode.OFF,
+            stopKeepAliveWhenOff = true,
+            onComplete = onComplete,
+            onSettled = onSettled
         )
-
-        val result = applyRefreshMode(
-            appContext,
-            AdaptiveHzMode.ADAPTIVE
-        )
-
-        ensureKeepAliveIfNeeded(appContext)
-        refreshSurfaces(appContext)
-
-        return result
     }
 
-    // Forces the lowest supported refresh-rate mode.
-    fun setMinimum(context: Context): RefreshRateApplyResult {
-        val appContext = context.applicationContext
-
-        AdaptiveHzPrefs.syncLegacyStateFromMode(
-            appContext,
-            AdaptiveHzMode.FORCE_MIN
+    fun turnOffForNotificationAsync(
+        context: Context,
+        onComplete: ((RefreshRateApplyResult) -> Unit)? = null,
+        onSettled: (() -> Unit)? = null
+    ) {
+        requestMode(
+            context = context,
+            mode = AdaptiveHzMode.OFF,
+            stopKeepAliveWhenOff = false,
+            onComplete = onComplete,
+            onSettled = onSettled
         )
-
-        val result = applyRefreshMode(
-            appContext,
-            AdaptiveHzMode.FORCE_MIN
-        )
-
-        ensureKeepAliveIfNeeded(appContext)
-        refreshSurfaces(appContext)
-
-        return result
     }
 
-    // Forces the highest supported refresh-rate mode.
-    fun setMaximum(context: Context): RefreshRateApplyResult {
-        val appContext = context.applicationContext
+    fun setAdaptiveAsync(
+        context: Context,
+        onComplete: ((RefreshRateApplyResult) -> Unit)? = null,
+        onSettled: (() -> Unit)? = null
+    ) {
+        requestMode(context, AdaptiveHzMode.ADAPTIVE, false, onComplete, onSettled)
+    }
 
-        AdaptiveHzPrefs.syncLegacyStateFromMode(
-            appContext,
-            AdaptiveHzMode.FORCE_MAX
-        )
+    fun setMinimumAsync(
+        context: Context,
+        onComplete: ((RefreshRateApplyResult) -> Unit)? = null,
+        onSettled: (() -> Unit)? = null
+    ) {
+        requestMode(context, AdaptiveHzMode.FORCE_MIN, false, onComplete, onSettled)
+    }
 
-        val result = applyRefreshMode(
-            appContext,
-            AdaptiveHzMode.FORCE_MAX
-        )
-
-        ensureKeepAliveIfNeeded(appContext)
-        refreshSurfaces(appContext)
-
-        return result
+    fun setMaximumAsync(
+        context: Context,
+        onComplete: ((RefreshRateApplyResult) -> Unit)? = null,
+        onSettled: (() -> Unit)? = null
+    ) {
+        requestMode(context, AdaptiveHzMode.FORCE_MAX, false, onComplete, onSettled)
     }
 
     // Returns the mode shortcuts that should be shown in the notification.
@@ -246,24 +314,30 @@ object AdaptiveHzActionHandler {
     }
 
     // Routes a mode request to the corresponding public action.
-    fun applyMode(
+    fun applyModeAsync(
         context: Context,
-        mode: AdaptiveHzMode
-    ): RefreshRateApplyResult {
+        mode: AdaptiveHzMode,
+        onComplete: ((RefreshRateApplyResult) -> Unit)? = null,
+        onSettled: (() -> Unit)? = null
+    ) {
         return when (mode) {
-            AdaptiveHzMode.OFF -> turnOff(context)
-            AdaptiveHzMode.ADAPTIVE -> setAdaptive(context)
-            AdaptiveHzMode.FORCE_MIN -> setMinimum(context)
-            AdaptiveHzMode.FORCE_MAX -> setMaximum(context)
+            AdaptiveHzMode.OFF -> turnOffAsync(context, onComplete, onSettled)
+            AdaptiveHzMode.ADAPTIVE -> setAdaptiveAsync(context, onComplete, onSettled)
+            AdaptiveHzMode.FORCE_MIN -> setMinimumAsync(context, onComplete, onSettled)
+            AdaptiveHzMode.FORCE_MAX -> setMaximumAsync(context, onComplete, onSettled)
         }
     }
 
     // Toggles Adaptive Hz between disabled and adaptive states.
-    fun toggle(context: Context): RefreshRateApplyResult {
-        return if (isAppEnabled(context.applicationContext)) {
-            turnOff(context)
+    fun toggleAsync(
+        context: Context,
+        onComplete: ((RefreshRateApplyResult) -> Unit)? = null,
+        onSettled: (() -> Unit)? = null
+    ) {
+        if (isAppEnabled(context.applicationContext)) {
+            turnOffAsync(context, onComplete, onSettled)
         } else {
-            turnOn(context)
+            turnOnAsync(context, onComplete, onSettled)
         }
     }
 }

@@ -10,8 +10,16 @@ import com.mahmutalperenunal.adaptivehz.BuildConfig
 import com.mahmutalperenunal.adaptivehz.core.input.InteractionSignalProvider
 import rikka.shizuku.Shizuku
 import rikka.shizuku.Shizuku.UserServiceArgs
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
-class ShizukuInputManager : InteractionSignalProvider {
+class ShizukuInputManager(
+    private val onPrivilegedServiceReady: (() -> Unit)? = null,
+    private val onPrivilegedServiceUnavailable: (() -> Unit)? = null,
+    private val onTouchDownSignal: (() -> Unit)? = null,
+    private val onTouchMoveSignal: (() -> Unit)? = null,
+    private val onTouchUpSignal: (() -> Unit)? = null
+) : InteractionSignalProvider {
 
     @Volatile
     private var touchActive = false
@@ -49,7 +57,13 @@ class ShizukuInputManager : InteractionSignalProvider {
     @Volatile
     private var lastStatusCheckAt = 0L
 
+    @Volatile
+    private var statusCheckScheduled = false
+
     private val lock = Any()
+    private val controlExecutor: ExecutorService = Executors.newSingleThreadExecutor { runnable ->
+        Thread(runnable, "AdaptiveHzShizukuControl").apply { isDaemon = true }
+    }
 
     private val userServiceArgs: UserServiceArgs by lazy {
         UserServiceArgs(
@@ -62,7 +76,9 @@ class ShizukuInputManager : InteractionSignalProvider {
             .daemon(false)
             .processNameSuffix(PROCESS_NAME_SUFFIX)
             .debuggable(BuildConfig.DEBUG)
-            .version(VERSION)
+            // The protocol revision also changes whenever AIDL does, preventing same-version
+            // development builds from reconnecting to an incompatible remote implementation.
+            .version(BuildConfig.VERSION_CODE * 100 + USER_SERVICE_API_REVISION)
     }
 
     private val inputEventCallback =
@@ -72,17 +88,22 @@ class ShizukuInputManager : InteractionSignalProvider {
                 inputMonitoringActive = true
                 touchActive = true
                 lastTouchDownAt = System.currentTimeMillis()
+                Log.d(TAG, "Raw touch DOWN")
+                onTouchDownSignal?.invoke()
             }
 
             override fun onTouchMove() {
                 inputMonitoringActive = true
                 lastTouchMoveAt = System.currentTimeMillis()
+                onTouchMoveSignal?.invoke()
             }
 
             override fun onTouchUp() {
                 inputMonitoringActive = true
                 touchActive = false
                 lastTouchUpAt = System.currentTimeMillis()
+                Log.d(TAG, "Raw touch UP")
+                onTouchUpSignal?.invoke()
             }
         }
 
@@ -90,14 +111,16 @@ class ShizukuInputManager : InteractionSignalProvider {
 
     private val permissionResultListener =
         Shizuku.OnRequestPermissionResultListener { requestCode, grantResult ->
-            if (requestCode != REQUEST_CODE) return@OnRequestPermissionResultListener
+            if (requestCode != ShizukuAccess.UI_PERMISSION_REQUEST_CODE) {
+                return@OnRequestPermissionResultListener
+            }
             if (destroyed) return@OnRequestPermissionResultListener
 
             val granted = grantResult == PackageManager.PERMISSION_GRANTED
             Log.d(TAG, "permissionResult granted=$granted")
 
             if (granted) {
-                bindUserService()
+                executeControl(::bindUserService)
             }
         }
 
@@ -109,55 +132,56 @@ class ShizukuInputManager : InteractionSignalProvider {
             synchronized(lock) {
                 if (destroyed) {
                     Log.w(TAG, "Service connected after destroy, unbinding immediately")
-                    runCatching {
-                        Shizuku.unbindUserService(userServiceArgs, this, true)
+                    executeControl {
+                        runCatching { Shizuku.unbindUserService(userServiceArgs, this, true) }
                     }
                     return
                 }
 
                 service = IInputMonitorService.Stub.asInterface(binder)
+                service?.let(ShizukuRefreshRateBridge::attach)
                 bound = true
                 bindingInProgress = false
             }
 
-            detectTouchscreenDeviceAndStartMonitoring()
+            executeControl {
+                if (destroyed) return@executeControl
+                ShizukuRefreshRateBridge.inspectSamsungRefreshRateTokenApi()?.let { report ->
+                    Log.i(TAG, "Samsung refresh-rate token probe:\n$report")
+                }
+
+                detectTouchscreenDeviceAndStartMonitoring()
+                onPrivilegedServiceReady?.invoke()
+            }
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
             Log.d(TAG, "UserService disconnected name=$name")
-
-            synchronized(lock) {
-                bindingInProgress = false
-                bound = false
-                service = null
-                touchActive = false
-                inputMonitoringActive = false
-            }
+            handleServiceUnavailable()
         }
 
         override fun onBindingDied(name: ComponentName?) {
             Log.w(TAG, "UserService binding died name=$name")
-
-            synchronized(lock) {
-                bindingInProgress = false
-                bound = false
-                service = null
-                touchActive = false
-                inputMonitoringActive = false
-            }
+            handleServiceUnavailable()
         }
 
         override fun onNullBinding(name: ComponentName?) {
             Log.w(TAG, "UserService null binding name=$name")
-
-            synchronized(lock) {
-                bindingInProgress = false
-                bound = false
-                service = null
-                touchActive = false
-                inputMonitoringActive = false
-            }
+            handleServiceUnavailable()
         }
+    }
+
+    /** Invalidates cached token state and lets the engine apply its normal vendor fallback. */
+    private fun handleServiceUnavailable() {
+        synchronized(lock) {
+            bindingInProgress = false
+            bound = false
+            ShizukuRefreshRateBridge.detach(service)
+            service = null
+            touchActive = false
+            inputMonitoringActive = false
+        }
+        onPrivilegedServiceUnavailable?.invoke()
     }
 
     /**
@@ -173,14 +197,27 @@ class ShizukuInputManager : InteractionSignalProvider {
 
         synchronized(lock) {
             if (service != null && inputMonitoringActive) return
-            if (bindingInProgress) return
+            if (bindingInProgress || statusCheckScheduled) return
 
             if (now - lastStatusCheckAt < STATUS_CHECK_THROTTLE_MS) {
                 return
             }
 
             lastStatusCheckAt = now
+            statusCheckScheduled = true
         }
+
+        executeControl {
+            try {
+                checkStatusOffMainThread()
+            } finally {
+                synchronized(lock) { statusCheckScheduled = false }
+            }
+        }
+    }
+
+    private fun checkStatusOffMainThread() {
+        if (destroyed) return
 
         registerPermissionListenerIfNeeded()
 
@@ -201,11 +238,16 @@ class ShizukuInputManager : InteractionSignalProvider {
         Log.d(TAG, "permissionGranted=$permissionGranted")
 
         if (!permissionGranted) {
-            requestPermission()
+            Log.d(TAG, "Shizuku permission is optional; waiting for an explicit UI request")
             return
         }
 
         bindUserService()
+    }
+
+    private fun executeControl(block: () -> Unit) {
+        runCatching { controlExecutor.execute(block) }
+            .onFailure { Log.w(TAG, "Shizuku control task was rejected", it) }
     }
 
     private fun registerPermissionListenerIfNeeded() {
@@ -227,15 +269,6 @@ class ShizukuInputManager : InteractionSignalProvider {
         }
 
         permissionListenerRegistered = false
-    }
-
-    private fun requestPermission() {
-        runCatching {
-            Shizuku.requestPermission(REQUEST_CODE)
-            Log.d(TAG, "Permission requested")
-        }.onFailure {
-            Log.e(TAG, "Permission request failed", it)
-        }
     }
 
     private fun bindUserService() {
@@ -281,7 +314,7 @@ class ShizukuInputManager : InteractionSignalProvider {
         }
 
         runCatching {
-            val result = remote.runCommand("getevent -lp")
+            val result = remote.listInputDevices()
             val detectedPath = parseTouchscreenDevicePath(result)
 
             touchscreenDevicePath = detectedPath
@@ -353,30 +386,44 @@ class ShizukuInputManager : InteractionSignalProvider {
         Log.d(TAG, "destroy")
 
         destroyed = true
+        executeControl {
+            unregisterPermissionListener()
 
-        unregisterPermissionListener()
+            val remote = synchronized(lock) {
+                val current = service
+                if (current?.asBinder()?.isBinderAlive == true) {
+                    val hyperOsRestored = runCatching {
+                        current.releaseHyperOsRefreshRateSetting()
+                    }.onFailure {
+                        Log.w(TAG, "HyperOS cleanup failed before unbind", it)
+                    }.getOrDefault(false)
+                    if (!hyperOsRestored) {
+                        Log.w(TAG, "HyperOS cleanup was rejected before unbind")
+                    }
+                    val released = runCatching { current.releaseSamsungRefreshRateTokenLimits() }
+                        .onFailure { Log.w(TAG, "Token cleanup failed before unbind", it) }
+                        .getOrDefault(false)
+                    if (!released) Log.w(TAG, "Token cleanup was rejected before unbind")
+                }
+                ShizukuRefreshRateBridge.detach(current)
+                service = null
+                inputMonitoringActive = false
+                touchActive = false
+                bindingInProgress = false
+                statusCheckScheduled = false
+                bound = false
+                current
+            }
 
-        val remote = synchronized(lock) {
-            val current = service
-            service = null
-            inputMonitoringActive = false
-            touchActive = false
-            bindingInProgress = false
-            bound = false
-            current
-        }
+            runCatching { remote?.stopMonitoring() }
+                .onFailure { Log.e(TAG, "stopMonitoring failed during destroy", it) }
 
-        runCatching {
-            remote?.stopMonitoring()
-        }.onFailure {
-            Log.e(TAG, "stopMonitoring failed during destroy", it)
-        }
-
-        runCatching {
-            Shizuku.unbindUserService(userServiceArgs, connection, true)
-            Log.d(TAG, "unbindUserService called")
-        }.onFailure {
-            Log.e(TAG, "unbindUserService failed", it)
+            runCatching {
+                Shizuku.unbindUserService(userServiceArgs, connection, true)
+                Log.d(TAG, "unbindUserService called")
+            }.onFailure {
+                Log.e(TAG, "unbindUserService failed", it)
+            }
         }
     }
 
@@ -400,17 +447,9 @@ class ShizukuInputManager : InteractionSignalProvider {
     companion object {
         private const val TAG = "AdaptiveHzShizuku"
 
-        private const val REQUEST_CODE = 6201
-
-        /**
-         * Increment this whenever the UserService lifecycle changes significantly.
-         *
-         * Shizuku uses versioning to recreate old UserService instances when needed.
-         */
-        private const val VERSION = 4
-
         private const val USER_SERVICE_TAG = "adaptive_hz_input_monitor"
         private const val PROCESS_NAME_SUFFIX = "input_monitor"
+        private const val USER_SERVICE_API_REVISION = 2
 
         private const val STATUS_CHECK_THROTTLE_MS = 2_000L
         private const val BIND_RETRY_COOLDOWN_MS = 10_000L

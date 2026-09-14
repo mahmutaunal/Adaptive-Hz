@@ -5,6 +5,7 @@ import android.content.ActivityNotFoundException
 import android.content.pm.PackageManager
 import android.provider.Settings
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -53,6 +55,8 @@ import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs
 import com.mahmutalperenunal.adaptivehz.core.service.StabilityForegroundService
 import com.mahmutalperenunal.adaptivehz.core.engine.model.AdaptiveHzMode
 import com.mahmutalperenunal.adaptivehz.core.engine.model.DeviceVendorDetector
+import com.mahmutalperenunal.adaptivehz.core.engine.model.RefreshRateApplyResult
+import com.mahmutalperenunal.adaptivehz.core.engine.model.isOperationalSuccess
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -65,6 +69,10 @@ import com.mahmutalperenunal.adaptivehz.core.apps.InstalledAppsRepository
 import com.mahmutalperenunal.adaptivehz.core.apps.RecentAppsProvider
 import com.mahmutalperenunal.adaptivehz.core.engine.model.DeviceVendor
 import com.mahmutalperenunal.adaptivehz.core.system.RootManager
+import com.mahmutalperenunal.adaptivehz.core.system.CustomRefreshRateController
+import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateCapabilities
+import com.mahmutalperenunal.adaptivehz.core.shizuku.ShizukuAccess
+import com.mahmutalperenunal.adaptivehz.core.shizuku.ShizukuAccessState
 import com.mahmutalperenunal.adaptivehz.core.quickaccess.QuickAccessManager
 import com.mahmutalperenunal.adaptivehz.core.update.GitHubUpdateChecker
 import com.mahmutalperenunal.adaptivehz.core.update.StableRelease
@@ -75,7 +83,20 @@ import com.mahmutalperenunal.adaptivehz.ui.settings.components.QuickAccessDiscov
 import com.mahmutalperenunal.adaptivehz.ui.settings.components.ProjectSupportCard
 import com.mahmutalperenunal.adaptivehz.ui.components.UpdateAvailableDialog
 import com.mahmutalperenunal.adaptivehz.ui.components.UpdateCheckConsentDialog
+import com.mahmutalperenunal.adaptivehz.ui.components.ShizukuRecommendationDialog
+import com.mahmutalperenunal.adaptivehz.ui.components.rememberShizukuAccessState
 import java.time.LocalDate
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+private data class HomeRuntimeSnapshot(
+    val accessibilityState: AdaptiveHzRuntimeState.AccessibilityState,
+    val usagePermissionGranted: Boolean,
+    val dashboardApps: List<InstalledAppInfo>,
+    val refreshRateCapabilities: RefreshRateCapabilities,
+    val rootAvailable: Boolean
+)
 
 /**
  * Home route that coordinates setup state, dashboard state and quick actions.
@@ -113,7 +134,9 @@ fun HomeScreen(
     val toastAdaptiveApplied = stringResource(id = R.string.toast_adaptive_applied)
     val toastMinimumApplied = stringResource(id = R.string.toast_minimum_applied)
     val toastMaximumApplied = stringResource(id = R.string.toast_maximum_applied)
+    val toastRefreshRateApplyFailed = stringResource(id = R.string.toast_refresh_rate_apply_failed)
     val toastSecureSettingsMissing = stringResource(id = R.string.toast_secure_settings_missing)
+    val toastCustomRateUnavailable = stringResource(id = R.string.toast_custom_rate_unavailable)
     val toastRootGrantSuccess = stringResource(id = R.string.root_grant_success)
     val toastRootGrantDenied = stringResource(id = R.string.root_grant_denied)
     val toastRootNotAvailable = stringResource(id = R.string.root_not_available)
@@ -122,6 +145,7 @@ fun HomeScreen(
     val labelOff = stringResource(id = R.string.label_off)
     val labelGranted = stringResource(id = R.string.label_granted)
     val labelRequired = stringResource(id = R.string.label_required)
+    val toastShizukuNotRunning = stringResource(id = R.string.toast_shizuku_not_running)
 
     val labelIdle = stringResource(id = R.string.label_idle)
     val labelActive = stringResource(id = R.string.label_active)
@@ -130,11 +154,36 @@ fun HomeScreen(
     val labelManualTargetMax = stringResource(id = R.string.label_target_maximum)
     val labelSystemDefault = stringResource(id = R.string.label_target_system_default)
 
+    val showApplyResult: (RefreshRateApplyResult, String) -> Unit = { result, successMessage ->
+        val customFallback = result is RefreshRateApplyResult.CustomFallbackApplied
+        val success = !customFallback &&
+            (result.isOperationalSuccess || result is RefreshRateApplyResult.NoOperation)
+        val message = when {
+            success -> successMessage
+            !prefs.isAdbGranted(appContext) -> toastSecureSettingsMissing
+            customFallback -> toastCustomRateUnavailable
+            else -> toastRefreshRateApplyFailed
+        }
+        Toast.makeText(
+            appContext,
+            message,
+            if (success) Toast.LENGTH_SHORT else Toast.LENGTH_LONG
+        ).show()
+    }
+
     val scrollState = rememberScrollState()
 
     // UI state restored from persisted app preferences.
     var adbGranted by remember { mutableStateOf(prefs.isAdbGranted(appContext)) }
     val currentMode = remember { mutableStateOf(prefs.getCurrentMode(appContext)) }
+    var refreshRateCapabilities by remember {
+        mutableStateOf(RefreshRateCapabilities(emptyList(), false))
+    }
+    var customMinimumRate by remember { mutableStateOf(prefs.getGlobalCustomMinimumRate(appContext)) }
+    var customMaximumRate by remember { mutableStateOf(prefs.getGlobalCustomMaximumRate(appContext)) }
+    var adaptiveTargetRate by remember {
+        mutableStateOf(prefs.getGlobalAdaptiveTargetRate(appContext))
+    }
 
     // Keeps the visible dashboard synchronized with mode changes initiated by
     // external app surfaces such as the Quick Settings tile or notification.
@@ -146,7 +195,9 @@ fun HomeScreen(
         onDispose(stopObserving)
     }
 
-    val accessibilityState = remember { mutableStateOf(getAccessibilityState()) }
+    val accessibilityState = remember {
+        mutableStateOf(AdaptiveHzRuntimeState.AccessibilityState.DISABLED)
+    }
 
     // Vendor is stable during the app session.
     val vendorLabel = remember { DeviceVendorDetector.detect().toString() }
@@ -159,29 +210,71 @@ fun HomeScreen(
     val installedAppsRepository = remember(appContext) { InstalledAppsRepository(appContext) }
     val recentAppsProvider = remember(appContext) { RecentAppsProvider(appContext) }
     var dashboardApps by remember { mutableStateOf<List<InstalledAppInfo>>(emptyList()) }
-    var usagePermissionGranted by remember { mutableStateOf(recentAppsProvider.hasPermission()) }
+    var usagePermissionGranted by remember { mutableStateOf(false) }
     val selectedDashboardApp = remember { mutableStateOf<InstalledAppInfo?>(null) }
 
-    // Refreshes the compact recent-app list shown on the dashboard.
-    fun reloadDashboardApps() {
-        dashboardApps = installedAppsRepository.getDashboardApps(limit = 5)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val refreshScope = rememberCoroutineScope()
+    val shizukuAccessState = rememberShizukuAccessState()
+    var shizukuWarningAcknowledged by remember { mutableStateOf(false) }
+    var pendingShizukuAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+
+    fun runWithShizukuRecommendation(action: () -> Unit) {
+        if (shizukuAccessState == ShizukuAccessState.READY || shizukuWarningAcknowledged) {
+            action()
+        } else {
+            pendingShizukuAction = action
+        }
     }
 
-    val lifecycleOwner = LocalLifecycleOwner.current
+    fun requestShizukuPermission() {
+        when (shizukuAccessState) {
+            ShizukuAccessState.READY -> Unit
+            ShizukuAccessState.PERMISSION_REQUIRED -> {
+                if (!ShizukuAccess.requestPermission()) {
+                    Toast.makeText(appContext, toastShizukuNotRunning, Toast.LENGTH_LONG).show()
+                }
+            }
+            ShizukuAccessState.NOT_RUNNING -> {
+                Toast.makeText(appContext, toastShizukuNotRunning, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    LaunchedEffect(shizukuAccessState) {
+        if (shizukuAccessState == ShizukuAccessState.READY) {
+            pendingShizukuAction?.let { pendingAction ->
+                pendingShizukuAction = null
+                pendingAction()
+            }
+        }
+    }
 
     // Re-reads runtime state after setup changes or lifecycle resume.
     fun refreshStates() {
-        accessibilityState.value = getAccessibilityState(appContext)
         currentMode.value = prefs.getCurrentMode(appContext)
-        usagePermissionGranted = recentAppsProvider.hasPermission()
-
-        reloadDashboardApps()
-
         adbGranted = prefs.isAdbGranted(appContext)
+        customMinimumRate = prefs.getGlobalCustomMinimumRate(appContext)
+        customMaximumRate = prefs.getGlobalCustomMaximumRate(appContext)
+        adaptiveTargetRate = prefs.getGlobalAdaptiveTargetRate(appContext)
 
-        rootAvailable = when (RootManager.getRootState()) {
-            is RootManager.RootState.Available -> true
-            else -> false
+        refreshScope.launch {
+            val snapshot = withContext(Dispatchers.IO) {
+                HomeRuntimeSnapshot(
+                    accessibilityState = getAccessibilityState(appContext),
+                    usagePermissionGranted = recentAppsProvider.hasPermission(),
+                    dashboardApps = installedAppsRepository.getDashboardApps(limit = 5),
+                    refreshRateCapabilities =
+                        CustomRefreshRateController.resolveCapabilities(appContext),
+                    rootAvailable = RootManager.getRootState() is RootManager.RootState.Available
+                )
+            }
+
+            accessibilityState.value = snapshot.accessibilityState
+            usagePermissionGranted = snapshot.usagePermissionGranted
+            dashboardApps = snapshot.dashboardApps
+            refreshRateCapabilities = snapshot.refreshRateCapabilities
+            rootAvailable = snapshot.rootAvailable
         }
     }
 
@@ -202,13 +295,6 @@ fun HomeScreen(
     // Performs the first state sync after composition.
     LaunchedEffect(Unit) {
         refreshStates()
-    }
-
-    LaunchedEffect(Unit) {
-        rootAvailable = when (RootManager.getRootState()) {
-            is RootManager.RootState.Available -> true
-            else -> false
-        }
     }
 
     val accessibilityConfigured = accessibilityState.value != AdaptiveHzRuntimeState.AccessibilityState.DISABLED
@@ -303,6 +389,7 @@ fun HomeScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
             .windowInsetsPadding(
                 WindowInsets.safeDrawing.only(
                     WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
@@ -344,7 +431,7 @@ fun HomeScreen(
             if (accessibilityBroken) {
                 RecoveryCard(
                     onRetry = {
-                        accessibilityState.value = getAccessibilityState(appContext)
+                        refreshStates()
                     },
                     onOpenAccessibilitySettings = openAccessibilitySettings,
                     onOpenBatterySettings = requestIgnoreBatteryOptimizations
@@ -359,6 +446,7 @@ fun HomeScreen(
                     batteryOptimizationsIgnored = batteryOptimizationsIgnored,
                     notificationsGranted = notificationsGranted,
                     usageAccessGranted = usagePermissionGranted,
+                    shizukuAccessState = shizukuAccessState,
                     keepAliveEnabled = keepAliveEnabled,
                     isXiaomiDevice = isXiaomiDevice,
                     labelOn = labelOn,
@@ -372,75 +460,80 @@ fun HomeScreen(
                     onOpenAccessibilitySettings = openAccessibilitySettings,
                     // Verifies WRITE_SECURE_SETTINGS through permission and safe write checks.
                     onVerifyAdb = {
-                        val permission = "android.permission.WRITE_SECURE_SETTINGS"
+                        refreshScope.launch {
+                            val verified = withContext(Dispatchers.IO) {
+                                val permission = "android.permission.WRITE_SECURE_SETTINGS"
+                                try {
+                                    val pmGranted = ContextCompat.checkSelfPermission(
+                                        appContext,
+                                        permission
+                                    ) == PackageManager.PERMISSION_GRANTED
 
-                        val verified = try {
-                            val pmGranted = ContextCompat.checkSelfPermission(
+                                    val cr = appContext.contentResolver
+                                    val key = Settings.Global.ANIMATOR_DURATION_SCALE
+                                    val current = Settings.Global.getFloat(cr, key, 1f)
+                                    val wrote = Settings.Global.putFloat(cr, key, current)
+                                    val after = Settings.Global.getFloat(cr, key, 1f)
+
+                                    pmGranted || (wrote && after == current)
+                                } catch (_: SecurityException) {
+                                    false
+                                } catch (_: Exception) {
+                                    ContextCompat.checkSelfPermission(
+                                        appContext,
+                                        permission
+                                    ) == PackageManager.PERMISSION_GRANTED
+                                }
+                            }
+
+                            prefs.setAdbGranted(appContext, verified)
+                            adbGranted = verified
+                            Toast.makeText(
                                 appContext,
-                                permission
-                            ) == PackageManager.PERMISSION_GRANTED
-
-                            val cr = appContext.contentResolver
-                            val key = Settings.Global.ANIMATOR_DURATION_SCALE
-                            val current = Settings.Global.getFloat(cr, key, 1f)
-                            val wrote = Settings.Global.putFloat(cr, key, current)
-                            val after = Settings.Global.getFloat(cr, key, 1f)
-
-                            pmGranted || (wrote && after == current)
-                        } catch (_: SecurityException) {
-                            false
-                        } catch (_: Exception) {
-                            ContextCompat.checkSelfPermission(
-                                appContext,
-                                permission
-                            ) == PackageManager.PERMISSION_GRANTED
-                        }
-
-                        if (verified) {
-                            prefs.setAdbGranted(appContext, true)
-                            adbGranted = true
-                            Toast.makeText(appContext, toastAdbVerified, Toast.LENGTH_SHORT).show()
-                        } else {
-                            prefs.setAdbGranted(appContext, false)
-                            adbGranted = false
-                            Toast.makeText(appContext, toastAdbPermissionMissing, Toast.LENGTH_LONG).show()
+                                if (verified) toastAdbVerified else toastAdbPermissionMissing,
+                                if (verified) Toast.LENGTH_SHORT else Toast.LENGTH_LONG
+                            ).show()
                         }
                     },
                     // Optional root fallback for granting the secure settings permission.
                     onGrantWithRoot = {
-                        when (val result = RootManager.grantWriteSecureSettings(appContext)) {
-                            is RootManager.RootState.Available -> {
-                                prefs.setAdbGranted(appContext, true)
-                                adbGranted = true
-                                Toast.makeText(
-                                    appContext,
-                                    toastRootGrantSuccess,
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            }
+                        refreshScope.launch {
+                            when (val result = withContext(Dispatchers.IO) {
+                                RootManager.grantWriteSecureSettings(appContext)
+                            }) {
+                                is RootManager.RootState.Available -> {
+                                    prefs.setAdbGranted(appContext, true)
+                                    adbGranted = true
+                                    Toast.makeText(
+                                        appContext,
+                                        toastRootGrantSuccess,
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
 
-                            is RootManager.RootState.Denied -> {
-                                Toast.makeText(
-                                    appContext,
-                                    toastRootGrantDenied,
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            }
+                                is RootManager.RootState.Denied -> {
+                                    Toast.makeText(
+                                        appContext,
+                                        toastRootGrantDenied,
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
 
-                            is RootManager.RootState.Unavailable -> {
-                                Toast.makeText(
-                                    appContext,
-                                    toastRootNotAvailable,
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            }
+                                is RootManager.RootState.Unavailable -> {
+                                    Toast.makeText(
+                                        appContext,
+                                        toastRootNotAvailable,
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
 
-                            is RootManager.RootState.Failed -> {
-                                Toast.makeText(
-                                    appContext,
-                                    result.reason ?: toastRootGrantFailed,
-                                    Toast.LENGTH_LONG
-                                ).show()
+                                is RootManager.RootState.Failed -> {
+                                    Toast.makeText(
+                                        appContext,
+                                        result.reason ?: toastRootGrantFailed,
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
                             }
                         }
                     },
@@ -451,6 +544,7 @@ fun HomeScreen(
                     onOpenUsageAccessSettings = {
                         context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
                     },
+                    onRequestShizukuPermission = ::requestShizukuPermission,
                     onSetKeepAliveEnabled = { next ->
                         prefs.setKeepAliveEnabled(appContext, next)
                         onKeepAliveEnabledChange(next)
@@ -484,59 +578,140 @@ fun HomeScreen(
                         selectedDashboardApp.value = app
                     },
                     onAppEnabledChange = { enabled ->
-                        try {
-                            if (enabled) {
-                                AdaptiveHzActionHandler.turnOn(appContext)
-                            } else {
-                                AdaptiveHzActionHandler.turnOff(appContext)
+                        val action = {
+                            try {
+                                if (enabled) {
+                                    AdaptiveHzActionHandler.turnOnAsync(appContext)
+                                } else {
+                                    AdaptiveHzActionHandler.turnOffAsync(appContext)
+                                }
+                                currentMode.value = AdaptiveHzActionHandler.getCurrentMode(appContext)
+                            } catch (_: SecurityException) {
+                                Toast.makeText(
+                                    appContext,
+                                    toastSecureSettingsMissing,
+                                    Toast.LENGTH_LONG
+                                ).show()
                             }
-                            currentMode.value = AdaptiveHzActionHandler.getCurrentMode(appContext)
-                        } catch (_: SecurityException) {
-                            Toast.makeText(
-                                appContext,
-                                toastSecureSettingsMissing,
-                                Toast.LENGTH_LONG
-                            ).show()
                         }
+                        if (enabled) runWithShizukuRecommendation(action) else action()
                     },
                     onAdaptiveClick = {
-                        try {
-                            AdaptiveHzActionHandler.setAdaptive(appContext)
-                            currentMode.value = AdaptiveHzActionHandler.getCurrentMode(appContext)
-                            Toast.makeText(appContext, toastAdaptiveApplied, Toast.LENGTH_SHORT).show()
-                        } catch (_: SecurityException) {
-                            Toast.makeText(
-                                appContext,
-                                toastSecureSettingsMissing,
-                                Toast.LENGTH_LONG
-                            ).show()
+                        runWithShizukuRecommendation {
+                            try {
+                                AdaptiveHzActionHandler.setAdaptiveAsync(
+                                    context = appContext,
+                                    onComplete = { result ->
+                                        showApplyResult(result, toastAdaptiveApplied)
+                                    }
+                                )
+                                currentMode.value = AdaptiveHzActionHandler.getCurrentMode(appContext)
+                            } catch (_: SecurityException) {
+                                Toast.makeText(
+                                    appContext,
+                                    toastSecureSettingsMissing,
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
                         }
                     },
                     onMinimumClick = {
-                        try {
-                            AdaptiveHzActionHandler.setMinimum(appContext)
-                            currentMode.value = AdaptiveHzActionHandler.getCurrentMode(appContext)
-                            Toast.makeText(appContext, toastMinimumApplied, Toast.LENGTH_SHORT).show()
-                        } catch (_: SecurityException) {
-                            Toast.makeText(
-                                appContext,
-                                toastSecureSettingsMissing,
-                                Toast.LENGTH_LONG
-                            ).show()
+                        runWithShizukuRecommendation {
+                            try {
+                                AdaptiveHzActionHandler.setMinimumAsync(
+                                    context = appContext,
+                                    onComplete = { result ->
+                                        showApplyResult(result, toastMinimumApplied)
+                                    }
+                                )
+                                currentMode.value = AdaptiveHzActionHandler.getCurrentMode(appContext)
+                            } catch (_: SecurityException) {
+                                Toast.makeText(
+                                    appContext,
+                                    toastSecureSettingsMissing,
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
                         }
                     },
                     onMaximumClick = {
-                        try {
-                            AdaptiveHzActionHandler.setMaximum(appContext)
-                            currentMode.value = AdaptiveHzActionHandler.getCurrentMode(appContext)
-                            Toast.makeText(appContext, toastMaximumApplied, Toast.LENGTH_SHORT).show()
-                        } catch (_: SecurityException) {
-                            Toast.makeText(
-                                appContext,
-                                toastSecureSettingsMissing,
-                                Toast.LENGTH_LONG
-                            ).show()
+                        runWithShizukuRecommendation {
+                            try {
+                                AdaptiveHzActionHandler.setMaximumAsync(
+                                    context = appContext,
+                                    onComplete = { result ->
+                                        showApplyResult(result, toastMaximumApplied)
+                                    }
+                                )
+                                currentMode.value = AdaptiveHzActionHandler.getCurrentMode(appContext)
+                            } catch (_: SecurityException) {
+                                Toast.makeText(
+                                    appContext,
+                                    toastSecureSettingsMissing,
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
                         }
+                    },
+                    supportedRefreshRates = refreshRateCapabilities.supportedRates,
+                    customRateSelectionSupported =
+                        refreshRateCapabilities.customRateSelectionSupported,
+                    customMinimumRate = customMinimumRate,
+                    customMaximumRate = customMaximumRate,
+                    adaptiveTargetRate = adaptiveTargetRate,
+                    onCustomMinimumRateSelected = { rate ->
+                        val action = {
+                            prefs.setGlobalCustomMinimumRate(appContext, rate)
+                            customMinimumRate = rate
+                            if (currentMode.value == AdaptiveHzMode.FORCE_MIN) {
+                                AdaptiveHzActionHandler.setMinimumAsync(
+                                    context = appContext,
+                                    onComplete = { result ->
+                                        if (result is RefreshRateApplyResult.CustomFallbackApplied ||
+                                            (!result.isOperationalSuccess && result !is RefreshRateApplyResult.NoOperation)) {
+                                            showApplyResult(result, toastMinimumApplied)
+                                        }
+                                    }
+                                )
+                            }
+                        }
+                        if (rate == null) action() else runWithShizukuRecommendation(action)
+                    },
+                    onCustomMaximumRateSelected = { rate ->
+                        val action = {
+                            prefs.setGlobalCustomMaximumRate(appContext, rate)
+                            customMaximumRate = rate
+                            if (currentMode.value == AdaptiveHzMode.FORCE_MAX) {
+                                AdaptiveHzActionHandler.setMaximumAsync(
+                                    context = appContext,
+                                    onComplete = { result ->
+                                        if (result is RefreshRateApplyResult.CustomFallbackApplied ||
+                                            (!result.isOperationalSuccess && result !is RefreshRateApplyResult.NoOperation)) {
+                                            showApplyResult(result, toastMaximumApplied)
+                                        }
+                                    }
+                                )
+                            }
+                        }
+                        if (rate == null) action() else runWithShizukuRecommendation(action)
+                    },
+                    onAdaptiveTargetRateSelected = { rate ->
+                        val action = {
+                            prefs.setGlobalAdaptiveTargetRate(appContext, rate)
+                            adaptiveTargetRate = rate
+                            if (currentMode.value == AdaptiveHzMode.ADAPTIVE) {
+                                AdaptiveHzActionHandler.setAdaptiveAsync(
+                                    context = appContext,
+                                    onComplete = { result ->
+                                        if (result is RefreshRateApplyResult.CustomFallbackApplied ||
+                                            (!result.isOperationalSuccess && result !is RefreshRateApplyResult.NoOperation)) {
+                                            showApplyResult(result, toastAdaptiveApplied)
+                                        }
+                                    }
+                                )
+                            }
+                        }
+                        if (rate == null) action() else runWithShizukuRecommendation(action)
                     }
                 )
 
@@ -595,15 +770,33 @@ fun HomeScreen(
     selectedDashboardApp.value?.let { app ->
         ProfileModePickerDialog(
             app = app,
-            onDismiss = { selectedDashboardApp.value = null },
+            onDismiss = {
+                selectedDashboardApp.value = null
+                refreshStates()
+            },
             onModeSelected = { mode ->
                 AdaptiveHzPrefs.setAppRefreshProfileMode(
                     context = appContext,
                     packageName = app.packageName,
                     mode = mode
                 )
-                selectedDashboardApp.value = null
-                reloadDashboardApps()
+                selectedDashboardApp.value = app.copy(
+                    profileMode = mode
+                )
+            }
+        )
+    }
+
+    pendingShizukuAction?.let { pendingAction ->
+        ShizukuRecommendationDialog(
+            onDismiss = { pendingShizukuAction = null },
+            onContinueWithoutShizuku = {
+                pendingShizukuAction = null
+                shizukuWarningAcknowledged = true
+                pendingAction()
+            },
+            onRequestPermission = {
+                requestShizukuPermission()
             }
         )
     }

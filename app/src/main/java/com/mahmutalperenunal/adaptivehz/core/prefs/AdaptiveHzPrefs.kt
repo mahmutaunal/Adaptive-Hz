@@ -1,6 +1,8 @@
 package com.mahmutalperenunal.adaptivehz.core.prefs
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.mahmutalperenunal.adaptivehz.core.engine.model.AdaptiveHzMode
@@ -46,6 +48,35 @@ object AdaptiveHzPrefs {
     const val KEY_ACCESSIBILITY_LAST_RECOVERY_NOTIFIED_AT = "accessibility_last_recovery_notified_at"
     const val KEY_INITIAL_SETUP_COMPLETED = "initial_setup_completed"
     private const val KEY_APP_PROFILE_PREFIX = "app_profile_"
+    private const val KEY_GLOBAL_CUSTOM_MIN_RATE = "global_custom_min_rate"
+    private const val KEY_GLOBAL_CUSTOM_MAX_RATE = "global_custom_max_rate"
+    private const val KEY_GLOBAL_ADAPTIVE_LOW_RATE = "global_adaptive_low_rate"
+    private const val KEY_GLOBAL_ADAPTIVE_HIGH_RATE = "global_adaptive_high_rate"
+    private const val KEY_APP_CUSTOM_MIN_RATE_PREFIX = "app_custom_min_rate_"
+    private const val KEY_APP_CUSTOM_MAX_RATE_PREFIX = "app_custom_max_rate_"
+    private const val LEGACY_KEY_APP_ADAPTIVE_LOW_RATE_PREFIX = "app_adaptive_low_rate_"
+    private const val LEGACY_KEY_APP_ADAPTIVE_HIGH_RATE_PREFIX = "app_adaptive_high_rate_"
+    private const val LEGACY_KEY_APP_CUSTOM_ADAPTIVE_PREFIX = "app_custom_adaptive_"
+    private const val KEY_CUSTOM_SETTINGS_SNAPSHOT_ACTIVE = "custom_settings_snapshot_active"
+    private const val KEY_CUSTOM_SETTINGS_SNAPSHOT_MIN = "custom_settings_snapshot_min"
+    private const val KEY_CUSTOM_SETTINGS_SNAPSHOT_PEAK = "custom_settings_snapshot_peak"
+    private const val KEY_CUSTOM_SETTINGS_SNAPSHOT_MIN_PRESENT = "custom_settings_snapshot_min_present"
+    private const val KEY_CUSTOM_SETTINGS_SNAPSHOT_PEAK_PRESENT = "custom_settings_snapshot_peak_present"
+    private const val KEY_REFRESH_RATE_CAPABILITY_IDENTITY = "refresh_rate_capability_identity"
+    private const val KEY_REFRESH_RATE_CAPABILITY_RATES = "refresh_rate_capability_rates"
+    private const val KEY_HYPEROS_CUSTOM_SNAPSHOT_ACTIVE = "hyperos_custom_snapshot_active"
+    private const val KEY_HYPEROS_CUSTOM_SNAPSHOT_KEY = "hyperos_custom_snapshot_key"
+    private const val KEY_HYPEROS_CUSTOM_SNAPSHOT_VALUE = "hyperos_custom_snapshot_value"
+    private const val KEY_HYPEROS_CUSTOM_SNAPSHOT_VALUE_PRESENT =
+        "hyperos_custom_snapshot_value_present"
+    private const val KEY_HYPEROS_CUSTOM_SNAPSHOT_COMPANION_KEY =
+        "hyperos_custom_snapshot_companion_key"
+    private const val KEY_HYPEROS_CUSTOM_SNAPSHOT_COMPANION_VALUE =
+        "hyperos_custom_snapshot_companion_value"
+    private const val KEY_HYPEROS_CUSTOM_SNAPSHOT_COMPANION_VALUE_PRESENT =
+        "hyperos_custom_snapshot_companion_value_present"
+    private const val KEY_HYPEROS_CUSTOM_ROUTE_IDENTITY = "hyperos_custom_route_identity"
+    private const val KEY_HYPEROS_CUSTOM_ROUTE_KEY = "hyperos_custom_route_key"
     const val KEY_DEBUG_FOREGROUND_PACKAGE = "debug_foreground_package"
     const val KEY_DEBUG_LAST_EVENT = "debug_last_event"
     const val KEY_DEBUG_LAST_WRITE = "debug_last_write"
@@ -73,7 +104,11 @@ object AdaptiveHzPrefs {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     fun isAdbGranted(context: Context): Boolean {
-        return prefs(context).getBoolean(KEY_ADB_GRANTED, false)
+        // Privileged grants can change independently of app data (package replacement, adb or
+        // root). Never let a persisted UI flag override Android's current permission state.
+        return context.applicationContext.checkSelfPermission(
+            Manifest.permission.WRITE_SECURE_SETTINGS
+        ) == PackageManager.PERMISSION_GRANTED
     }
 
     fun setAdbGranted(context: Context, granted: Boolean) {
@@ -380,9 +415,27 @@ object AdaptiveHzPrefs {
     ): AppRefreshProfileMode {
         if (packageName.isNullOrBlank()) return AppRefreshProfileMode.DEFAULT
 
+        val storage = prefs(context)
         val key = KEY_APP_PROFILE_PREFIX + packageName
+        val legacyFlagKey = LEGACY_KEY_APP_CUSTOM_ADAPTIVE_PREFIX + packageName
+        val legacyLowKey = LEGACY_KEY_APP_ADAPTIVE_LOW_RATE_PREFIX + packageName
+        val legacyHighKey = LEGACY_KEY_APP_ADAPTIVE_HIGH_RATE_PREFIX + packageName
 
-        val raw = prefs(context).getString(key, null)
+        // Older development builds exposed a per-app custom Adaptive profile. It had
+        // ambiguous precedence and could silently override the global policy. Migrate it
+        // to DEFAULT (inherit global) and remove all orphaned values without converting it
+        // to a persistent minimum/maximum lock.
+        if (storage.getBoolean(legacyFlagKey, false)) {
+            storage.edit {
+                remove(legacyFlagKey)
+                remove(legacyLowKey)
+                remove(legacyHighKey)
+                remove(key)
+            }
+            return AppRefreshProfileMode.DEFAULT
+        }
+
+        val raw = storage.getString(key, null)
             ?: return AppRefreshProfileMode.DEFAULT
 
         val migrated = when (raw) {
@@ -397,7 +450,7 @@ object AdaptiveHzPrefs {
         }
 
         if (raw != migrated.name) {
-            prefs(context).edit {
+            storage.edit {
                 if (migrated == AppRefreshProfileMode.DEFAULT) {
                     remove(key)
                 } else {
@@ -417,10 +470,260 @@ object AdaptiveHzPrefs {
         if (packageName.isBlank()) return
 
         prefs(context).edit {
+            remove(LEGACY_KEY_APP_CUSTOM_ADAPTIVE_PREFIX + packageName)
+            remove(LEGACY_KEY_APP_ADAPTIVE_LOW_RATE_PREFIX + packageName)
+            remove(LEGACY_KEY_APP_ADAPTIVE_HIGH_RATE_PREFIX + packageName)
             if (mode == AppRefreshProfileMode.DEFAULT) {
                 remove(KEY_APP_PROFILE_PREFIX + packageName)
             } else {
                 putString(KEY_APP_PROFILE_PREFIX + packageName, mode.name)
+            }
+        }
+    }
+
+    fun getGlobalCustomMinimumRate(context: Context): Int? =
+        getOptionalPositiveInt(context, KEY_GLOBAL_CUSTOM_MIN_RATE)
+
+    fun setGlobalCustomMinimumRate(context: Context, rate: Int?) =
+        setOptionalPositiveInt(context, KEY_GLOBAL_CUSTOM_MIN_RATE, rate)
+
+    fun getGlobalCustomMaximumRate(context: Context): Int? =
+        getOptionalPositiveInt(context, KEY_GLOBAL_CUSTOM_MAX_RATE)
+
+    fun setGlobalCustomMaximumRate(context: Context, rate: Int?) =
+        setOptionalPositiveInt(context, KEY_GLOBAL_CUSTOM_MAX_RATE, rate)
+
+    fun getGlobalAdaptiveTargetRate(context: Context): Int? =
+        getOptionalPositiveInt(context, KEY_GLOBAL_ADAPTIVE_HIGH_RATE)
+            // Older builds allowed LOW without a HIGH value. Preserve that user's
+            // only explicit choice when migrating to the single-target model.
+            ?: getOptionalPositiveInt(context, KEY_GLOBAL_ADAPTIVE_LOW_RATE)
+
+    fun setGlobalAdaptiveTargetRate(context: Context, rate: Int?) {
+        setOptionalPositiveInts(
+            context,
+            KEY_GLOBAL_ADAPTIVE_LOW_RATE to null,
+            KEY_GLOBAL_ADAPTIVE_HIGH_RATE to rate
+        )
+    }
+
+    fun getAppCustomMinimumRate(context: Context, packageName: String?): Int? =
+        getAppOptionalPositiveInt(context, KEY_APP_CUSTOM_MIN_RATE_PREFIX, packageName)
+
+    fun setAppCustomMinimumRate(context: Context, packageName: String, rate: Int?) =
+        setAppOptionalPositiveInt(context, KEY_APP_CUSTOM_MIN_RATE_PREFIX, packageName, rate)
+
+    fun getAppCustomMaximumRate(context: Context, packageName: String?): Int? =
+        getAppOptionalPositiveInt(context, KEY_APP_CUSTOM_MAX_RATE_PREFIX, packageName)
+
+    fun setAppCustomMaximumRate(context: Context, packageName: String, rate: Int?) =
+        setAppOptionalPositiveInt(context, KEY_APP_CUSTOM_MAX_RATE_PREFIX, packageName, rate)
+
+    data class OriginalRefreshRateSettings(
+        val minValue: String?,
+        val peakValue: String?
+    )
+
+    fun getOriginalRefreshRateSettings(context: Context): OriginalRefreshRateSettings? {
+        val storage = prefs(context)
+        if (!storage.getBoolean(KEY_CUSTOM_SETTINGS_SNAPSHOT_ACTIVE, false)) return null
+        return OriginalRefreshRateSettings(
+            minValue = if (storage.getBoolean(KEY_CUSTOM_SETTINGS_SNAPSHOT_MIN_PRESENT, false)) {
+                storage.getString(KEY_CUSTOM_SETTINGS_SNAPSHOT_MIN, null)
+            } else null,
+            peakValue = if (storage.getBoolean(KEY_CUSTOM_SETTINGS_SNAPSHOT_PEAK_PRESENT, false)) {
+                storage.getString(KEY_CUSTOM_SETTINGS_SNAPSHOT_PEAK, null)
+            } else null
+        )
+    }
+
+    fun clearOriginalRefreshRateSettings(context: Context): Boolean {
+        return prefs(context).edit()
+            .remove(KEY_CUSTOM_SETTINGS_SNAPSHOT_ACTIVE)
+            .remove(KEY_CUSTOM_SETTINGS_SNAPSHOT_MIN_PRESENT)
+            .remove(KEY_CUSTOM_SETTINGS_SNAPSHOT_PEAK_PRESENT)
+            .remove(KEY_CUSTOM_SETTINGS_SNAPSHOT_MIN)
+            .remove(KEY_CUSTOM_SETTINGS_SNAPSHOT_PEAK)
+            .commit()
+    }
+
+    data class CachedRefreshRateCapabilities(
+        val identity: String,
+        val supportedRates: List<Int>
+    )
+
+    fun getCachedRefreshRateCapabilities(
+        context: Context,
+        identity: String
+    ): CachedRefreshRateCapabilities? {
+        val storage = prefs(context)
+        val cachedIdentity = storage.getString(KEY_REFRESH_RATE_CAPABILITY_IDENTITY, null)
+        if (cachedIdentity != identity) return null
+
+        val rates = storage.getString(KEY_REFRESH_RATE_CAPABILITY_RATES, null)
+            ?.split(',')
+            ?.mapNotNull { it.toIntOrNull()?.takeIf { rate -> rate > 0 } }
+            ?.distinct()
+            ?.sorted()
+            .orEmpty()
+
+        return rates.takeIf { it.size > 1 }?.let {
+            CachedRefreshRateCapabilities(cachedIdentity, it)
+        }
+    }
+
+    fun saveCachedRefreshRateCapabilities(
+        context: Context,
+        identity: String,
+        supportedRates: List<Int>
+    ) {
+        val normalized = supportedRates.filter { it > 0 }.distinct().sorted()
+        if (normalized.size <= 1) return
+
+        prefs(context).edit()
+            .putString(KEY_REFRESH_RATE_CAPABILITY_IDENTITY, identity)
+            .putString(KEY_REFRESH_RATE_CAPABILITY_RATES, normalized.joinToString(","))
+            .commit()
+    }
+
+    data class HyperOsCustomSettingSnapshot(
+        val key: String,
+        val originalValue: String?,
+        val companionKey: String,
+        val companionOriginalValue: String?
+    )
+
+    fun getHyperOsCustomSettingSnapshot(context: Context): HyperOsCustomSettingSnapshot? {
+        val storage = prefs(context)
+        if (!storage.getBoolean(KEY_HYPEROS_CUSTOM_SNAPSHOT_ACTIVE, false)) return null
+        val key = storage.getString(KEY_HYPEROS_CUSTOM_SNAPSHOT_KEY, null)
+            ?.takeIf { it.isNotBlank() }
+            ?: return null
+        val value = if (storage.getBoolean(KEY_HYPEROS_CUSTOM_SNAPSHOT_VALUE_PRESENT, false)) {
+            storage.getString(KEY_HYPEROS_CUSTOM_SNAPSHOT_VALUE, null)
+        } else {
+            null
+        }
+        val companionKey = storage.getString(
+            KEY_HYPEROS_CUSTOM_SNAPSHOT_COMPANION_KEY,
+            null
+        )?.takeIf { it.isNotBlank() } ?: return null
+        val companionValue = if (
+            storage.getBoolean(KEY_HYPEROS_CUSTOM_SNAPSHOT_COMPANION_VALUE_PRESENT, false)
+        ) {
+            storage.getString(KEY_HYPEROS_CUSTOM_SNAPSHOT_COMPANION_VALUE, null)
+        } else {
+            null
+        }
+        return HyperOsCustomSettingSnapshot(key, value, companionKey, companionValue)
+    }
+
+    /** Commits the recovery record before a persistent OEM setting is changed. */
+    fun saveHyperOsCustomSettingSnapshot(
+        context: Context,
+        key: String,
+        originalValue: String?,
+        companionKey: String,
+        companionOriginalValue: String?
+    ): Boolean {
+        val existing = getHyperOsCustomSettingSnapshot(context)
+        if (existing != null) return existing.key == key
+
+        return prefs(context).edit()
+            .putBoolean(KEY_HYPEROS_CUSTOM_SNAPSHOT_ACTIVE, true)
+            .putString(KEY_HYPEROS_CUSTOM_SNAPSHOT_KEY, key)
+            .putBoolean(KEY_HYPEROS_CUSTOM_SNAPSHOT_VALUE_PRESENT, originalValue != null)
+            .putString(KEY_HYPEROS_CUSTOM_SNAPSHOT_COMPANION_KEY, companionKey)
+            .putBoolean(
+                KEY_HYPEROS_CUSTOM_SNAPSHOT_COMPANION_VALUE_PRESENT,
+                companionOriginalValue != null
+            )
+            .apply {
+                if (originalValue == null) {
+                    remove(KEY_HYPEROS_CUSTOM_SNAPSHOT_VALUE)
+                } else {
+                    putString(KEY_HYPEROS_CUSTOM_SNAPSHOT_VALUE, originalValue)
+                }
+                if (companionOriginalValue == null) {
+                    remove(KEY_HYPEROS_CUSTOM_SNAPSHOT_COMPANION_VALUE)
+                } else {
+                    putString(
+                        KEY_HYPEROS_CUSTOM_SNAPSHOT_COMPANION_VALUE,
+                        companionOriginalValue
+                    )
+                }
+            }
+            .commit()
+    }
+
+    fun clearHyperOsCustomSettingSnapshot(context: Context): Boolean {
+        return prefs(context).edit()
+            .remove(KEY_HYPEROS_CUSTOM_SNAPSHOT_ACTIVE)
+            .remove(KEY_HYPEROS_CUSTOM_SNAPSHOT_KEY)
+            .remove(KEY_HYPEROS_CUSTOM_SNAPSHOT_VALUE_PRESENT)
+            .remove(KEY_HYPEROS_CUSTOM_SNAPSHOT_VALUE)
+            .remove(KEY_HYPEROS_CUSTOM_SNAPSHOT_COMPANION_KEY)
+            .remove(KEY_HYPEROS_CUSTOM_SNAPSHOT_COMPANION_VALUE_PRESENT)
+            .remove(KEY_HYPEROS_CUSTOM_SNAPSHOT_COMPANION_VALUE)
+            .commit()
+    }
+
+    fun getVerifiedHyperOsCustomRoute(context: Context, identity: String): String? {
+        val storage = prefs(context)
+        if (storage.getString(KEY_HYPEROS_CUSTOM_ROUTE_IDENTITY, null) != identity) return null
+        return storage.getString(KEY_HYPEROS_CUSTOM_ROUTE_KEY, null)
+    }
+
+    fun saveVerifiedHyperOsCustomRoute(context: Context, identity: String, key: String): Boolean {
+        return prefs(context).edit()
+            .putString(KEY_HYPEROS_CUSTOM_ROUTE_IDENTITY, identity)
+            .putString(KEY_HYPEROS_CUSTOM_ROUTE_KEY, key)
+            .commit()
+    }
+
+    fun clearVerifiedHyperOsCustomRoute(context: Context): Boolean {
+        return prefs(context).edit()
+            .remove(KEY_HYPEROS_CUSTOM_ROUTE_IDENTITY)
+            .remove(KEY_HYPEROS_CUSTOM_ROUTE_KEY)
+            .commit()
+    }
+
+    private fun getAppOptionalPositiveInt(
+        context: Context,
+        prefix: String,
+        packageName: String?
+    ): Int? {
+        if (packageName.isNullOrBlank()) return null
+        return getOptionalPositiveInt(context, prefix + packageName)
+    }
+
+    private fun setAppOptionalPositiveInt(
+        context: Context,
+        prefix: String,
+        packageName: String,
+        value: Int?
+    ) {
+        if (packageName.isBlank()) return
+        setOptionalPositiveInt(context, prefix + packageName, value)
+    }
+
+    private fun getOptionalPositiveInt(context: Context, key: String): Int? {
+        val storage = prefs(context)
+        if (!storage.contains(key)) return null
+        return storage.getInt(key, 0).takeIf { it > 0 }
+    }
+
+    private fun setOptionalPositiveInt(context: Context, key: String, value: Int?) {
+        setOptionalPositiveInts(context, key to value)
+    }
+
+    private fun setOptionalPositiveInts(
+        context: Context,
+        vararg values: Pair<String, Int?>
+    ) {
+        prefs(context).edit {
+            values.forEach { (key, value) ->
+                if (value != null && value > 0) putInt(key, value) else remove(key)
             }
         }
     }

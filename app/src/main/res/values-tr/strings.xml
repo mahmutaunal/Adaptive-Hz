@@ -36,7 +36,7 @@
     <string name="status_accessibility">Erişilebilirlik</string>
     <string name="status_mode">Mod</string>
 
-    <string name="mode_adaptive">Adaptif (Otomatik)</string>
+    <string name="mode_adaptive">Adaptif</string>
     <string name="mode_manual">Manuel</string>
 
     <string name="minimum">Minimum</string>
@@ -65,7 +65,9 @@
     <string name="toast_adaptive_applied">Adaptif uygulandı</string>
     <string name="toast_minimum_applied">Minimum uygulandı</string>
     <string name="toast_maximum_applied">Maksimum uygulandı</string>
+    <string name="toast_refresh_rate_apply_failed">Yenileme hızı uygulanamadı. WRITE_SECURE_SETTINGS iznini ve desteklenen özel değerler için Shizuku bağlantısını kontrol edin.</string>
     <string name="toast_secure_settings_missing">WRITE_SECURE_SETTINGS izni eksik.</string>
+    <string name="toast_custom_rate_unavailable">Özel yenileme hızı uygulanamadı. Cihazın normal davranışı geri yüklendi. Shizuku bağlantısını ve özel değer desteğini kontrol edin.</string>
 
     <string name="label_missing">EKSİK</string>
     <string name="label_on">AÇIK</string>
@@ -108,6 +110,17 @@
     <string name="root_not_available">Bu cihazda root erişimi bulunmuyor.</string>
     <string name="root_grant_failed">Otomatik root kurulumu başarısız oldu.</string>
 
+    <string name="setup_shizuku_title">Shizuku</string>
+    <string name="setup_shizuku_desc">İsteğe bağlıdır. Shizuku dokunma algılamasını iyileştirir ve desteklenen cihazlarda özel yenileme hızı değerlerini güvenle etkinleştirir. Adaptive Hz’in normal modları onsuz da çalışır.</string>
+    <string name="setup_shizuku_ready_message">Shizuku çalışıyor ve izin verildi.</string>
+    <string name="shizuku_recommendation_title">Shizuku öneriliyor</string>
+    <string name="shizuku_recommendation_message">Normal cihaz modları Shizuku olmadan çalışabilir. İzin vermek etkileşim algılamasını iyileştirir ve desteklenen özel yenileme hızı değerlerini güvenle uygulamak için gereklidir.</string>
+    <string name="shizuku_grant_permission">Shizuku izni ver</string>
+    <string name="shizuku_continue_without">Shizuku olmadan devam et</string>
+    <string name="toast_shizuku_not_running">Shizuku çalışmıyor. Önce Shizuku’yu başlatın veya Shizuku olmadan devam edin.</string>
+    <string name="settings_shizuku_ready_summary">Shizuku çalışıyor ve izin verildi</string>
+    <string name="settings_shizuku_recommended_summary">Doğru etkileşim algılama için isteğe bağlı ve önerilir; desteklenen özel değerleri güvenle uygulamak için gereklidir</string>
+
     <!-- Common -->
     <string name="cd_back">Geri</string>
     <string name="action_close">Kapat</string>
@@ -138,7 +151,7 @@
     <!-- Settings - header -->
     <string name="settings_title">Ayarlar</string>
     <string name="settings_app_name">Adaptive Hz</string>
-    <string name="settings_app_tagline">Adaptif Hz, kullanıcı etkileşimine göre ekran yenileme hızını 60 Hz ile 120 Hz arasında otomatik olarak değiştirir.</string>
+    <string name="settings_app_tagline">Adaptif Hz, kullanıcı etkileşimine göre ekran yenileme hızını otomatik olarak değiştirir.</string>
 
     <!-- Settings - defaults (developer) -->
     <string name="settings_developer_name">AlpWare Studio</string>
@@ -443,4 +456,12 @@
     <string name="quick_access_widget_manual_instructions">Ana ekranınızdaki boş bir alana basılı tutun, Widget’lar seçeneğini açın ve Adaptive Hz’i seçin.</string>
     <string name="quick_access_request_failed">Sistem ekleme isteğini açamadı. Bu kısayolu elle ekleyebilirsiniz.</string>
     <string name="quick_access_request_dismissed">Kısayol eklenmedi.</string>
+    <string name="custom_refresh_rate_title">Özel yenileme hızı</string>
+    <string name="custom_refresh_rate_description">Etkin modun kullanacağı hızı hassas biçimde ayarlayın.</string>
+    <string name="custom_refresh_profile_title">Yenileme davranışı</string>
+    <string name="custom_refresh_rate_label">Yenileme hızı</string>
+    <string name="custom_refresh_rate_default">Varsayılan</string>
+    <string name="custom_refresh_rate_hz">%1$d Hz</string>
+    <string name="custom_adaptive_target_label">Dokunma yenileme hızı</string>
+    <string name="custom_refresh_rate_unsupported">Bu cihaz özel yenileme hızı seçimini desteklemiyor.</string>
 </resources>

@@ -65,7 +65,9 @@
     <string name="toast_adaptive_applied">Adaptativo aplicado</string>
     <string name="toast_minimum_applied">Mínimo aplicado</string>
     <string name="toast_maximum_applied">Máximo aplicado</string>
+    <string name="toast_refresh_rate_apply_failed">No se pudo aplicar la frecuencia. Comprueba WRITE_SECURE_SETTINGS y, para valores personalizados compatibles, la conexión de Shizuku.</string>
     <string name="toast_secure_settings_missing">Falta el permiso WRITE_SECURE_SETTINGS.</string>
+    <string name="toast_custom_rate_unavailable">No se pudo aplicar la frecuencia personalizada. Se restauró el comportamiento normal del dispositivo. Comprueba la conexión de Shizuku y la compatibilidad con valores personalizados.</string>
 
     <string name="label_missing">FALTA</string>
     <string name="label_on">ON</string>
@@ -103,6 +105,18 @@
     <string name="setup_adb_desc_with_root">Concede el permiso privilegiado requerido mediante ADB o usa la configuración automática con root si tu dispositivo lo permite.</string>
     <string name="setup_root_detected_desc">Se detectó acceso root en este dispositivo. Puedes intentar otorgar el permiso requerido automáticamente en lugar de usar ADB.</string>
     <string name="setup_root_grant_button">Conceder automáticamente</string>
+
+    <string name="setup_shizuku_title">Shizuku</string>
+    <string name="setup_shizuku_desc">Opcional. Shizuku mejora la detección táctil y habilita valores personalizados seguros en dispositivos compatibles. Los modos normales de Adaptive Hz funcionan sin él.</string>
+    <string name="setup_shizuku_ready_message">Shizuku está activo y el permiso está concedido.</string>
+    <string name="shizuku_recommendation_title">Se recomienda Shizuku</string>
+    <string name="shizuku_recommendation_message">Los modos normales funcionan sin Shizuku. Conceder el permiso mejora la detección y es necesario para aplicar de forma segura los valores personalizados compatibles.</string>
+    <string name="shizuku_grant_permission">Conceder permiso de Shizuku</string>
+    <string name="shizuku_continue_without">Continuar sin Shizuku</string>
+    <string name="toast_shizuku_not_running">Shizuku no está activo. Inícialo primero o continúa sin Shizuku.</string>
+    <string name="settings_shizuku_ready_summary">Shizuku está activo y el permiso está concedido</string>
+    <string name="settings_shizuku_recommended_summary">Opcional y recomendado para una detección precisa; necesario para valores personalizados seguros en dispositivos compatibles</string>
+
     <string name="root_grant_success">El permiso requerido se otorgó correctamente.</string>
     <string name="root_grant_denied">La solicitud de root fue rechazada.</string>
     <string name="root_not_available">El acceso root no está disponible en este dispositivo.</string>
@@ -138,7 +152,7 @@
     <!-- Settings - header -->
     <string name="settings_title">Ajustes</string>
     <string name="settings_app_name">Adaptive Hz</string>
-    <string name="settings_app_tagline">Adaptive Hz cambia automáticamente la tasa de refresco de la pantalla entre 60 Hz y 120 Hz según la interacción del usuario.</string>
+    <string name="settings_app_tagline">Adaptive Hz cambia automáticamente la tasa de refresco de la pantalla según la interacción del usuario.</string>
 
     <!-- Settings - defaults (developer) -->
     <string name="settings_developer_name">AlpWare Studio</string>
@@ -442,4 +456,12 @@
     <string name="quick_access_widget_manual_instructions">Mantén pulsada una zona vacía de la pantalla de inicio, elige Widgets y selecciona Adaptive Hz.</string>
     <string name="quick_access_request_failed">El sistema no pudo abrir la solicitud. Puedes añadir este acceso directo manualmente.</string>
     <string name="quick_access_request_dismissed">No se añadió el acceso directo.</string>
+    <string name="custom_refresh_rate_title">Frecuencia personalizada</string>
+    <string name="custom_refresh_rate_description">Ajusta la frecuencia del modo activo.</string>
+    <string name="custom_refresh_profile_title">Comportamiento de frecuencia</string>
+    <string name="custom_refresh_rate_label">Frecuencia de actualización</string>
+    <string name="custom_refresh_rate_default">Predeterminado</string>
+    <string name="custom_refresh_rate_hz">%1$d Hz</string>
+    <string name="custom_adaptive_target_label">Frecuencia al tocar</string>
+    <string name="custom_refresh_rate_unsupported">Este dispositivo no admite la selección de frecuencia personalizada.</string>
 </resources>

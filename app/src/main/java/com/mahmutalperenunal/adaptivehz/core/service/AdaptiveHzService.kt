@@ -16,7 +16,6 @@ import com.mahmutalperenunal.adaptivehz.core.engine.strategy.VendorStrategyProvi
 import com.mahmutalperenunal.adaptivehz.core.health.AccessibilityHealthMonitor
 import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs
 import com.mahmutalperenunal.adaptivehz.core.shizuku.ShizukuInputManager
-import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateController
 
 /**
  * Accessibility bridge between the Android system and AdaptiveHzEngine.
@@ -35,7 +34,29 @@ class AdaptiveHzService : AccessibilityService() {
 
     private val heartbeatHandler by lazy { Handler(Looper.getMainLooper()) }
 
-    private val shizukuInputManager by lazy { ShizukuInputManager() }
+    private val shizukuInputManager by lazy {
+        ShizukuInputManager(
+            onPrivilegedServiceReady = {
+                if (::engine.isInitialized) {
+                    engine.reapplyCurrentMode("Shizuku privileged settings service ready")
+                }
+            },
+            onPrivilegedServiceUnavailable = {
+                if (::engine.isInitialized) {
+                    engine.reapplyCurrentMode("Shizuku privileged settings service unavailable")
+                }
+            },
+            onTouchDownSignal = {
+                if (::engine.isInitialized) engine.onRawTouchDown()
+            },
+            onTouchMoveSignal = {
+                if (::engine.isInitialized) engine.onRawTouchMove()
+            },
+            onTouchUpSignal = {
+                if (::engine.isInitialized) engine.onRawTouchUp()
+            }
+        )
+    }
 
     private var lastShizukuRetryAt = 0L
     private var batterySaverReceiverRegistered = false
@@ -51,18 +72,8 @@ class AdaptiveHzService : AccessibilityService() {
             if (intent?.action != PowerManager.ACTION_POWER_SAVE_MODE_CHANGED) return
             if (!::engine.isInitialized) return
 
-            val batterySaverOn = RefreshRateController.isBatterySaverOn(this@AdaptiveHzService)
-            val keepActiveDuringBatterySaver =
-                AdaptiveHzPrefs.shouldKeepActiveDuringBatterySaver(this@AdaptiveHzService)
-
-            Log.d(
-                TAG,
-                "Battery Saver changed. enabled=$batterySaverOn, " +
-                        "keepActive=$keepActiveDuringBatterySaver"
-            )
-
             engine.reapplyCurrentMode(
-                reason = "Battery Saver changed: enabled=$batterySaverOn"
+                reason = "Battery Saver changed"
             )
         }
     }
@@ -146,7 +157,9 @@ class AdaptiveHzService : AccessibilityService() {
         unregisterBatterySaverReceiver()
 
         try {
-            if (::engine.isInitialized) engine.stop(restoreSystemControlled = false)
+            // Accessibility can be disabled independently of the in-app toggle. Never leave the
+            // last adaptive/fixed target active after the component that owns it has stopped.
+            if (::engine.isInitialized) engine.stop(restoreSystemControlled = true)
         } catch (t: Throwable) {
             Log.e(TAG, "Failed to stop engine", t)
         }

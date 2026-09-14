@@ -38,6 +38,7 @@ import androidx.compose.material.icons.outlined.Storefront
 import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material.icons.outlined.SystemUpdate
 import androidx.compose.material.icons.outlined.Terminal
+import androidx.compose.material.icons.outlined.TouchApp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -69,10 +70,13 @@ import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs
 import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs.getInteractionDropDelayMs
 import com.mahmutalperenunal.adaptivehz.core.prefs.AppLanguage
 import com.mahmutalperenunal.adaptivehz.core.prefs.AppThemeMode
+import com.mahmutalperenunal.adaptivehz.core.shizuku.ShizukuAccess
+import com.mahmutalperenunal.adaptivehz.core.shizuku.ShizukuAccessState
 import com.mahmutalperenunal.adaptivehz.core.update.GitHubUpdateChecker
 import com.mahmutalperenunal.adaptivehz.core.update.StableRelease
 import com.mahmutalperenunal.adaptivehz.core.update.UpdateCheckResult
 import com.mahmutalperenunal.adaptivehz.ui.components.UpdateAvailableDialog
+import com.mahmutalperenunal.adaptivehz.ui.components.rememberShizukuAccessState
 import com.mahmutalperenunal.adaptivehz.ui.settings.components.DialogOptionRow
 import com.mahmutalperenunal.adaptivehz.ui.settings.components.LegalDialog
 import com.mahmutalperenunal.adaptivehz.ui.settings.components.QuickAccessOptions
@@ -149,6 +153,7 @@ fun SettingsScreen(
     }
     var updateCheckState by remember { mutableStateOf(UpdateCheckUiState.Idle) }
     var availableRelease by remember { mutableStateOf<StableRelease?>(null) }
+    val shizukuAccessState = rememberShizukuAccessState()
 
     val scrollState = rememberScrollState()
     val topBarState = rememberTopAppBarState()
@@ -161,6 +166,7 @@ fun SettingsScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(R.string.settings_title)) },
@@ -291,6 +297,28 @@ fun SettingsScreen(
                     stringResource(R.string.settings_usage_access_recommended_summary)
                 },
                 onClick = onOpenUsageAccessSettings
+            )
+
+            SettingsRow(
+                leading = Icons.Outlined.TouchApp,
+                title = stringResource(R.string.setup_shizuku_title),
+                subtitle = if (shizukuAccessState == ShizukuAccessState.READY) {
+                    stringResource(R.string.settings_shizuku_ready_summary)
+                } else {
+                    stringResource(R.string.settings_shizuku_recommended_summary)
+                },
+                onClick = {
+                    if (shizukuAccessState != ShizukuAccessState.PERMISSION_REQUIRED ||
+                        !ShizukuAccess.requestPermission()) {
+                        if (shizukuAccessState != ShizukuAccessState.READY) {
+                            Toast.makeText(
+                                appContext,
+                                R.string.toast_shizuku_not_running,
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
+                }
             )
 
             SettingsRow(

@@ -10,6 +10,9 @@ gradle-app.setting
 
 # Local config
 local.properties
+keystore.properties
+signing.properties
+secrets.properties
 
 # Android Studio / IntelliJ IDEA
 .idea/
@@ -32,8 +35,19 @@ out/
 *.ap_
 *.aab
 *.aar
+*.idsig
+*.dm
 *.dex
 *.class
+
+# Android Studio APK Analyzer / exported release output
+/app/release/
+
+# Android developer identity registration (machine/signing specific)
+**/adi-registration.properties
+
+# Generated package metadata outside ignored build directories
+**/output-metadata.json
 
 # Generated
 bin/
@@ -102,6 +116,12 @@ $RECYCLE.BIN/
 # VS Code
 .vscode/
 
+# Editor temporary / patch files
+*.swp
+*.swo
+*.orig
+*.rej
+
 ############################################
 # Fastlane
 ############################################
@@ -120,7 +140,7 @@ fastlane/test_output/
 *.crt
 
 ############################################
-Compose preview / IntelliJ caches
+# Compose preview / IntelliJ caches
 ############################################
 .idea/caches/
 .idea/libraries/

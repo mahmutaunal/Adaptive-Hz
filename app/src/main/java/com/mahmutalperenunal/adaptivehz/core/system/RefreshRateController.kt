@@ -2,10 +2,12 @@ package com.mahmutalperenunal.adaptivehz.core.system
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.hardware.display.DisplayManager
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
 import android.util.Log
+import android.view.Display
 import com.mahmutalperenunal.adaptivehz.core.engine.model.DeviceVendor
 import com.mahmutalperenunal.adaptivehz.core.engine.model.DeviceVendorDetector
 import com.mahmutalperenunal.adaptivehz.core.engine.model.RefreshRateApplyResult
@@ -472,7 +474,10 @@ object RefreshRateController {
         val appContext = context.applicationContext
 
         val rates = try {
-            appContext.display.supportedModes
+            val displayManager = appContext.getSystemService(DisplayManager::class.java)
+            val display = displayManager?.getDisplay(Display.DEFAULT_DISPLAY)
+                ?: throw IllegalStateException("Default display is unavailable")
+            display.supportedModes
                 .map { it.refreshRate.roundToInt() }
                 .filter { it > 0 }
                 .distinct()

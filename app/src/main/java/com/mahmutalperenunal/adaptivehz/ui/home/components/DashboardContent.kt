@@ -19,9 +19,11 @@ import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.Eco
+import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.Factory
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Speed
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -31,11 +33,18 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.ImageBitmap
@@ -74,7 +83,15 @@ fun DashboardComponent(
     onAppEnabledChange: (Boolean) -> Unit,
     onAdaptiveClick: () -> Unit,
     onMinimumClick: () -> Unit,
-    onMaximumClick: () -> Unit
+    onMaximumClick: () -> Unit,
+    supportedRefreshRates: List<Int>,
+    customRateSelectionSupported: Boolean,
+    customMinimumRate: Int?,
+    customMaximumRate: Int?,
+    adaptiveTargetRate: Int?,
+    onCustomMinimumRateSelected: (Int?) -> Unit,
+    onCustomMaximumRateSelected: (Int?) -> Unit,
+    onAdaptiveTargetRateSelected: (Int?) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -227,6 +244,19 @@ fun DashboardComponent(
             )
         }
 
+        GlobalRefreshRateControls(
+            currentMode = currentMode,
+            controlsEnabled = appEnabled && currentMode != AdaptiveHzMode.OFF,
+            supportedRates = supportedRefreshRates,
+            supported = customRateSelectionSupported,
+            customMinimumRate = customMinimumRate,
+            customMaximumRate = customMaximumRate,
+            adaptiveTargetRate = adaptiveTargetRate,
+            onCustomMinimumRateSelected = onCustomMinimumRateSelected,
+            onCustomMaximumRateSelected = onCustomMaximumRateSelected,
+            onAdaptiveTargetRateSelected = onAdaptiveTargetRateSelected
+        )
+
     }
 
     Spacer(modifier = Modifier.height(20.dp))
@@ -339,6 +369,214 @@ fun DashboardComponent(
     }
 
     Spacer(modifier = Modifier.height(12.dp))
+}
+
+@Composable
+private fun GlobalRefreshRateControls(
+    currentMode: AdaptiveHzMode,
+    controlsEnabled: Boolean,
+    supportedRates: List<Int>,
+    supported: Boolean,
+    customMinimumRate: Int?,
+    customMaximumRate: Int?,
+    adaptiveTargetRate: Int?,
+    onCustomMinimumRateSelected: (Int?) -> Unit,
+    onCustomMaximumRateSelected: (Int?) -> Unit,
+    onAdaptiveTargetRateSelected: (Int?) -> Unit
+) {
+    Spacer(modifier = Modifier.height(12.dp))
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .alpha(if (controlsEnabled) 1f else 0.6f),
+        shape = MaterialTheme.shapes.extraLarge,
+        color = if (controlsEnabled) {
+            MaterialTheme.colorScheme.surfaceContainerLow
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant
+        }
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Surface(
+                    modifier = Modifier.size(48.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.secondaryContainer
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Outlined.Tune,
+                            contentDescription = null,
+                            modifier = Modifier.size(28.dp),
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    }
+                }
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.custom_refresh_rate_title),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = stringResource(R.string.custom_refresh_rate_description),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            if (!supported) {
+                Surface(
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.55f)
+                ) {
+                    Text(
+                        text = stringResource(R.string.custom_refresh_rate_unsupported),
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
+            }
+
+            when (currentMode) {
+                AdaptiveHzMode.FORCE_MIN -> RefreshRatePickerRow(
+                    label = stringResource(R.string.custom_refresh_rate_label),
+                    value = customMinimumRate,
+                    rates = supportedRates,
+                    enabled = controlsEnabled && supported,
+                    onSelected = onCustomMinimumRateSelected
+                )
+                AdaptiveHzMode.FORCE_MAX -> RefreshRatePickerRow(
+                    label = stringResource(R.string.custom_refresh_rate_label),
+                    value = customMaximumRate,
+                    rates = supportedRates,
+                    enabled = controlsEnabled && supported,
+                    onSelected = onCustomMaximumRateSelected
+                )
+                AdaptiveHzMode.ADAPTIVE -> RefreshRatePickerRow(
+                    label = stringResource(R.string.custom_adaptive_target_label),
+                    value = adaptiveTargetRate,
+                    rates = supportedRates,
+                    enabled = controlsEnabled && supported,
+                    onSelected = onAdaptiveTargetRateSelected
+                )
+                AdaptiveHzMode.OFF -> RefreshRatePickerRow(
+                    label = stringResource(R.string.custom_refresh_rate_label),
+                    value = null,
+                    rates = emptyList(),
+                    enabled = false,
+                    onSelected = {}
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RefreshRatePickerRow(
+    label: String,
+    value: Int?,
+    rates: List<Int>,
+    enabled: Boolean,
+    onSelected: (Int?) -> Unit
+) {
+    var showDialog by remember { mutableStateOf(false) }
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = enabled) { showDialog = true },
+        shape = MaterialTheme.shapes.large,
+        color = if (enabled) {
+            MaterialTheme.colorScheme.surfaceContainerHigh
+        } else {
+            MaterialTheme.colorScheme.surfaceContainer
+        }
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 13.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = value?.let { stringResource(R.string.custom_refresh_rate_hz, it) }
+                        ?: stringResource(R.string.custom_refresh_rate_default),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = if (enabled) MaterialTheme.colorScheme.onSurface
+                        else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Icon(
+                imageVector = Icons.Outlined.ExpandMore,
+                contentDescription = null,
+                tint = if (enabled) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            icon = { Icon(Icons.Outlined.Speed, contentDescription = null) },
+            title = { Text(label) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    (listOf<Int?>(null) + rates).forEach { rate ->
+                        val selected = value == rate
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    onSelected(rate)
+                                    showDialog = false
+                                },
+                            shape = MaterialTheme.shapes.large,
+                            color = if (selected) {
+                                MaterialTheme.colorScheme.secondaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.surfaceContainerLow
+                            }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(selected = selected, onClick = null)
+                                Text(
+                                    text = rate?.let {
+                                        stringResource(R.string.custom_refresh_rate_hz, it)
+                                    } ?: stringResource(R.string.custom_refresh_rate_default),
+                                    modifier = Modifier.padding(start = 4.dp),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text(stringResource(R.string.close))
+                }
+            }
+        )
+    }
 }
 
 @Composable

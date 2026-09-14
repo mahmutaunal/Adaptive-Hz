@@ -58,17 +58,17 @@ adb shell pm revoke com.mahmutalperenunal.adaptivehz android.permission.WRITE_SE
 
 **Permission:** `moe.shizuku.manager.permission.API_V23`
 
-**Purpose:** Enables optional advanced local input detection through the separately installed Shizuku service.
+**Purpose:** Enables optional advanced local input detection. On compatible Samsung firmware it also owns session-scoped DisplayManager min/max tokens used for custom refresh-rate values. On HyperOS 3 it owns a guarded, reversible lease for the runtime-verified `user_refresh_rate` or `miui_refresh_rate` secure setting. The generic settings bridge is retained only to restore `min_refresh_rate` and `peak_refresh_rate` snapshots left by older Adaptive Hz versions.
 
 **Risk:** Shizuku can expose elevated Android APIs depending on how its service is started.
 
-**Mitigation:** Request access explicitly, keep the user-service interface narrow, validate binder lifecycle and caller assumptions, and ensure the core app still works without Shizuku.
+**Mitigation:** Request access only after an explicit user action, present it as recommended rather than required, allow the user to continue without it, accept only verified custom transports, bind custom sessions to the UserService/client-Binder lifetime, and ensure the existing vendor modes still work without Shizuku. HyperOS writes are restricted to two exact secure keys, snapshot the previous value before mutation, require a real physical-mode transition, and restore on every exit path. Persistent generic min/peak writes are not used for new custom selections.
 
 ## Root access
 
-Root is not an Android manifest permission. Adaptive Hz only attempts a local `su` command when the user chooses the root-assisted permission path.
+Root is not an Android manifest permission. Adaptive Hz attempts a local `su` command only when the user chooses the root-assisted `WRITE_SECURE_SETTINGS` setup path, or when a legacy min/peak snapshot must be restored and ordinary transports are unavailable.
 
-**Current intended command:** Grant this package `WRITE_SECURE_SETTINGS`.
+**Current intended commands:** Grant this package `WRITE_SECURE_SETTINGS`, or restore/delete one of the two allowlisted min/peak values captured by a pre-token Adaptive Hz version. Root is not a fallback for applying new custom selections.
 
 **Mitigation:** Avoid concatenating untrusted input into shell commands, use a timeout, cap captured output, and do not treat root presence as user consent.
 

@@ -7,6 +7,11 @@ import java.util.concurrent.TimeUnit
 
 object RootManager {
 
+    private val allowedRefreshRateKeys = setOf(
+        RefreshRateController.KEY_MIN_REFRESH_RATE,
+        RefreshRateController.KEY_PEAK_REFRESH_RATE
+    )
+
     sealed class RootState {
         data object Available : RootState()
         data object Unavailable : RootState()
@@ -92,6 +97,35 @@ object RootManager {
         } else {
             RootState.Failed("Permission command completed but permission is still not granted.")
         }
+    }
+
+    /** Restores one of the two allowlisted settings saved by legacy Adaptive Hz builds. */
+    fun writeRefreshRateSetting(key: String, value: String?): Boolean {
+        if (key !in allowedRefreshRateKeys) return false
+
+        val command = if (value == null) {
+            "/system/bin/settings delete system $key"
+        } else {
+            val normalized = value.toFloatOrNull()
+                ?.takeIf { it.isFinite() && it >= 0f }
+                ?.toString()
+                ?: return false
+            "/system/bin/settings put system $key $normalized"
+        }
+
+        val writeResult = runSuCommand(command)
+        if (!writeResult.success) return false
+
+        val expected = value?.toFloatOrNull()
+        val actual = readRefreshRateSetting(key)?.toFloatOrNull()
+        return if (value == null) actual == null else actual == expected
+    }
+
+    private fun readRefreshRateSetting(key: String): String? {
+        if (key !in allowedRefreshRateKeys) return null
+        val result = runSuCommand("/system/bin/settings get system $key")
+        if (!result.success) return null
+        return result.stdout.trim().takeUnless { it == "null" || it.isEmpty() }
     }
 
     private fun runSuCommand(command: String): CommandResult {

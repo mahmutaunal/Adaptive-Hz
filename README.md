@@ -15,6 +15,9 @@
 
 > Bring true adaptive refresh rate to devices that don’t support it — intelligently, automatically, and without root.
 
+> [!IMPORTANT]
+> **Custom refresh-rate support is currently in testing.** Compatible Samsung One UI devices use a device-tested, session-scoped implementation, while HyperOS 3 uses guarded physical-mode verification and is awaiting its first full device acceptance run. Existing vendor modes remain unchanged when custom values are unavailable or rejected.
+
 <p align="center">
   <a href="https://github.com/mahmutaunal/Adaptive-Hz/releases">
     <img src="https://img.shields.io/badge/Download-APK-blue?style=for-the-badge" />
@@ -75,7 +78,7 @@ For the most accurate adaptive refresh-rate behavior:
 - Open Adaptive Hz
 - Grant Shizuku permission
 
-> 💡 Adaptive Hz works without Shizuku. Shizuku only improves interaction accuracy on some devices/apps.
+> 💡 Adaptive Hz's existing vendor modes work without Shizuku. On supported devices, custom values use Shizuku-owned guarded sessions: session-scoped display tokens on One UI and exact-state-restoring vendor-setting leases on HyperOS 3.
 
 ---
 
@@ -184,6 +187,8 @@ Adaptive Hz solves this by:
 - Recent apps shortcut powered by optional Usage Access
 - Event coalescing to reduce noisy Accessibility event spam
 - Vendor-aware refresh control and tuning
+- Custom Adaptive, Minimum and Maximum targets on compatible devices
+- Independent custom Minimum and Maximum values for per-app profiles on compatible devices
 - Optional Shizuku-powered real touch detection for improved accuracy
 - Optional Stability Mode (foreground service)
 - Diagnostics and Accessibility Event Inspector tools
@@ -250,16 +255,35 @@ Adaptive Hz can optionally show recently used apps on the dashboard for faster p
 
 This requires Android's **Usage Access** permission and is optional. If Usage Access is not granted, per-app profiles still work through the full app list.
 
+### Custom refresh-rate values
+
+Custom values are an optional extension of the existing vendor modes. They are shown only when the display reports more than one physical refresh-rate mode.
+
+- **Adaptive** has one custom target. The normal vendor low state remains unchanged; interaction raises the display to the selected target.
+- **Minimum** and **Maximum** each have one independent custom value.
+- Per-app custom values are available only for the **Minimum** and **Maximum** profiles. A per-app custom Adaptive profile is intentionally not supported.
+- On Samsung/One UI, custom values use the verified DisplayManager min/max token API.
+- On HyperOS 3, Adaptive Hz safely probes the two known secure-setting routes and accepts one only after `Display.mode` physically reaches the requested Hz. The verified route is cached per firmware and display identity.
+- Root is not used to create a new custom override. This avoids persistent `min_refresh_rate` or `peak_refresh_rate` values surviving force-stop or uninstall.
+- If a safe transport, physical verification, or Shizuku is unavailable, Adaptive Hz restores the original state and falls back to the device's existing vendor mode.
+- Turning Adaptive Hz off keeps the custom-rate card visible in a passive state so the feature remains understandable without enabling any control.
+
+The selected value is a policy request, not a promise that every frame will be rendered at that rate. The device firmware may temporarily clamp the effective refresh rate because of power saving, thermal state, AOD/lock screen, display resolution, content cadence, or panel policy.
+
+Custom Samsung sessions temporarily open One UI's full physical refresh-rate range before acquiring the requested min/max tokens. The previous Samsung refresh mode is restored when the session ends. HyperOS 3 sessions snapshot the exact original vendor-setting value before the first write and restore it when the session ends. Cleanup runs on Global Off, return to a normal vendor mode, Accessibility-service shutdown, Shizuku service shutdown, normal process teardown, client Binder death, boot, and package replacement. During an update or boot, Adaptive Hz also restores any persistent min/peak snapshot left by versions released before the token-based implementation.
+
 ---
 
 ## Supported Vendors
 
-### Samsung
+### Samsung / One UI
 Uses:
 
 ```
 refresh_rate_mode
 ```
+
+Compatible One UI builds may additionally use Shizuku-owned, session-scoped DisplayManager min/max tokens for custom values. Physical choices come from `Display.supportedModes`; no model-specific Hz list is hardcoded. If the required Samsung API is unavailable, the app keeps using the existing `refresh_rate_mode` behavior.
 
 ### Xiaomi / HyperOS
 
@@ -278,6 +302,12 @@ user_refresh_rate = 1
 ```
 
 Adaptive mode continues to use the device's actual supported minimum and maximum refresh-rate values.
+
+HyperOS 3 custom values do not assume that the version's nominal key is effective. The app ranks
+`user_refresh_rate` and `miui_refresh_rate` from the live device state, performs a reversible probe,
+and caches a route only when the active physical display mode reaches the requested rate. A successful
+settings read-back by itself is not considered success. HyperOS 1, HyperOS 2, and the existing normal
+Xiaomi modes remain on their previous strategy.
 
 ---
 
@@ -305,7 +335,7 @@ This prevents infinite refresh loops and unnecessary maximum-Hz usage.
 |------------|----------|---------|
 | WRITE_SECURE_SETTINGS | Yes | Modify refresh rate system setting |
 | Accessibility Service | Yes | Detect global interaction |
-| Shizuku Permission | Optional | Enables low-level real touch detection via input events |
+| Shizuku Permission | Optional (recommended) | Enables low-level real touch detection and owns guarded custom-rate sessions on compatible One UI and HyperOS 3 firmware |
 | PACKAGE_USAGE_STATS / Usage Access | Optional | Show recently used apps on the dashboard |
 | QUERY_ALL_PACKAGES | Optional | List installed apps for per-app profiles |
 | Foreground Service | Optional | Stability Mode |
@@ -365,10 +395,13 @@ This allows the engine to:
 - Improve battery efficiency while keeping scrolling smooth
 
 ### Behavior
-- Shizuku support is completely optional
+- Shizuku support is optional for the existing vendor modes
 - The app still works normally without Shizuku
+- Setup marks Shizuku as recommended and never blocks completion when it is unavailable
+- Mode and profile screens explain the benefit before continuing, and always allow the user to continue without Shizuku
 - Accessibility remains the fallback interaction system
-- Input monitoring is only used to verify real touch behavior
+- Input monitoring is used to verify real touch behavior
+- The privileged user service owns session-scoped Samsung display tokens and guarded HyperOS 3 setting leases; its generic min/peak write allowlist is retained only to restore legacy snapshots
 - No continuous polling loops are used
 
 ### Privacy
@@ -495,7 +528,7 @@ Adaptive Hz includes a **resizable home screen widget** for quick access to refr
 - Supports resizing:
   - Expands horizontally for better spacing
   - Switches to a compact layout when space is limited
-- Designed to match system widget behavior on **OneUI and HyperOS**
+- Designed to match system widget behavior on **One UI and HyperOS**
 
 ### Design
 - Minimal, clean card-style layout
@@ -510,67 +543,93 @@ Adaptive Hz includes a **resizable home screen widget** for quick access to refr
 
 ## Architecture
 
-```
-Adaptive Hz
-├── core
-│   ├── apps
-│   │   ├── InstalledAppInfo
-│   │   ├── InstalledAppsRepository
-│   │   └── RecentAppsProvider
-│   ├── debug
-│   │   ├── DebugAccessibilityEvent
-│   │   └── DebugEventStore
-│   ├── engine
-│   │   ├── model
-│   │   │   ├── DeviceVendor.kt
-│   │   │   ├── EngineModels.kt
-│   │   │   ├── VendorStrategy
-│   │   │   └── VendorTuning
-│   │   ├── strategy
-│   │   │   ├── OtherStrategy
-│   │   │   ├── SamsungStrategy
-│   │   │   └── XiaomiStrategy
-│   │   ├── AdaptiveHzEngine
-│   │   └── AdaptiveHzRuntimeState
-│   ├── health
-│   │   └── AccessibilityHealthMonitor
-│   ├── input
-│   │   └── InteractionSignalProvider
-│   ├── locale
-│   │   └── AppLocaleController
-│   ├── prefs
-│   │   └── AdaptiveHzPrefs
-│   ├── service
-│   │   ├── AdaptiveHzActionHandler
-│   │   ├── AdaptiveHzService
-│   │   ├── AdaptiveHzTileService
-│   │   └── StabilityForegroundService
-│   ├── shizuku
-│   │   ├── InputMonitorUserService
-│   │   ├── ShizukuInputManager
-│   │   ├── IInputEventCallback.aidl
-│   │   └── IInputMonitorService.aidl
-│   ├── system
-│   │   ├── BootReceiver
-│   │   ├── RefreshRateController
-│   │   └── RootManager
-│   └── widget
-│       ├── AdaptiveHzWidgetProvider
-│       └── AdaptiveHzWidgetUpdater
-├── ui
-│   ├── home
-│   │   ├── components
-│   │   │   ├── DashboardContent.kt
-│   │   │   └── SetupContent.kt
-│   │   ├── HomeScreen.kt
-│   │   └── PerAppRefreshScreen.kt
-│   ├── settings
-│   │   ├── AccessibilityEventInspectorScreen.kt
-│   │   ├── DiagnosticsScreen.kt
-│   │   └── SettingsScreen.kt
-│   └── theme
-│
-└── MainActivity.kt
+```text
+Adaptive-Hz/
+├── .github/
+│   ├── ISSUE_TEMPLATE/                # Bug, feature and device-support forms
+│   └── FUNDING.yml
+├── app/
+│   ├── src/main/
+│   │   ├── AndroidManifest.xml
+│   │   ├── aidl/.../core/shizuku/
+│   │   │   ├── IInputEventCallback.aidl
+│   │   │   └── IInputMonitorService.aidl
+│   │   ├── assets/
+│   │   ├── java/.../adaptivehz/
+│   │   │   ├── MainActivity.kt
+│   │   │   ├── core/
+│   │   │   │   ├── apps/
+│   │   │   │   │   ├── InstalledAppInfo.kt
+│   │   │   │   │   ├── InstalledAppsRepository.kt
+│   │   │   │   │   └── RecentAppsProvider.kt
+│   │   │   │   ├── debug/
+│   │   │   │   │   ├── DebugAccessibilityEvent.kt
+│   │   │   │   │   └── DebugEventStore.kt
+│   │   │   │   ├── engine/
+│   │   │   │   │   ├── model/
+│   │   │   │   │   │   ├── DeviceVendor.kt
+│   │   │   │   │   │   ├── EngineModels.kt
+│   │   │   │   │   │   ├── VendorStrategy.kt
+│   │   │   │   │   │   └── VendorTuning.kt
+│   │   │   │   │   ├── strategy/
+│   │   │   │   │   │   ├── OtherStrategy.kt
+│   │   │   │   │   │   ├── SamsungStrategy.kt
+│   │   │   │   │   │   ├── VendorStrategyProvider.kt
+│   │   │   │   │   │   └── XiaomiStrategy.kt
+│   │   │   │   │   ├── AdaptiveHzEngine.kt
+│   │   │   │   │   └── AdaptiveHzRuntimeState.kt
+│   │   │   │   ├── health/AccessibilityHealthMonitor.kt
+│   │   │   │   ├── input/InteractionSignalProvider.kt
+│   │   │   │   ├── locale/AppLocaleController.kt
+│   │   │   │   ├── prefs/AdaptiveHzPrefs.kt
+│   │   │   │   ├── quickaccess/QuickAccessManager.kt
+│   │   │   │   ├── service/
+│   │   │   │   │   ├── AdaptiveHzActionHandler.kt
+│   │   │   │   │   ├── AdaptiveHzService.kt
+│   │   │   │   │   ├── AdaptiveHzTileService.kt
+│   │   │   │   │   └── StabilityForegroundService.kt
+│   │   │   │   ├── shizuku/
+│   │   │   │   │   ├── InputMonitorUserService.kt
+│   │   │   │   │   └── ShizukuInputManager.kt
+│   │   │   │   ├── support/SupportPromptPolicy.kt
+│   │   │   │   ├── system/
+│   │   │   │   │   ├── BootReceiver.kt
+│   │   │   │   │   ├── RefreshRateController.kt
+│   │   │   │   │   └── RootManager.kt
+│   │   │   │   └── update/GitHubUpdateChecker.kt
+│   │   │   ├── ui/
+│   │   │   │   ├── components/UpdateUi.kt
+│   │   │   │   ├── home/
+│   │   │   │   │   ├── components/
+│   │   │   │   │   │   ├── DashboardContent.kt
+│   │   │   │   │   │   └── SetupContent.kt
+│   │   │   │   │   ├── HomeScreen.kt
+│   │   │   │   │   └── PerAppRefreshScreen.kt
+│   │   │   │   ├── settings/
+│   │   │   │   │   ├── components/SettingsComponents.kt
+│   │   │   │   │   ├── AccessibilityEventInspectorScreen.kt
+│   │   │   │   │   ├── DiagnosticsScreen.kt
+│   │   │   │   │   └── SettingsScreen.kt
+│   │   │   │   └── theme/
+│   │   │   │       ├── Color.kt
+│   │   │   │       ├── Shape.kt
+│   │   │   │       ├── Theme.kt
+│   │   │   │       └── Type.kt
+│   │   │   └── widget/
+│   │   │       ├── AdaptiveHzWidgetProvider.kt
+│   │   │       └── AdaptiveHzWidgetUpdater.kt
+│   │   └── res/                         # Strings, themes, widget layouts and icons
+│   ├── src/test/.../adaptivehz/
+│   │   ├── ExampleUnitTest.kt
+│   │   └── core/
+│   │       ├── support/SupportPromptPolicyTest.kt
+│   │       └── update/SemanticVersionTest.kt
+│   └── build.gradle.kts
+├── assets/                              # README logo and screenshots
+├── gradle/libs.versions.toml
+├── build.gradle.kts
+├── settings.gradle.kts
+└── README.md
 ```
 
 ---
@@ -620,12 +679,16 @@ Note: Results may vary depending on usage patterns and device behavior.
 - User force-stop disables background switching until reopened
 - Accessibility service must remain enabled
 - Recent apps shortcuts require optional Usage Access permission
+- Custom fixed values require a compatible verified transport and a live Shizuku connection
+- HyperOS 3 custom values are in testing and remain experimental until the first full physical-device acceptance run
+- A reported display mode can still be clamped by OEM power, thermal, AOD, resolution, or content policies
 
 ---
 
 ## Tested Devices
 
-- Samsung Galaxy A52 (Android 14 / OneUI 6)
+- Samsung Galaxy A52 (Android 14 / One UI 6)
+- Samsung Galaxy S24 (One UI — custom values device-tested)
 - Redmi Note 14 Pro 5G (HyperOS 3.x – Community-tested)
 - Poco F3 (HyperOS 1.x – Community-tested)
 
@@ -640,10 +703,12 @@ Adaptive Hz uses vendor- and ROM-aware refresh-rate handling. Compatibility can 
 | Brand / Platform | Device / ROM | Refresh-rate setting | Status | Notes |
 |---|---|---|---|---|
 | Samsung One UI | Galaxy A52 / One UI 6 | `refresh_rate_mode` | ✅ Stable | Existing Samsung behavior remains unchanged. |
-| Samsung One UI | Other supported Galaxy devices | `refresh_rate_mode` | ⚠️ Device-dependent | Support depends on the refresh-rate modes exposed by the device and One UI version. |
+| Samsung One UI | Other supported Galaxy devices | `refresh_rate_mode` | ✅ Existing behavior retained | Normal Adaptive, Minimum, Maximum and Off modes continue to use the established vendor path. |
+| Samsung One UI | Galaxy S24 | Session-scoped DisplayManager tokens for custom values | ✅ Device-tested | Global and per-app custom values have been verified on-device; broader One UI reports are requested. |
+| Samsung One UI | Other compatible Galaxy devices | Session-scoped DisplayManager tokens for custom values | 🧪 Testing | Requires the verified Samsung token API and a live Shizuku connection; available values come from the physical display modes. |
 | Xiaomi / HyperOS 1 | Poco F3 / HyperOS 1 | `user_refresh_rate` | ✅ Community tested | Adaptive mode uses the physical minimum and maximum Hz values. Persistent Maximum mode uses `user_refresh_rate = 1`. |
 | Xiaomi / HyperOS 2 | HyperOS 2 devices | `miui_refresh_rate` | ⚠️ Experimental | Some HyperOS 2 builds may override refresh-rate values or apply separate launcher and System UI policies. More device reports are needed. |
-| Xiaomi / HyperOS 3 | Redmi Note 14 Pro 5G / HyperOS 3 | `miui_refresh_rate` | ✅ Community tested | Uses explicit minimum and maximum refresh-rate values. |
+| Xiaomi / HyperOS 3 | Redmi Note 14 Pro 5G / HyperOS 3 | Runtime-verified `user_refresh_rate` / `miui_refresh_rate` route | 🧪 Custom validation pending | Normal modes remain unchanged. Custom values use physical modes reported by the display, reversible route probing, exact-state restoration, and fail-safe legacy fallback. |
 | Xiaomi / MIUI or unknown HyperOS builds | Xiaomi, Redmi, and Poco devices | `miui_refresh_rate` fallback | ⚠️ Best effort | Regional and custom ROM variants may behave differently. |
 | Other Android vendors | Pixel, OnePlus, Nothing, and others | Vendor-specific / unsupported | 🧪 Planned | Additional vendor support is planned and community testing is welcome. |
 
@@ -652,7 +717,7 @@ Adaptive Hz uses vendor- and ROM-aware refresh-rate handling. Compatibility can 
 ## ❓ FAQ
 
 ### Is this safe for my device?
-Yes. Adaptive Hz only changes system refresh rate settings. It does not modify hardware behavior.
+Adaptive Hz does not modify display hardware or firmware. It uses Android/OEM refresh-rate controls and restores temporary custom state when the feature is disabled. Custom refresh-rate support is currently in testing because OEM behavior can vary between device models, firmware versions, and regions; device reports are encouraged.
 
 ### Does it require root?
 No. It works using standard Android permissions.
@@ -713,8 +778,8 @@ MIT License
 - [x] Accessibility Event Inspector
 - [x] Event coalescing
 - [x] Configurable drop delay after touch interaction
+- [ ] Custom refresh-rate values
 - [ ] More vendor support (Pixel, OnePlus)
-- [ ] Export / import per-app profiles
 
 Made with care by AlpWare Studio
 
@@ -724,4 +789,4 @@ Made with care by AlpWare Studio
 
 Inspired by limitations in OEM adaptive refresh rate implementations.
 
----</file>
+---

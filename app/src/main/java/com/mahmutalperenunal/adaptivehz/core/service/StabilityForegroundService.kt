@@ -69,27 +69,27 @@ class StabilityForegroundService : Service() {
         when (intent?.action) {
             ACTION_TOGGLE_ON -> {
                 cancelPendingStop()
-                AdaptiveHzActionHandler.turnOn(this)
+                AdaptiveHzActionHandler.turnOnAsync(this)
             }
 
             ACTION_TOGGLE_OFF -> {
-                AdaptiveHzActionHandler.turnOffForNotification(this)
+                AdaptiveHzActionHandler.turnOffForNotificationAsync(this)
                 scheduleDelayedStop()
             }
 
             ACTION_SET_ADAPTIVE -> {
                 cancelPendingStop()
-                AdaptiveHzActionHandler.setAdaptive(this)
+                AdaptiveHzActionHandler.setAdaptiveAsync(this)
             }
 
             ACTION_SET_MIN -> {
                 cancelPendingStop()
-                AdaptiveHzActionHandler.setMinimum(this)
+                AdaptiveHzActionHandler.setMinimumAsync(this)
             }
 
             ACTION_SET_MAX -> {
                 cancelPendingStop()
-                AdaptiveHzActionHandler.setMaximum(this)
+                AdaptiveHzActionHandler.setMaximumAsync(this)
             }
 
             ACTION_STOP -> {

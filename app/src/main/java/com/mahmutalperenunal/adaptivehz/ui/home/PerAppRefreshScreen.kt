@@ -2,17 +2,22 @@ package com.mahmutalperenunal.adaptivehz.ui.home
 
 import android.annotation.SuppressLint
 import android.util.LruCache
+import android.widget.Toast
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -25,8 +30,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Apps
+import androidx.compose.material.icons.outlined.Bolt
+import androidx.compose.material.icons.outlined.Eco
 import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.SettingsSuggest
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -56,6 +64,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -69,9 +78,16 @@ import kotlinx.coroutines.withContext
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.core.graphics.drawable.toBitmap
 import androidx.compose.ui.res.stringResource
 import com.mahmutalperenunal.adaptivehz.R
+import com.mahmutalperenunal.adaptivehz.core.system.CustomRefreshRateController
+import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateCapabilities
+import com.mahmutalperenunal.adaptivehz.core.shizuku.ShizukuAccess
+import com.mahmutalperenunal.adaptivehz.core.shizuku.ShizukuAccessState
+import com.mahmutalperenunal.adaptivehz.ui.components.ShizukuRecommendationDialog
+import com.mahmutalperenunal.adaptivehz.ui.components.rememberShizukuAccessState
 
 /**
  * Per-app profile screen with search, filtering and paginated app loading.
@@ -165,6 +181,7 @@ fun PerAppRefreshScreen(
     val filteredApps = apps
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(id = R.string.per_app_profiles_title)) },
@@ -309,8 +326,6 @@ fun PerAppRefreshScreen(
                         it
                     }
                 }
-
-                selectedApp.value = null
             }
         )
     }
@@ -523,47 +538,273 @@ fun ProfileModePickerDialog(
     onDismiss: () -> Unit,
     onModeSelected: (AppRefreshProfileMode) -> Unit
 ) {
+    val context = LocalContext.current.applicationContext
+    val capabilities by produceState(
+        initialValue = RefreshRateCapabilities(emptyList(), false),
+        key1 = app.packageName
+    ) {
+        value = withContext(Dispatchers.IO) {
+            CustomRefreshRateController.resolveCapabilities(context)
+        }
+    }
+    var selectedMode by remember(app.packageName) { mutableStateOf(app.profileMode) }
+    var customMinimum by remember(app.packageName) {
+        mutableStateOf(AdaptiveHzPrefs.getAppCustomMinimumRate(context, app.packageName))
+    }
+    var customMaximum by remember(app.packageName) {
+        mutableStateOf(AdaptiveHzPrefs.getAppCustomMaximumRate(context, app.packageName))
+    }
+    val shizukuAccessState = rememberShizukuAccessState()
+    var showShizukuRecommendation by remember(app.packageName) { mutableStateOf(false) }
+
+    fun applyProfile() {
+        when (selectedMode) {
+            AppRefreshProfileMode.FORCE_MIN ->
+                AdaptiveHzPrefs.setAppCustomMinimumRate(
+                    context, app.packageName, customMinimum
+                )
+            AppRefreshProfileMode.FORCE_MAX ->
+                AdaptiveHzPrefs.setAppCustomMaximumRate(
+                    context, app.packageName, customMaximum
+                )
+            else -> Unit
+        }
+        onModeSelected(selectedMode)
+        onDismiss()
+    }
+
+    fun requestShizukuPermission() {
+        if (shizukuAccessState == ShizukuAccessState.PERMISSION_REQUIRED &&
+            ShizukuAccess.requestPermission()) {
+            return
+        }
+        Toast.makeText(context, R.string.toast_shizuku_not_running, Toast.LENGTH_LONG).show()
+    }
+
+    LaunchedEffect(shizukuAccessState) {
+        if (showShizukuRecommendation && shizukuAccessState == ShizukuAccessState.READY) {
+            showShizukuRecommendation = false
+            applyProfile()
+        }
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(app.label)
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(app.label, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    text = stringResource(R.string.custom_refresh_profile_title),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         },
         text = {
-            Column {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 AppRefreshProfileMode.entries.forEach { mode ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onModeSelected(mode) }
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = app.profileMode == mode,
-                            onClick = { onModeSelected(mode) }
-                        )
-
-                        Column(modifier = Modifier.padding(start = 8.dp)) {
-                            Text(
-                                text = mode.title(),
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                            Text(
-                                text = mode.description(),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                    ProfileModeOption(
+                        title = mode.title(),
+                        description = mode.description(),
+                        icon = mode.icon(),
+                        selected = selectedMode == mode,
+                        onClick = {
+                            selectedMode = mode
                         }
-                    }
+                    )
+                }
+
+                if (!capabilities.customRateSelectionSupported &&
+                    (selectedMode == AppRefreshProfileMode.FORCE_MIN ||
+                        selectedMode == AppRefreshProfileMode.FORCE_MAX)) {
+                    Text(
+                        stringResource(R.string.custom_refresh_rate_unsupported),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                if (capabilities.customRateSelectionSupported &&
+                    selectedMode == AppRefreshProfileMode.FORCE_MIN) {
+                    InlineRefreshRateSelector(
+                        label = stringResource(R.string.custom_refresh_rate_label),
+                        value = customMinimum,
+                        rates = capabilities.supportedRates,
+                        enabled = capabilities.customRateSelectionSupported,
+                        onSelected = {
+                            customMinimum = it
+                        }
+                    )
+                }
+                if (capabilities.customRateSelectionSupported &&
+                    selectedMode == AppRefreshProfileMode.FORCE_MAX) {
+                    InlineRefreshRateSelector(
+                        label = stringResource(R.string.custom_refresh_rate_label),
+                        value = customMaximum,
+                        rates = capabilities.supportedRates,
+                        enabled = capabilities.customRateSelectionSupported,
+                        onSelected = {
+                            customMaximum = it
+                        }
+                    )
                 }
             }
         },
-        confirmButton = {
+        dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(text = stringResource(id = R.string.close))
+                Text(text = stringResource(id = R.string.action_cancel))
+            }
+        },
+        confirmButton = {
+            FilledTonalButton(
+                onClick = {
+                    if (shizukuAccessState == ShizukuAccessState.READY) {
+                        applyProfile()
+                    } else {
+                        showShizukuRecommendation = true
+                    }
+                }
+            ) {
+                Text(text = stringResource(id = R.string.apply_profile))
             }
         }
     )
+
+    if (showShizukuRecommendation) {
+        ShizukuRecommendationDialog(
+            onDismiss = { showShizukuRecommendation = false },
+            onContinueWithoutShizuku = {
+                showShizukuRecommendation = false
+                applyProfile()
+            },
+            onRequestPermission = {
+                requestShizukuPermission()
+            }
+        )
+    }
+}
+
+@Composable
+private fun ProfileModeOption(
+    title: String,
+    description: String,
+    icon: ImageVector,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = MaterialTheme.shapes.large,
+        color = if (selected) {
+            MaterialTheme.colorScheme.secondaryContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceContainerLow
+        },
+        border = if (selected) {
+            BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.45f))
+        } else null
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 11.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                modifier = Modifier.size(40.dp),
+                shape = RoundedCornerShape(14.dp),
+                color = if (selected) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.surfaceContainerHigh
+                }
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        modifier = Modifier.size(21.dp),
+                        tint = if (selected) {
+                            MaterialTheme.colorScheme.onPrimary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                    )
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .padding(start = 12.dp)
+                    .weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            RadioButton(selected = selected, onClick = null)
+        }
+    }
+}
+
+@Composable
+private fun InlineRefreshRateSelector(
+    label: String,
+    value: Int?,
+    rates: List<Int>,
+    enabled: Boolean,
+    onSelected: (Int?) -> Unit
+) {
+    Column(
+        modifier = Modifier.padding(top = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(5.dp)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            FilterChip(
+                selected = value == null,
+                onClick = { onSelected(null) },
+                enabled = enabled,
+                label = { Text(stringResource(R.string.custom_refresh_rate_default)) }
+            )
+            rates.forEach { rate ->
+                FilterChip(
+                    selected = value == rate,
+                    onClick = { onSelected(rate) },
+                    enabled = enabled,
+                    label = { Text(stringResource(R.string.custom_refresh_rate_hz, rate)) }
+                )
+            }
+        }
+    }
+}
+
+private fun AppRefreshProfileMode.icon(): ImageVector = when (this) {
+    AppRefreshProfileMode.DEFAULT -> Icons.Outlined.SettingsSuggest
+    AppRefreshProfileMode.SYSTEM_CONTROLLED -> Icons.Outlined.Apps
+    AppRefreshProfileMode.FORCE_MIN -> Icons.Outlined.Eco
+    AppRefreshProfileMode.FORCE_MAX -> Icons.Outlined.Bolt
 }
 
 /**
@@ -576,6 +817,27 @@ private fun BulkProfileModePickerDialog(
     onDismiss: () -> Unit,
     onModeSelected: (AppRefreshProfileMode) -> Unit
 ) {
+    val context = LocalContext.current.applicationContext
+    val shizukuAccessState = rememberShizukuAccessState()
+    var pendingMode by remember { mutableStateOf<AppRefreshProfileMode?>(null) }
+
+    fun selectMode(mode: AppRefreshProfileMode) {
+        if (shizukuAccessState == ShizukuAccessState.READY) {
+            onModeSelected(mode)
+        } else {
+            pendingMode = mode
+        }
+    }
+
+    LaunchedEffect(shizukuAccessState) {
+        if (shizukuAccessState == ShizukuAccessState.READY) {
+            pendingMode?.let { mode ->
+                pendingMode = null
+                onModeSelected(mode)
+            }
+        }
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -605,13 +867,13 @@ private fun BulkProfileModePickerDialog(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onModeSelected(mode) }
+                            .clickable { selectMode(mode) }
                             .padding(vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
                             selected = false,
-                            onClick = { onModeSelected(mode) }
+                            onClick = { selectMode(mode) }
                         )
 
                         Column(modifier = Modifier.padding(start = 8.dp)) {
@@ -635,6 +897,26 @@ private fun BulkProfileModePickerDialog(
             }
         }
     )
+
+    pendingMode?.let { mode ->
+        ShizukuRecommendationDialog(
+            onDismiss = { pendingMode = null },
+            onContinueWithoutShizuku = {
+                pendingMode = null
+                onModeSelected(mode)
+            },
+            onRequestPermission = {
+                if (shizukuAccessState != ShizukuAccessState.PERMISSION_REQUIRED ||
+                    !ShizukuAccess.requestPermission()) {
+                    Toast.makeText(
+                        context,
+                        R.string.toast_shizuku_not_running,
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -651,70 +933,125 @@ private fun BulkProfileActionRow(
             containerColor = MaterialTheme.colorScheme.secondaryContainer
         )
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Surface(
-                modifier = Modifier.size(44.dp),
-                shape = RoundedCornerShape(14.dp),
-                        color = MaterialTheme.colorScheme.secondary
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Outlined.Layers,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSecondary,
-                        modifier = Modifier.size(24.dp)
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val useStackedLayout = maxWidth < 400.dp || LocalDensity.current.fontScale > 1.15f
+
+            if (useStackedLayout) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        BulkProfileIcon()
+                        Spacer(modifier = Modifier.width(14.dp))
+                        BulkProfileSummary(
+                            appCount = appCount,
+                            includeSystemApps = includeSystemApps,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    BulkProfileButton(
+                        onClick = onClick,
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
-            }
-
-            Spacer(modifier = Modifier.width(14.dp))
-
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                Text(
-                    text = stringResource(id = R.string.all_listed_apps),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = Int.MAX_VALUE
-                )
-
-                Text(
-                    text = if (includeSystemApps) {
-                        stringResource(
-                            id = R.string.app_count_including_system_apps,
-                            appCount
-                        )
-                    } else {
-                        stringResource(
-                            id = R.string.user_app_count,
-                            appCount
-                        )
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = Int.MAX_VALUE
-                )
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            FilledTonalButton(onClick = onClick) {
-                Text(text = stringResource(id = R.string.apply_profile))
-                Spacer(modifier = Modifier.width(4.dp))
-                Icon(
-                    imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
+            } else {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    BulkProfileIcon()
+                    Spacer(modifier = Modifier.width(14.dp))
+                    BulkProfileSummary(
+                        appCount = appCount,
+                        includeSystemApps = includeSystemApps,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    BulkProfileButton(onClick = onClick)
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun BulkProfileIcon() {
+    Surface(
+        modifier = Modifier.size(44.dp),
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.secondary
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                imageVector = Icons.Outlined.Layers,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSecondary,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun BulkProfileSummary(
+    appCount: Int,
+    includeSystemApps: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        Text(
+            text = stringResource(id = R.string.all_listed_apps),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold
+        )
+
+        Text(
+            text = if (includeSystemApps) {
+                stringResource(
+                    id = R.string.app_count_including_system_apps,
+                    appCount
+                )
+            } else {
+                stringResource(
+                    id = R.string.user_app_count,
+                    appCount
+                )
+            },
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun BulkProfileButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    FilledTonalButton(
+        onClick = onClick,
+        modifier = modifier
+    ) {
+        Text(
+            text = stringResource(id = R.string.apply_profile),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Spacer(modifier = Modifier.width(4.dp))
+        Icon(
+            imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
+            contentDescription = null,
+            modifier = Modifier.size(18.dp)
+        )
     }
 }
 

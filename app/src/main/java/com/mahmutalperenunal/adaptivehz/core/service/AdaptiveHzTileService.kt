@@ -38,7 +38,10 @@ class AdaptiveHzTileService : TileService() {
         val appContext = applicationContext
 
         try {
-            AdaptiveHzActionHandler.toggle(appContext)
+            AdaptiveHzActionHandler.toggleAsync(
+                context = appContext,
+                onComplete = { updateTile() }
+            )
         } catch (_: Throwable) {
         }
 

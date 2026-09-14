@@ -34,6 +34,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
@@ -47,10 +48,13 @@ import androidx.compose.ui.unit.dp
 import com.mahmutalperenunal.adaptivehz.BuildConfig
 import com.mahmutalperenunal.adaptivehz.core.prefs.AdaptiveHzPrefs
 import com.mahmutalperenunal.adaptivehz.core.engine.AdaptiveHzRuntimeState
+import com.mahmutalperenunal.adaptivehz.core.engine.model.DeviceVendorDetector
 import com.mahmutalperenunal.adaptivehz.core.system.RefreshRateController
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Debug screen exposing runtime state, engine activity and system diagnostics.
@@ -69,19 +73,38 @@ fun DiagnosticsScreen(
     var refreshTick by remember { mutableIntStateOf(0) }
 
     // Refreshes controller state only when the user explicitly requests it.
-    val status = remember(refreshTick) {
-        RefreshRateController.readStatus(appContext)
+    val status by produceState(
+        initialValue = RefreshRateController.Status(
+            vendor = DeviceVendorDetector.detect(),
+            selectedWritePath = "-",
+            selectedValue = "-",
+            displayHz = 0f,
+            hyperOsDetection = null,
+            candidateSettings = emptyList()
+        ),
+        key1 = refreshTick
+    ) {
+        value = withContext(Dispatchers.IO) {
+            RefreshRateController.readStatus(appContext)
+        }
     }
 
-    val accessibilityState = remember(refreshTick) {
-        AdaptiveHzRuntimeState.getAccessibilityState(appContext)
+    val accessibilityState by produceState(
+        initialValue = AdaptiveHzRuntimeState.AccessibilityState.DISABLED,
+        key1 = refreshTick
+    ) {
+        value = withContext(Dispatchers.IO) {
+            AdaptiveHzRuntimeState.getAccessibilityState(appContext)
+        }
     }
 
-    val powerSaveMode = remember(refreshTick) {
-        runCatching {
-            val pm = appContext.getSystemService(PowerManager::class.java)
-            pm?.isPowerSaveMode == true
-        }.getOrDefault(false)
+    val powerSaveMode by produceState(initialValue = false, key1 = refreshTick) {
+        value = withContext(Dispatchers.IO) {
+            runCatching {
+                val pm = appContext.getSystemService(PowerManager::class.java)
+                pm?.isPowerSaveMode == true
+            }.getOrDefault(false)
+        }
     }
 
     val lastHeartbeat = AdaptiveHzPrefs.getAccessibilityLastHeartbeat(appContext)

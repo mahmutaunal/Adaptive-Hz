@@ -50,8 +50,14 @@ sealed interface RefreshRateApplyResult {
 
     // An unexpected error occurred while applying the requested value.
     data class Failure(
-        override val requestedWrite: SettingWrite,
+        override val requestedWrite: SettingWrite?,
         val throwable: Throwable
+    ) : RefreshRateApplyResult
+
+    // A requested custom rate was unavailable, but the existing vendor strategy was restored.
+    data class CustomFallbackApplied(
+        override val requestedWrite: SettingWrite?,
+        val requestedRefreshRateHz: Int
     ) : RefreshRateApplyResult
 
     // No write was required for the requested state.
@@ -64,7 +70,8 @@ sealed interface RefreshRateApplyResult {
 val RefreshRateApplyResult.isOperationalSuccess: Boolean
     get() = when (this) {
         is RefreshRateApplyResult.AppliedAndVerified,
-        is RefreshRateApplyResult.WrittenButUnverified -> true
+        is RefreshRateApplyResult.WrittenButUnverified,
+        is RefreshRateApplyResult.CustomFallbackApplied -> true
 
         else -> false
     }

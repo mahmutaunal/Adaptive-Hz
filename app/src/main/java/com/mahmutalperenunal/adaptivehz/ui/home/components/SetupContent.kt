@@ -38,12 +38,14 @@ import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Terminal
+import androidx.compose.material.icons.outlined.TouchApp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import com.mahmutalperenunal.adaptivehz.R
+import com.mahmutalperenunal.adaptivehz.core.shizuku.ShizukuAccessState
 
 /**
  * Setup flow shown before the main dashboard becomes available.
@@ -55,6 +57,7 @@ fun SetupComponent(
     batteryOptimizationsIgnored: Boolean,
     notificationsGranted: Boolean,
     usageAccessGranted: Boolean,
+    shizukuAccessState: ShizukuAccessState,
     keepAliveEnabled: Boolean,
     isXiaomiDevice: Boolean,
     labelOn: String,
@@ -71,6 +74,7 @@ fun SetupComponent(
     onRequestIgnoreBatteryOptimizations: () -> Unit,
     onRequestNotificationPermission: () -> Unit,
     onOpenUsageAccessSettings: () -> Unit,
+    onRequestShizukuPermission: () -> Unit,
     onSetKeepAliveEnabled: (Boolean) -> Unit
 ) {
     val context = LocalContext.current.applicationContext
@@ -141,6 +145,23 @@ fun SetupComponent(
                 )
             }
         }
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    SetupCard(
+        icon = Icons.Outlined.TouchApp,
+        title = stringResource(id = R.string.setup_shizuku_title),
+        description = stringResource(id = R.string.setup_shizuku_desc),
+        ok = shizukuAccessState == ShizukuAccessState.READY,
+        primaryButtonText = stringResource(id = R.string.shizuku_grant_permission),
+        onPrimaryClick = onRequestShizukuPermission,
+        okLabelOverride = if (shizukuAccessState == ShizukuAccessState.READY) {
+            stringResource(id = R.string.label_ok)
+        } else {
+            stringResource(id = R.string.label_recommended)
+        },
+        successMessage = stringResource(id = R.string.setup_shizuku_ready_message)
     )
 
     Spacer(modifier = Modifier.height(16.dp))

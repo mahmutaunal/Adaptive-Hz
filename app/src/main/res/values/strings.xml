@@ -36,7 +36,7 @@
     <string name="status_accessibility">Accessibility</string>
     <string name="status_mode">Mode</string>
 
-    <string name="mode_adaptive">Adaptive (Auto)</string>
+    <string name="mode_adaptive">Adaptive</string>
     <string name="mode_manual">Manual</string>
 
     <string name="minimum">Minimum</string>
@@ -65,7 +65,9 @@
     <string name="toast_adaptive_applied">Adaptive applied</string>
     <string name="toast_minimum_applied">Minimum applied</string>
     <string name="toast_maximum_applied">Maximum applied</string>
+    <string name="toast_refresh_rate_apply_failed">The refresh rate could not be applied. Check WRITE_SECURE_SETTINGS and, for supported custom values, the Shizuku connection.</string>
     <string name="toast_secure_settings_missing">WRITE_SECURE_SETTINGS permission is missing.</string>
+    <string name="toast_custom_rate_unavailable">The custom refresh rate could not be applied. The normal device behavior was restored. Check the Shizuku connection and custom-rate support.</string>
 
     <string name="label_missing">MISSING</string>
     <string name="label_on">ON</string>
@@ -108,6 +110,17 @@
     <string name="root_not_available">Root is not available on this device.</string>
     <string name="root_grant_failed">Automatic root setup failed.</string>
 
+    <string name="setup_shizuku_title">Shizuku</string>
+    <string name="setup_shizuku_desc">Optional. Shizuku improves touch detection and enables safe custom refresh-rate values on supported devices. Normal Adaptive Hz modes continue to work without it.</string>
+    <string name="setup_shizuku_ready_message">Shizuku is running and permission is granted.</string>
+    <string name="shizuku_recommendation_title">Shizuku is recommended</string>
+    <string name="shizuku_recommendation_message">Normal device modes can work without Shizuku. Granting permission improves interaction detection and is required to apply supported custom refresh-rate values safely.</string>
+    <string name="shizuku_grant_permission">Grant Shizuku permission</string>
+    <string name="shizuku_continue_without">Continue without Shizuku</string>
+    <string name="toast_shizuku_not_running">Shizuku is not running. Start it first, or continue without Shizuku.</string>
+    <string name="settings_shizuku_ready_summary">Shizuku is running and permission is granted</string>
+    <string name="settings_shizuku_recommended_summary">Optional but recommended for accurate interaction detection; required for safe custom values on supported devices</string>
+
     <!-- Common -->
     <string name="cd_back">Back</string>
     <string name="action_close">Close</string>
@@ -138,7 +151,7 @@
     <!-- Settings - header -->
     <string name="settings_title">Settings</string>
     <string name="settings_app_name">Adaptive Hz</string>
-    <string name="settings_app_tagline">Adaptive Hz automatically switches the display refresh rate between 60 Hz and 120 Hz based on user interaction.</string>
+    <string name="settings_app_tagline">Adaptive Hz automatically switches the display refresh rate based on user interaction.</string>
 
     <!-- Settings - defaults (developer) -->
     <string name="settings_developer_name">AlpWare Studio</string>
@@ -438,4 +451,12 @@
     <string name="quick_access_widget_manual_instructions">Touch and hold an empty area of your home screen, choose Widgets, then select Adaptive Hz.</string>
     <string name="quick_access_request_failed">The system could not open the add request. You can add this shortcut manually.</string>
     <string name="quick_access_request_dismissed">Shortcut was not added.</string>
+    <string name="custom_refresh_rate_title">Custom refresh rate</string>
+    <string name="custom_refresh_rate_description">Fine-tune the rate used by the active mode.</string>
+    <string name="custom_refresh_profile_title">Refresh behavior</string>
+    <string name="custom_refresh_rate_label">Refresh rate</string>
+    <string name="custom_refresh_rate_default">Default</string>
+    <string name="custom_refresh_rate_hz">%1$d Hz</string>
+    <string name="custom_adaptive_target_label">Touch refresh rate</string>
+    <string name="custom_refresh_rate_unsupported">This device does not support custom refresh-rate selection.</string>
 </resources>

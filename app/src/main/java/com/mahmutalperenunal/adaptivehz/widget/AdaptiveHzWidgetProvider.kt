@@ -43,12 +43,26 @@ class AdaptiveHzWidgetProvider : AppWidgetProvider() {
         super.onReceive(context, intent)
         val appContext = context.applicationContext
 
-        // Dispatch widget button actions and refresh requests
+        val requestedMode = when (intent.action) {
+            ACTION_SET_OFF -> AdaptiveHzMode.OFF
+            ACTION_SET_MIN -> AdaptiveHzMode.FORCE_MIN
+            ACTION_SET_ADAPTIVE -> AdaptiveHzMode.ADAPTIVE
+            ACTION_SET_MAX -> AdaptiveHzMode.FORCE_MAX
+            else -> null
+        }
+
+        if (requestedMode != null) {
+            val pendingResult = goAsync()
+            AdaptiveHzActionHandler.applyModeAsync(
+                context = appContext,
+                mode = requestedMode,
+                onSettled = pendingResult::finish
+            )
+            return
+        }
+
+        // Dispatch widget refresh requests synchronously; they perform no system I/O.
         when (intent.action) {
-            ACTION_SET_OFF -> AdaptiveHzActionHandler.applyMode(appContext, AdaptiveHzMode.OFF)
-            ACTION_SET_MIN -> AdaptiveHzActionHandler.applyMode(appContext, AdaptiveHzMode.FORCE_MIN)
-            ACTION_SET_ADAPTIVE -> AdaptiveHzActionHandler.applyMode(appContext, AdaptiveHzMode.ADAPTIVE)
-            ACTION_SET_MAX -> AdaptiveHzActionHandler.applyMode(appContext, AdaptiveHzMode.FORCE_MAX)
             ACTION_REFRESH -> AdaptiveHzWidgetUpdater.refreshAll(appContext)
             ACTION_WIDGET_PINNED -> AdaptiveHzWidgetUpdater.refreshAll(appContext)
         }

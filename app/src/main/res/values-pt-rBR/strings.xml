@@ -65,7 +65,9 @@
     <string name="toast_adaptive_applied">Modo adaptativo aplicado</string>
     <string name="toast_minimum_applied">Mínimo aplicado</string>
     <string name="toast_maximum_applied">Máximo aplicado</string>
+    <string name="toast_refresh_rate_apply_failed">Não foi possível aplicar a taxa. Verifique WRITE_SECURE_SETTINGS e, para valores personalizados compatíveis, a conexão do Shizuku.</string>
     <string name="toast_secure_settings_missing">A permissão WRITE_SECURE_SETTINGS está ausente.</string>
+    <string name="toast_custom_rate_unavailable">Não foi possível aplicar a taxa personalizada. O comportamento normal do dispositivo foi restaurado. Verifique a conexão do Shizuku e o suporte a valores personalizados.</string>
 
     <string name="label_missing">AUSENTE</string>
     <string name="label_on">ATIVADO</string>
@@ -108,6 +110,17 @@
     <string name="root_not_available">O acesso root não está disponível neste dispositivo.</string>
     <string name="root_grant_failed">Falha na configuração automática via root.</string>
 
+    <string name="setup_shizuku_title">Shizuku</string>
+    <string name="setup_shizuku_desc">Opcional. O Shizuku melhora a detecção de toque e habilita valores personalizados seguros em dispositivos compatíveis. Os modos normais do Adaptive Hz funcionam sem ele.</string>
+    <string name="setup_shizuku_ready_message">O Shizuku está em execução e a permissão foi concedida.</string>
+    <string name="shizuku_recommendation_title">O Shizuku é recomendado</string>
+    <string name="shizuku_recommendation_message">Os modos normais funcionam sem o Shizuku. Conceder a permissão melhora a detecção e é necessário para aplicar com segurança os valores personalizados compatíveis.</string>
+    <string name="shizuku_grant_permission">Conceder permissão do Shizuku</string>
+    <string name="shizuku_continue_without">Continuar sem Shizuku</string>
+    <string name="toast_shizuku_not_running">O Shizuku não está em execução. Inicie-o primeiro ou continue sem o Shizuku.</string>
+    <string name="settings_shizuku_ready_summary">O Shizuku está em execução e a permissão foi concedida</string>
+    <string name="settings_shizuku_recommended_summary">Opcional e recomendado para detecção precisa; necessário para valores personalizados seguros em dispositivos compatíveis</string>
+
     <!-- Common -->
     <string name="cd_back">Voltar</string>
     <string name="action_close">Fechar</string>
@@ -138,7 +151,7 @@
     <!-- Settings - header -->
     <string name="settings_title">Configurações</string>
     <string name="settings_app_name">Adaptive Hz</string>
-    <string name="settings_app_tagline">O Adaptive Hz alterna automaticamente a taxa de atualização da tela entre 60 Hz e 120 Hz com base na interação do usuário.</string>
+    <string name="settings_app_tagline">O Adaptive Hz alterna automaticamente a taxa de atualização da tela com base na interação do usuário.</string>
 
     <!-- Settings - defaults (developer) -->
     <string name="settings_developer_name">AlpWare Studio</string>
@@ -438,4 +451,12 @@
     <string name="quick_access_widget_manual_instructions">Toque e segure uma área vazia da tela inicial, escolha Widgets e selecione Adaptive Hz.</string>
     <string name="quick_access_request_failed">O sistema não conseguiu abrir a solicitação. Você pode adicionar este atalho manualmente.</string>
     <string name="quick_access_request_dismissed">O atalho não foi adicionado.</string>
+    <string name="custom_refresh_rate_title">Taxa de atualização personalizada</string>
+    <string name="custom_refresh_rate_description">Ajuste a taxa usada pelo modo ativo.</string>
+    <string name="custom_refresh_profile_title">Comportamento da taxa</string>
+    <string name="custom_refresh_rate_label">Taxa de atualização</string>
+    <string name="custom_refresh_rate_default">Padrão</string>
+    <string name="custom_refresh_rate_hz">%1$d Hz</string>
+    <string name="custom_adaptive_target_label">Taxa ao tocar</string>
+    <string name="custom_refresh_rate_unsupported">Este dispositivo não oferece seleção de taxa de atualização personalizada.</string>
 </resources>
